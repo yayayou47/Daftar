@@ -417,6 +417,72 @@
     return {modifiees: n};
   }
 
+  /* Synchronisation : réglage fait sur le téléphone (moi, à partir de base) fusionné avec l'état reçu de l'ordinateur
+     (eux), élément par élément (« id », ou « code » des devises) et champ par champ. Mêmes règles que fusion3 /
+     fusionner_reglages dans serveur.py. ABSENT = clé ou élément inexistant. */
+  const ABSENT = Symbol('absent');
+  function egal(a, b) {
+    if (a === b) return true;
+    if (a === ABSENT || b === ABSENT || a === null || b === null || typeof a !== 'object' || typeof b !== 'object') return false;
+    if (Array.isArray(a) !== Array.isArray(b)) return false;
+    if (Array.isArray(a)) return a.length === b.length && a.every((x, i) => egal(x, b[i]));
+    const ka = Object.keys(a), kb = Object.keys(b);
+    return ka.length === kb.length && ka.every(k => Object.prototype.hasOwnProperty.call(b, k) && egal(a[k], b[k]));
+  }
+  const estObjet = x => x !== null && x !== ABSENT && typeof x === 'object' && !Array.isArray(x);
+  function cleListe(...listes) {
+    const elems = listes.filter(Array.isArray).flat();
+    for (const k of ['id', 'code'])
+      if (elems.length && elems.every(x => estObjet(x) && typeof x[k] === 'string')) return k;
+    return null;
+  }
+  function fusion3(base, moi, eux, conflits, chemin) {
+    chemin = chemin || '';
+    if (egal(moi, base)) return eux;
+    if (egal(eux, base) || egal(eux, moi)) return moi;
+    if (estObjet(moi) && estObjet(eux)) {
+      const b = estObjet(base) ? base : {}, out = {};
+      for (const k of Object.keys(eux).concat(Object.keys(moi).filter(k => !(k in eux)))) {
+        const v = fusion3(k in b ? b[k] : ABSENT, k in moi ? moi[k] : ABSENT, k in eux ? eux[k] : ABSENT, conflits, chemin + '/' + k);
+        if (v !== ABSENT) out[k] = v;
+      }
+      return out;
+    }
+    const cle = Array.isArray(moi) && Array.isArray(eux) ? cleListe(Array.isArray(base) ? base : [], moi, eux) : null;
+    if (cle) {
+      const carte = l => new Map(l.map(x => [x[cle], x]));
+      const b = Array.isArray(base) ? carte(base) : new Map(), m = carte(moi), e = carte(eux);
+      const communsB = [...b.keys()].filter(k => m.has(k));
+      let ordre, autre;
+      if (!egal(moi.map(x => x[cle]).filter(k => b.has(k)), communsB)) { ordre = moi.map(x => x[cle]); autre = eux.map(x => x[cle]); }
+      else { ordre = eux.map(x => x[cle]); autre = moi.map(x => x[cle]); }
+      autre.forEach((k, i) => {
+        if (ordre.includes(k)) return;
+        let prec = null;
+        for (let j = i - 1; j >= 0; j--) if (ordre.includes(autre[j])) { prec = autre[j]; break; }
+        ordre.splice(prec !== null ? ordre.indexOf(prec) + 1 : 0, 0, k);
+      });
+      const out = [];
+      for (const k of ordre) {
+        const v = fusion3(b.has(k) ? b.get(k) : ABSENT, m.has(k) ? m.get(k) : ABSENT, e.has(k) ? e.get(k) : ABSENT, conflits, chemin + '/' + k);
+        if (v !== ABSENT) out.push(v);
+      }
+      return out;
+    }
+    conflits.push(chemin || '/');
+    return moi;
+  }
+  /* rend {corps, conflits} : chaque section présente dans corps ET dans base est fusionnée avec prm */
+  function fusionnerReglages(prm, base, corps) {
+    const out = Object.assign({}, corps), conflits = [];
+    for (const k of SECTIONS_REGLAGES)
+      if (k in corps && base && k in base) {
+        const v = fusion3(base[k], corps[k], k in prm ? prm[k] : ABSENT, conflits, k);
+        if (v === ABSENT) delete out[k]; else out[k] = v;
+      }
+    return {corps: copie(out), conflits};
+  }
+
   /* contrôle d'un fichier importé (« Importer mes données ») : même format que donnees/carnet.json */
   function verifierImport(d) {
     if (!d || typeof d !== 'object' || d.version !== 5 || !Array.isArray(d.operations) || !d.parametres)
@@ -428,5 +494,5 @@
     return d;
   }
 
-  window.AppYaMoteur = {vide, purgerCorbeille, DELAI_CORBEILLE, nettoyer, vidangeAuto, regler, reclasser, marquer, verifierImport, POSTES_DEFAUT, COMPTES_DEFAUT, REVENUS_DEFAUT, TYPES_EVENEMENT};
+  window.AppYaMoteur = {fusionnerReglages, vide, purgerCorbeille, DELAI_CORBEILLE, nettoyer, vidangeAuto, regler, reclasser, marquer, verifierImport, POSTES_DEFAUT, COMPTES_DEFAUT, REVENUS_DEFAUT, TYPES_EVENEMENT};
 })();

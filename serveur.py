@@ -210,10 +210,108 @@ RE_MAJ = re.compile(r"^\d{4}-\d{2}-\d{2}T[\d:.]+Z?$")
 RE_HEURE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
 
 
+ABSENT = object()
+
+
+def _cle_liste(*listes):
+    """Clé d'identité des éléments d'une liste de réglages (« id », ou « code » pour les devises), sinon None :
+    la liste est alors traitée comme une seule valeur (relevés d'un compte, mots-clés…)."""
+    elems = [x for l in listes if isinstance(l, list) for x in l]
+    for k in ("id", "code"):
+        if elems and all(isinstance(x, dict) and isinstance(x.get(k), str) for x in elems):
+            return k
+    return None
+
+
+def fusion3(base, moi, eux, conflits, chemin=""):
+    """Fusion à trois voies : « moi » = réglage fait sur le téléphone à partir de « base » ; « eux » = état actuel de
+    l'ordinateur. Seul ce que le téléphone a changé par rapport à base est appliqué ; le reste garde la valeur de
+    l'ordinateur. Changé des deux côtés différemment : le téléphone l'emporte (son changement arrive en dernier) et le
+    chemin est noté dans conflits. ABSENT = clé ou élément inexistant. Même règle que fusion3 dans moteur.js."""
+    if moi == base:
+        return eux
+    if eux == base or eux == moi:
+        return moi
+    if isinstance(moi, dict) and isinstance(eux, dict):
+        b = base if isinstance(base, dict) else {}
+        out = {}
+        for k in list(eux) + [k for k in moi if k not in eux]:
+            v = fusion3(b.get(k, ABSENT), moi.get(k, ABSENT), eux.get(k, ABSENT), conflits, chemin + "/" + str(k))
+            if v is not ABSENT:
+                out[k] = v
+        return out
+    cle = _cle_liste(base if isinstance(base, list) else [], moi, eux) if isinstance(moi, list) and isinstance(eux, list) else None
+    if cle:
+        b = {x[cle]: x for x in base} if isinstance(base, list) else {}
+        m = {x[cle]: x for x in moi}
+        e = {x[cle]: x for x in eux}
+        communs_b = [k for k in b if k in m]
+        if [x[cle] for x in moi if x[cle] in b] != communs_b:
+            # le téléphone a changé l'ordre (postes) : son ordre, avec les ajouts de l'ordinateur après leur voisin
+            ordre, autre = [x[cle] for x in moi], [x[cle] for x in eux]
+        else:
+            ordre, autre = [x[cle] for x in eux], [x[cle] for x in moi]
+        for i, k in enumerate(autre):
+            if k not in ordre:
+                prec = next((autre[j] for j in range(i - 1, -1, -1) if autre[j] in ordre), None)
+                ordre.insert(ordre.index(prec) + 1 if prec is not None else 0, k)
+        out = []
+        for k in ordre:
+            v = fusion3(b.get(k, ABSENT), m.get(k, ABSENT), e.get(k, ABSENT), conflits, chemin + "/" + k)
+            if v is not ABSENT:
+                out.append(v)
+        return out
+    conflits.append(chemin or "/")
+    return moi
+
+
+def fusionner_reglages(prm, base, corps):
+    """Réglage fait sur le téléphone (corps, à partir de base) recalé sur les réglages actuels de l'ordinateur (prm) :
+    chaque section présente dans corps ET dans base est fusionnée (fusion3) ; les autres clés passent telles quelles.
+    Rend (corps fusionné, liste des chemins changés des deux côtés)."""
+    out, conflits = dict(corps), []
+    for k in SECTIONS_REGLAGES:
+        if k in corps and k in base:
+            v = fusion3(base[k], corps[k], prm.get(k, ABSENT), conflits, k)
+            if v is ABSENT:
+                out.pop(k)
+            else:
+                out[k] = v
+    return out, conflits
+
+
+def decalage_horloge(horloge):
+    """Avance de l'horloge de l'ordinateur sur celle du téléphone (heure envoyée par le téléphone au moment de la
+    synchronisation), si elle dépasse une minute ; sinon 0."""
+    try:
+        t = dt.datetime.fromisoformat(str(horloge).replace("Z", "+00:00"))
+        if t.tzinfo is None:
+            return dt.timedelta(0)
+        ecart = dt.datetime.now(dt.timezone.utc) - t
+    except (TypeError, ValueError):
+        return dt.timedelta(0)
+    return ecart if abs(ecart) > dt.timedelta(minutes=1) else dt.timedelta(0)
+
+
+def recaler_maj(maj, ecart):
+    """Date de modification du téléphone ramenée à l'horloge de l'ordinateur."""
+    if not ecart:
+        return maj
+    try:
+        t = dt.datetime.fromisoformat(maj.replace("Z", "+00:00"))
+        if t.tzinfo is None:
+            t = t.replace(tzinfo=dt.timezone.utc)
+    except ValueError:
+        return maj
+    return (t + ecart).astimezone(dt.timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
+
+
 def synchroniser(d, corps):
     """Applique les changements d'un appareil puis renvoie tout ce qui a changé depuis sa révision.
     Règle : la modification la plus récente (maj) l'emporte ; une ligne refusée par la validation est
-    signalée, jamais perdue (elle reste sur l'appareil)."""
+    signalée, jamais perdue (elle reste sur l'appareil). Les dates maj du téléphone sont recalées sur l'horloge de
+    l'ordinateur (« horloge » = heure du téléphone à l'envoi). Un réglage porte « base » (état des sections touchées
+    vu par le téléphone) : il est fusionné avec les réglages actuels (fusionner_reglages) au lieu de les remplacer."""
     if not isinstance(corps, dict):
         raise ValueError("Corps de requête invalide.")
     try:
@@ -224,18 +322,26 @@ def synchroniser(d, corps):
     index = {o.get("id"): o for o in ops}
     tombes = {t["id"]: t for t in d.setdefault("supprimees", [])}
     conflits, rejets, a_renvoyer = [], [], set()
+    ecart = decalage_horloge(corps.get("horloge"))
     params_modifies = False
     for ch in (corps.get("changements") or [])[:5000]:
         cid, maj = str(ch.get("id", "")), str(ch.get("maj", ""))
         if not re.match(r"^[\w-]{1,40}$", cid) or not RE_MAJ.match(maj):
             rejets.append({"id": cid, "erreur": "Changement mal formé."})
             continue
+        maj = recaler_maj(maj, ecart)
         if ch.get("type") == "params":
             # réglages faits sur le téléphone (même hors ligne) : appliqués ici dans l'ordre de saisie
             corps_p = ch.get("corps")
             if not isinstance(corps_p, dict) or corps_p.get("restaurer") is not None:
                 rejets.append({"id": cid, "erreur": "Réglage mal formé."})
                 continue
+            if isinstance(ch.get("base"), dict):
+                corps_p, doubles = fusionner_reglages(d.get("parametres", {}), ch["base"], corps_p)
+                if doubles:
+                    conflits.append({"id": cid, "libelle": "réglages",
+                                     "motif": "modifiés aussi sur l'ordinateur (%s) : version du téléphone gardée pour ces éléments"
+                                              % ", ".join(doubles[:5])})
             try:
                 regler(d, corps_p, "réglages faits sur le téléphone")
             except ValueError as e:
@@ -757,7 +863,7 @@ def nettoyer_comptes(liste, d):
         if typ == "tiers":
             c["titulaire"] = texte(x.get("titulaire"), 60) or nom
             c["morale"] = bool(x.get("morale"))          # personne morale (association, famille, entreprise…)
-            c["moi"] = nettoyer_mots(x.get("moi"))       # vos noms dans les notes de ce compte (« prt Yaya » = votre part)
+            c["moi"] = nettoyer_mots(x.get("moi"))       # vos noms dans les notes de ce compte (« prt Ali » = votre part)
             c["contrib"] = nettoyer_mots(x.get("contrib"))   # libellés de vos dépenses versées à ce compte
             if x.get("sourdine"):
                 c["sourdine"] = True   # solde négatif (avance) gardé dans le compte mais pas compté dans le patrimoine

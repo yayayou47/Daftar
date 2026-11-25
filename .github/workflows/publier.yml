@@ -15,7 +15,11 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Aucune donnée personnelle dans le dépôt
+        env:
+          DAFTAR_MOTS_INTERDITS: ${{ secrets.DAFTAR_MOTS_INTERDITS }}
         run: bash outils/verifier-depot.sh
+      - name: Tests (synchronisation, parité serveur.py ↔ moteur.js)
+        run: python3 -m unittest discover -s tests -v
       - uses: actions/setup-node@v5
         with:
           node-version: 22

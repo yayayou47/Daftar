@@ -31,6 +31,9 @@ La version ordinateur peut aussi servir un téléphone synchronisé (via Tailsca
   (`.github/workflows/`).
 
 Le dossier `donnees/` n'est jamais versionné (`.gitignore`, contrôle `outils/verifier-depot.sh`).
+Ce contrôle cherche aussi, dans le contenu des fichiers, une liste de mots interdits (noms de
+personnes, de lieux…) gardée hors du dépôt : `outils/mots-interdits.txt` en local, secret
+`DAFTAR_MOTS_INTERDITS` dans les workflows. `bash outils/installer-crochet.sh` le lance avant chaque commit.
 
 Bibliothèques incluses : SheetJS 0.18.5 (`app/xlsx.full.min.js`) et pdf.js 3.11.174 (`app/pdf.min.js`,
 `app/pdf.worker.min.js`), toutes deux sous licence Apache 2.0. L'OCR des relevés photographiés

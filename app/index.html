@@ -782,7 +782,7 @@ body.avec-clavier{padding-bottom:290px}
     <div id="pasteBox" hidden style="display:flex;flex-direction:column;gap:10.5px">
       <div class="row" style="gap:8px 14px"><label class="label" for="pasteCpt" style="margin:0">Lignes d'un seul compte</label><select id="pasteCpt" aria-describedby="pasteCptH"></select>
         <label class="check"><input type="checkbox" id="pasteK"> montants en milliers (10 = 10 000)</label></div>
-      <span class="hint" id="pasteCptH">Pour l'historique d'un compte (compte d'un tiers…) : « − » = dépense de ce compte, sans signe = entrée ; votre nom (« prt Yaya ») = votre part, versée de vos espèces ; « ( −244 000 ) » = solde du compte ce jour-là.</span>
+      <span class="hint" id="pasteCptH">Pour l'historique d'un compte (compte d'un tiers…) : « − » = dépense de ce compte, sans signe = entrée ; votre nom (« prt Ali ») = votre part, versée de vos espèces ; « ( −244 000 ) » = solde du compte ce jour-là.</span>
       <label class="label" for="pasteText">Une opération par ligne, comme dans votre carnet (montants <span class="uS-court"></span>, sans signe)</label>
       <textarea id="pasteText" placeholder=""></textarea>
       <div class="hint compteshint"><b>Compte qui paie :</b> sans précision, la dépense est faite en <b>espèces</b>. Ajoutez le mot-clé du compte dans la ligne : <code><span data-k="30">30</span> scolarité banque</code>, <code><span data-k="5">5</span> crédit mobile</code>. Chaque compte (banque, carte, mobile money…) se crée dans Comptes et biens, avec ses mots-clés.</div>
@@ -1153,7 +1153,9 @@ function appliquerReleve(prm,ch){(prm.comptes||[]).forEach(c=>{if(c.id!==ch.comp
    dans l'ordre, ce qui est encore en attente d'envoi (soldes notés, réglages faits hors ligne) */
 function reappliquerEnAttente(){const M=window.AppYaMoteur;
   for(const c of LOC.file){if(c.type==='releve')appliquerReleve(LOC.donnees.parametres,c);
-    else if(c.type==='params'&&M){try{M.regler(LOC.donnees,JSON.parse(JSON.stringify(c.corps)))}catch(e){}}}
+    else if(c.type==='params'&&M){try{   // avec base : fusion avec ce que l'ordinateur a changé entre-temps (sinon remplacement)
+      const corps=c.base&&M.fusionnerReglages?M.fusionnerReglages(LOC.donnees.parametres,c.base,c.corps).corps:JSON.parse(JSON.stringify(c.corps));
+      M.regler(LOC.donnees,corps)}catch(e){}}}
   delete LOC.donnees.historique}
 async function releveLocal(compte,date,solde,heure){await locPret();
   const ch={type:'releve',id:nouvelIdOp(),maj:maintenant(),compte,date,solde,...(heure?{heure}:{}),doc:{libelle:`solde de ${nomCpt(compte)} au ${dmy(date)}`}};
@@ -1212,8 +1214,12 @@ async function reqLocale(method,url,body){
      appliqués par l'ordinateur à la synchronisation. Seul le retour en arrière (historique de l'ordinateur) demande la liaison. */
   const M=window.AppYaMoteur;
   if(p==='/api/parametres'&&method==='PUT'&&M&&body&&body.restaurer==null){
+    /* base = sections touchées telles que le téléphone les voyait : l'ordinateur n'appliquera que ce qui a changé
+       (fusion élément par élément), sans effacer ce qui a été réglé sur l'ordinateur entre-temps */
+    const prm=LOC.donnees.parametres||{},base={};
+    for(const k of ['postes','budgets','revenus','evenements','programmees','comptes','biens','devises'])if(k in body&&k in prm)base[k]=JSON.parse(JSON.stringify(prm[k]));
     const essai=JSON.parse(JSON.stringify(LOC.donnees)),res=M.regler(essai,JSON.parse(JSON.stringify(body)));delete essai.historique;
-    LOC.donnees=essai;LOC.file=LOC.file.concat([{type:'params',id:nouvelIdOp(),maj:maintenant(),corps:body,doc:{libelle:'réglages : '+Object.keys(body).join(', ')}}]);
+    LOC.donnees=essai;LOC.file=LOC.file.concat([{type:'params',id:nouvelIdOp(),maj:maintenant(),corps:body,base,doc:{libelle:'réglages : '+Object.keys(body).join(', ')}}]);
     await locSauver();syncBientot();return JSON.parse(JSON.stringify(res))}
   if(p==='/api/reclasser'&&method==='POST'&&M){
     const avant=new Map(ops.map(o=>[o.id,o.categorie])),res=M.reclasser(LOC.donnees,body||{});
@@ -1239,7 +1245,7 @@ async function unPassage(){
     try{
       await locCharger();
       const envoi=LOC.file.map(({erreur,...c})=>c),cle=c=>c.id+'|'+c.maj,envoyes=new Set(envoi.map(cle));
-      const r=await reqServeur('POST','/api/sync',{depuis:LOC.donnees?LOC.rev:0,changements:envoi});
+      const r=await reqServeur('POST','/api/sync',{depuis:LOC.donnees?LOC.rev:0,horloge:maintenant(),changements:envoi});
       const rejets=new Map((r.rejets||[]).map(x=>[x.id,x.erreur]));
       // retirer de la file ce qui est arrivé ; garder (avec le motif) ce qui a été refusé, et ce qui a été saisi pendant l'échange
       LOC.file=LOC.file.filter(c=>!envoyes.has(cle(c))||rejets.has(c.id)).map(c=>envoyes.has(cle(c))&&rejets.has(c.id)?{...c,erreur:rejets.get(c.id)}:c);
@@ -1891,7 +1897,7 @@ const UK=v=>v&&v.engin==='groupe'?'h':'km';
 const INTERVALLE_DEFAUT=t=>t==='groupe'?250:3000;
 const VEH=()=>{const l=VEHS();return l.find(b=>b.id===vehSelId)||l[0]||null};
 function choisirEngin(id){vehSelId=id;memo('appya-engin',id);vehSel=null}
-/* engin d'une saisie : bien investi, sinon nom propre de l'engin cité (« yamaha », « avante »), sinon l'engin affiché
+/* engin d'une saisie : bien investi, sinon nom propre de l'engin cité (« yamaha », « corolla »), sinon l'engin affiché
    s'il a ce poste, sinon un engin de ce poste, sinon l'engin affiché */
 const MOTS_GENERIQUES=new Set(['voiture','moto','camion','vehicule','engin','auto','bus']);
 function enginDe(lib,categorie,bien){
@@ -2467,7 +2473,7 @@ function parseList(text,fallback,impose){
   return out;
 }
 /* « Lignes d'un seul compte » : − = dépense de ce compte, sans signe = entrée ; « ( −244 000 ) » = solde du compte ce jour-là ;
-   sur le compte d'un tiers, votre nom (« prt Yaya ») = votre part : votre dépense en espèces, versée à ce compte, rattachée
+   sur le compte d'un tiers, votre nom (« prt Ali ») = votre part : votre dépense en espèces, versée à ce compte, rattachée
    à la dépense déjà notée dans votre journal quand il y en a une (même montant, ±TOL_J jours, libellé de versement) */
 function ligneCompte(line,neg,date,X,pris){
   const out=[];
@@ -2680,7 +2686,7 @@ function cptRow(c){const used=c.id==='especes';   // tout compte peut être supp
     <button type="button" class="mini danger" ${c.id?`data-supcpt="${c.id}"`:'data-x'} ${used?'disabled title="Le compte Espèces ne se supprime pas"':''} aria-label="Supprimer le compte ${esc(c.nom)}">✕</button>
     <div class="cTiers"${c.type==='tiers'?'':' hidden'}><input class="cTit" value="${esc(c.titulaire||'')}" placeholder="titulaire (frère, maison familiale…)" aria-label="Titulaire du compte" maxlength="60">
       <select class="cMor" aria-label="Personne physique ou morale"><option value="">Personne physique</option><option value="1"${c.morale?' selected':''}>Personne morale (famille, association…)</option></select>
-      <input class="cMoi" value="${esc((c.moi||[]).join(', '))}" placeholder="votre nom dans ses notes : yaya" aria-label="Votre nom dans les notes de ce compte">
+      <input class="cMoi" value="${esc((c.moi||[]).join(', '))}" placeholder="votre nom dans ses notes : ali" aria-label="Votre nom dans les notes de ce compte">
       <input class="cContrib" value="${esc((c.contrib||[]).join(', '))}" placeholder="vos versements : contribution maison" aria-label="Libellés de vos dépenses versées à ce compte">
       <select class="cSourd" aria-label="Solde négatif (avance)"><option value="">Solde négatif : compté comme dette</option><option value="1"${c.sourdine?' selected':''}>Solde négatif : en sourdine</option></select></div></div>`}
 function bienRow(b){const used=all.some(e=>e.nature==='investissement'&&e.bien===b.id);
@@ -3376,7 +3382,7 @@ let progDirty=false;
 function progRow(p){
   const cls=p.nature==='revenu'?REVENUS.map(r=>`<option value="${r.id}"${r.id===p.cat_revenu?' selected':''}>${esc(r.label)}</option>`).join(''):optsPostes(p.categorie||'autre');
   const nx=prochaineEcheance(p);
-  return `<div class="evrow" data-id="${p.id||''}" data-ign="${esc(JSON.stringify(p.ignorees||[]))}"><input class="pLib" value="${esc(p.libelle||'')}" placeholder="Facturation package…" aria-label="Libellé" maxlength="200" style="flex:3 1 16em;font-weight:600">
+  return `<div class="evrow" data-id="${p.id||''}" data-ign="${esc(JSON.stringify(p.ignorees||[]))}"><input class="pLib" value="${esc(p.libelle||'')}" placeholder="Frais de tenue de compte…" aria-label="Libellé" maxlength="200" style="flex:3 1 16em;font-weight:600">
     <select class="pNat" aria-label="Nature"><option value="depense"${p.nature!=='revenu'?' selected':''}>Dépense</option><option value="revenu"${p.nature==='revenu'?' selected':''}>Revenu</option></select>
     <select class="pMode" aria-label="Montant"><option value="fixe"${p.mode!=='interets'?' selected':''}>montant fixe</option><option value="interets"${p.mode==='interets'?' selected':''}>intérêts du compte</option></select>
     ${p.mode==='interets'?'<span class="hint">montant calculé à chaque échéance</span>':`<input class="pMt" inputmode="numeric" value="${p.montant||''}" placeholder="montant FCFA" aria-label="Montant en FCFA" style="flex:0 1 8em">`}

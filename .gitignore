@@ -6,6 +6,7 @@ appya-*.json
 CLAUDE.md
 AGENTS.md
 LISEZMOI-PERSO.txt
+outils/mots-interdits.txt
 # Construction
 __pycache__/
 *.pyc

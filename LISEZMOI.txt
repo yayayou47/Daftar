@@ -116,7 +116,7 @@ Courant et exceptionnel : Données et réglages › Événements et revenus.
     confirmer avant l'enregistrement.
 
 Opérations programmées : Données et réglages › Programmées. Frais de tenue
-de compte, abonnements (« Facturation package fonctionnaire », Coris, 3 578,
+de compte, abonnements (« frais de tenue de compte », votre banque, 3 500,
 le 30 de chaque mois), intérêts d'un compte épargne (solde × taux du compte).
 Chaque échéance passée s'annonce par un bandeau « … à confirmer » : on coche,
 on corrige la date ou le montant d'après le relevé, puis « Enregistrer » ;
@@ -218,7 +218,8 @@ d'accueil »). Daftar s'ouvre alors comme une application, même sans réseau.
     bouton. Si l'ordinateur ne répond pas dans les 20 secondes, le bouton
     passe à « Hors ligne » au lieu de rester bloqué.
   - Une ligne modifiée des deux côtés : la modification la plus récente gagne
-    et un message le signale. Une ligne refusée par l'ordinateur (montant
+    et un message le signale. Les heures sont comparées sur l'horloge de
+    l'ordinateur : un téléphone mal réglé ne fausse pas le résultat. Une ligne refusée par l'ordinateur (montant
     nul…) reste dans le téléphone, signalée « refusée », à corriger.
   - Une vidange envoyée par le téléphone met le repère à jour sur
     l'ordinateur.
@@ -229,7 +230,10 @@ d'accueil »). Daftar s'ouvre alors comme une application, même sans réseau.
   - Les réglages (postes, comptes, biens, repères, projet maison, parités,
     reclassements) se font aussi hors ligne et partent avec les saisies,
     dans l'ordre. Seul le retour en arrière (« Sauvegarde et retour »)
-    demande que le téléphone soit relié à l'ordinateur.
+    demande que le téléphone soit relié à l'ordinateur. Seul ce qui a été
+    changé sur le téléphone est appliqué : un poste ou un compte ajouté sur
+    l'ordinateur entre-temps est gardé. Un même élément changé des deux
+    côtés garde la version du téléphone, et un message le signale.
   - L'adresse sécurisée est relayée par Tailscale (« tailscale serve ») ;
     pour la couper : tailscale serve --https=443 off
   - Daftar s'ouvre tout de suite depuis la copie gardée dans le téléphone,
@@ -329,7 +333,7 @@ Données et réglages › Comptes et biens › type « Compte d'un tiers » : de
 l'argent que vous gardez ou gérez pour quelqu'un (un frère qui vous a
 confié une somme, la caisse d'une maison familiale…). Renseignez le
 titulaire, personne physique ou morale, votre nom tel qu'il apparaît dans
-ses notes (« yaya ») et le libellé de vos versements (« contribution
+ses notes (« ali ») et le libellé de vos versements (« contribution
 maison »).
   - Ces comptes sont gardés à part : leurs dépenses et leurs entrées ne
     comptent ni dans vos dépenses, ni dans vos revenus, ni dans vos
@@ -346,8 +350,8 @@ maison »).
     espèces ; le champ « Versé au compte de » (reconnu par son libellé) la
     fait aussi entrer sur le compte du tiers, sans doublon.
   - Historique d'un tiers : Coller une liste › « Lignes d'un seul compte »
-    = ce compte. « −40 000 msri » = dépense du compte ; « 20 000 prt
-    Gamra » = dépôt de Gamra ; « 50 000 prt Yaya » = votre part, rattachée
+    = ce compte. « −40 000 savon » = dépense du compte ; « 20 000 prt
+    Halima » = dépôt de Halima ; « 50 000 prt Ali » = votre part, rattachée
     à la dépense déjà notée dans votre journal (même montant, à 5 jours
     près) ou ajoutée comme dépense en espèces ; « ( −244 000 ) » en fin de
     ligne = solde du compte ce jour-là, après les opérations du jour.
