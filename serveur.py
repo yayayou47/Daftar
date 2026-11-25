@@ -39,8 +39,19 @@ from http.cookies import SimpleCookie
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 
-VERSION = "1.4.10"
-VERSION_NOM = "Ousnou"   # nom de la version (même valeur que VERSION_APP dans app/index.html)
+
+
+def lire_version():
+    """Numéro et nom de la version, lus dans app/version.js (seul endroit où ils sont écrits)."""
+    try:
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "app", "version.js"), encoding="utf-8") as f:
+            t = f.read()
+        return (re.search(r"numero:\s*'([^']+)'", t).group(1), re.search(r"nom:\s*'([^']*)'", t).group(1))
+    except (OSError, AttributeError):
+        return ("?", "")
+
+
+VERSION, VERSION_NOM = lire_version()
 RACINE = os.path.dirname(os.path.abspath(__file__))
 APP = os.path.join(RACINE, "app")
 DONNEES = os.path.join(RACINE, "donnees")
@@ -713,7 +724,7 @@ def nettoyer_devises(liste):
     for x in liste or []:
         code = str(x.get("code", "")).strip().upper()
         if not RE_DEVISE.match(code):
-            raise ValueError("Code de devise invalide : %r (3 lettres, par exemple USD)." % code)
+            raise ValueError("Code de devise invalide : %s (3 lettres, par exemple USD)." % code)
         if code in vus:
             raise ValueError("Devise en double : %s" % code)
         vus.add(code)
@@ -753,7 +764,7 @@ def nettoyer_revenus(liste):
     for x in liste or []:
         rid, label = str(x.get("id", "")).strip(), texte(x.get("label"), 60)
         if not RE_ID.match(rid):
-            raise ValueError("Identifiant de type de revenu invalide : %r" % rid)
+            raise ValueError("Identifiant de type de revenu invalide : %s" % rid)
         if not label:
             raise ValueError("Chaque type de revenu doit avoir un nom.")
         if rid in vus or label.lower() in noms:
@@ -771,7 +782,7 @@ def nettoyer_evenements(liste, d):
     for x in liste or []:
         eid, nom = str(x.get("id", "")).strip(), texte(x.get("nom"), 60)
         if not RE_ID.match(eid):
-            raise ValueError("Identifiant d'événement invalide : %r" % eid)
+            raise ValueError("Identifiant d'événement invalide : %s" % eid)
         if not nom or eid in vus:
             raise ValueError("Chaque événement doit avoir un nom unique.")
         vus.add(eid)
@@ -798,7 +809,7 @@ def nettoyer_programmees(liste, d):
     for x in liste or []:
         pid, lib = str(x.get("id", "")).strip(), texte(x.get("libelle"), 200)
         if not RE_ID.match(pid):
-            raise ValueError("Identifiant d'opération programmée invalide : %r" % pid)
+            raise ValueError("Identifiant d'opération programmée invalide : %s" % pid)
         if not lib or pid in vus:
             raise ValueError("Chaque opération programmée doit avoir un libellé unique.")
         vus.add(pid)
@@ -836,7 +847,7 @@ def nettoyer_comptes(liste, d):
         cid = str(x.get("id", "")).strip()
         nom = texte(x.get("nom"), 60)
         if not RE_ID.match(cid):
-            raise ValueError("Identifiant de compte invalide : %r" % cid)
+            raise ValueError("Identifiant de compte invalide : %s" % cid)
         if not nom:
             raise ValueError("Chaque compte doit avoir un nom.")
         if cid in vus or nom.lower() in noms:
@@ -885,7 +896,7 @@ def nettoyer_biens(liste, d):
         bid = str(x.get("id", "")).strip()
         nom = texte(x.get("nom"), 60)
         if not RE_ID.match(bid):
-            raise ValueError("Identifiant de bien invalide : %r" % bid)
+            raise ValueError("Identifiant de bien invalide : %s" % bid)
         if not nom or bid in vus:
             raise ValueError("Chaque bien doit avoir un nom unique.")
         vus.add(bid)
@@ -965,7 +976,7 @@ def regler(d, corps, resume=None):
             pid = str(x.get("id", "")).strip()
             label = str(x.get("label", "")).strip()[:60]
             if not RE_ID.match(pid):
-                raise ValueError("Identifiant de poste invalide : %r" % pid)
+                raise ValueError("Identifiant de poste invalide : %s" % pid)
             if not label:
                 raise ValueError("Chaque poste doit avoir un nom.")
             if pid in vus or label.lower() in noms:

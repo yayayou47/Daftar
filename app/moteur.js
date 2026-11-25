@@ -65,6 +65,7 @@
 
   function montantPositif(v, quoi = 'Montant', zero = false) {
     const m = typeof v === 'number' ? v : (v === '' || v == null ? NaN : Number(v));
+    if (Number.isNaN(m)) erreur(`${quoi} invalide.`);   // illisible (serveur.py : float() échoue)
     if (!Number.isFinite(m) || m < 0 || (m === 0 && !zero)) erreur(`${quoi} invalide : il doit être positif.`);
     return Number.isInteger(m) ? m : Math.round(m * 100) / 100;
   }
@@ -183,7 +184,8 @@
       vus.add(code);
       let taux = 1;
       if (code !== 'XAF') {
-        taux = Number(x.taux);
+        taux = x.taux == null || x.taux === '' ? NaN : Number(x.taux);
+        if (Number.isNaN(taux)) erreur(`Parité invalide pour ${code}.`);
         if (!(taux > 0 && taux < 1e9)) erreur(`Parité invalide pour ${code} : elle doit être positive.`);
         taux = Math.round(taux * 1e6) / 1e6;
       }

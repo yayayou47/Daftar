@@ -34,7 +34,12 @@ jobs:
           echo "VERSION=$V" >> "$GITHUB_ENV"
           # numéro interne Android toujours croissant
           echo "CODE=$(( 100000 + GITHUB_RUN_NUMBER ))" >> "$GITHUB_ENV"
-          echo "NOMVER=$(sed -n 's/^VERSION_NOM = "\(.*\)".*/\1/p' serveur.py)" >> "$GITHUB_ENV"
+          echo "NOMVER=$(sed -n "s/.*nom: '\([^']*\)'.*/\1/p" app/version.js)" >> "$GITHUB_ENV"
+          # le tag doit être le numéro de app/version.js (seul endroit de la version)
+          NUM="$(sed -n "s/.*numero: '\([^']*\)'.*/\1/p" app/version.js)"
+          if [ "$GITHUB_REF_TYPE" = tag ] && [ "$NUM" != "$V" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME ≠ version $NUM de app/version.js : changer le numéro avant de poser le tag."; exit 1
+          fi
       - name: Version ordinateur (zip Ubuntu)
         run: |
           mkdir -p dist/Daftar/donnees

@@ -13,6 +13,12 @@ cd "$(dirname "$0")/.."
 if git ls-files | grep -E '^donnees/|(^|/)carnet[^/]*\.json$|(^|/)appya-[0-9].*\.json$|\.jks$|\.keystore$'; then
   echo "ERREUR : des fichiers de données ou de signature sont suivis par git (voir ci-dessus)." >&2; exit 1
 fi
+# version : un seul endroit (app/version.js) ; package.json doit suivre
+NUM="$(sed -n "s/.*numero: '\([^']*\)'.*/\1/p" app/version.js)"
+PKG="$(sed -n 's/^  "version": "\(.*\)",$/\1/p' package.json)"
+if [ -z "$NUM" ] || [ "$NUM" != "$PKG" ]; then
+  echo "ERREUR : version $NUM (app/version.js) ≠ $PKG (package.json) : mettre package.json au même numéro." >&2; exit 1
+fi
 python3 -I - <<'PY'
 import os, re, subprocess, sys, unicodedata
 

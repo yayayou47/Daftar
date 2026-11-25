@@ -1,549 +1,476 @@
-DAFTAR OUSNOU 1.2.1 — SUIVI FINANCIER, ENGINS ET MAISON — VERSION UBUNTU
-======================================================================
+DAFTAR — SUIVI FINANCIER, ENGINS ET MAISON
+==========================================
 
-Une application qui tourne dans votre navigateur, sur votre ordinateur
-(http://localhost:8780), sans internet. Vos données restent chez vous,
-dans un simple fichier JSON. Daftar réunit l'ancien Suivi financier et
-l'ancien Carnet du véhicule en une seule application.
+Daftar note vos dépenses, revenus, comptes (espèces, banques, mobile
+money), prêts aux proches, biens et patrimoine, ainsi que le carnet de vos
+engins (carburant, kilomètres, vidanges) et de votre maison (travaux). Tout
+est en francs CFA, en français, et fonctionne sans internet. Vos données
+restent chez vous.
 
-Prérequis : Ubuntu 20.04 ou plus récent (Python 3 est déjà installé).
-Aucun droit administrateur (sudo) n'est nécessaire.
+Ce mode d'emploi a trois parties :
+  I.   PREMIERS PAS : installer, découvrir, première saisie.
+  II.  USAGE QUOTIDIEN : noter, lire ses chiffres, corriger.
+  III. AVANCÉ : comptes de tiers, relevés, téléphone synchronisé, commande
+       daftar, sauvegardes, changer d'ordinateur.
+
+Le numéro de version s'affiche en bas de chaque page.
 
 
-1. INSTALLER
-------------
-Dans un terminal (Ctrl+Alt+T), placez-vous dans le dossier décompressé,
-où qu'il soit (Téléchargements, disque externe, clé USB…), puis :
+######################################################################
+I. PREMIERS PAS
+######################################################################
+
+1. TROIS FAÇONS D'UTILISER DAFTAR
+---------------------------------
+Les trois versions viennent du même code (https://github.com/yayayou47/Daftar,
+publié sans aucune donnée).
+
+  - Lien web, le plus simple : https://yayayou47.github.io/Daftar/ dans
+    Chrome, puis ⋮ › « Installer l'application ». Mise à jour automatique.
+    Les données restent dans l'appareil.
+  - Android : fichier Daftar-<version>.apk de la page « Releases » du dépôt
+    (autoriser l'installation depuis cette source la première fois). Les
+    données restent dans le téléphone.
+  - Ordinateur Ubuntu : fichier Daftar-ubuntu-<version>.zip de la page
+    « Releases ». Les données sont dans ~/Daftar/donnees/carnet.json, avec
+    une copie de sécurité chaque jour. L'ordinateur peut aussi servir un
+    téléphone synchronisé (partie III, chapitre 13).
+
+Sur le téléphone (lien web ou APK), les données n'existent QUE dans
+l'appareil : exportez-les régulièrement (chapitre 10). Daftar vous le
+rappelle par un bandeau quand votre dernière sauvegarde a plus de 7 jours et
+que vous avez saisi quelque chose depuis.
+
+
+2. INSTALLER SUR UBUNTU
+-----------------------
+Prérequis : Ubuntu 20.04 ou plus récent (Python 3 est déjà installé). Aucun
+droit administrateur (sudo) n'est nécessaire.
+
+Dans un terminal (Ctrl+Alt+T), placez-vous dans le dossier décompressé, où
+qu'il soit (Téléchargements, disque externe, clé USB…), puis :
 
     bash installer.sh
 
 Utilisez « bash installer.sh » et non « ./installer.sh » : sur un disque
 externe NTFS ou exFAT, Ubuntu refuse d'exécuter les fichiers directement
-(« Permission non accordée »). Avec « bash », ce droit n'est pas nécessaire.
+(« Permission non accordée ») ; avec « bash », ce droit n'est pas nécessaire.
 
-L'installation :
-  - copie le carnet dans ~/Daftar ;
-  - le fait démarrer automatiquement à chaque ouverture de session ;
-  - ajoute « Daftar » au menu des applications et une icône
-    sur le bureau (clic droit > « Autoriser le lancement » la première fois) ;
-  - installe la commande  daftar ;
-  - ouvre le carnet dans le navigateur ;
-  - désigne le dossier d'où vous l'avez lancée comme COPIE MIROIR de vos
-    données : voir les parties 7 et 8.
+L'installation copie Daftar dans ~/Daftar, le fait démarrer à chaque
+ouverture de session, ajoute « Daftar » au menu des applications et une icône
+sur le bureau (clic droit › « Autoriser le lancement » la première fois),
+installe la commande daftar et ouvre Daftar dans le navigateur
+(http://localhost:8780). Le dossier d'où vous l'avez lancée devient la COPIE
+MIROIR de vos données (chapitre 14).
 
 Variantes :
-    bash installer.sh --ici            garder le carnet et ses données dans ce dossier
-    bash installer.sh --reseau         accessible aussi depuis le téléphone (même Wi-Fi)
+    bash installer.sh --ici            garder Daftar et ses données dans ce dossier
     bash installer.sh --sans-service   pas de démarrage automatique
+    bash installer.sh --reseau         accès depuis un téléphone du même Wi-Fi (chapitre 13)
+
+Mettre à jour : décompressez la nouvelle version et relancez
+« bash installer.sh ». Vos données ne sont jamais écrasées. Rechargez ensuite
+l'onglet Daftar déjà ouvert (F5) : la mise à jour n'en ouvre pas un nouveau.
 
 
-2. LES RUBRIQUES
+3. PREMIER LANCEMENT ET DÉMO
+----------------------------
+Avec un carnet vide, une page d'accueil présente Daftar et les trois
+premières étapes : vos comptes, vos engins et votre maison, votre première
+opération.
+
+La DÉMO (bouton « Démo » en bas de page, ou adresse terminée par « ?demo »)
+montre trois années de données simulées : comptes, salaire, dépenses,
+voiture, moto, groupe électrogène, construction d'une villa, mariage,
+mission, baptême, prêts, frais bancaires. Elles sont rangées à part : vos
+propres données ne sont ni lues ni modifiées. « Recréer les données de
+démo » les remet à zéro ; « Quitter la démo » ramène à votre carnet. C'est la
+seule façon d'en sortir : le bouton « précédent » laisse dans la démo.
+
+
+4. LES RUBRIQUES
 ----------------
-  - La barre des rubriques reste en haut de l'écran quand on fait défiler.
-    Laissée ouverte d'un jour à l'autre, l'application passe d'elle-même au
-    nouveau jour : la date de Saisir devient celle du jour (sauf pendant la
-    modification d'une ligne), le mois en cours avance.
-    Toucher une rubrique (Mes finances, Engins, House, Données et réglages,
-    Saisir) l'ouvre toujours en haut de la page. Dans Données et réglages,
-    toucher un onglet (Postes et libellés, Comptes et biens…) amène
-    directement à son contenu.
-    Le bouton retour du téléphone ramène à la rubrique, à la vue ou à
-    l'onglet précédents (et ferme d'abord une fenêtre ouverte) ; seul le
-    premier écran fait sortir de Daftar.
-  - Saisir (premier bouton, en bleu) : affiche seulement la carte de saisie
-    d'une opération, le curseur dans le champ Montant. Les autres onglets
-    (coller une liste, relevé, réglages…) sont dans Données et réglages.
+La barre des rubriques reste en haut de l'écran :
+
+  - Saisir (en bleu) : la carte de saisie d'une opération, le curseur dans
+    le champ Montant.
   - Mes finances : vues Mois, Année, Patrimoine et Statistiques, avec le
     journal de toutes les opérations.
-  - Engins : barre d'avancement vers la prochaine vidange (part effectuée
-    et part restante de l'intervalle, en %, écrites dans la barre),
-    dépenses (et comparaison avec l'année précédente à la même date, en vert
-    si elles baissent, en rouge si elles montent), carburant et entretien et
-    réparations (liseré de la couleur de leur catégorie), prix moyen du
-    litre, consommation (en vert ou en rouge si elle s'écarte de plus de
-    10 % de la moyenne de l'engin), date estimée de la prochaine vidange (au
-    rythme des 6 derniers mois), km parcourus, coût par km (et hors
-    carburant), récapitulatif mensuel ou annuel, liste des vidanges et
-    journal du véhicule (par année avec ‹ ›, ou toutes les années). Au
-    téléphone, « + engin », « Par année » et « Toutes les années » tiennent
-    sur une ligne.
-  - House (un terrain, une construction) : coût de revient (terrain +
-    travaux), valeur actuelle et appréciation, travaux par année ou par mois
-    et par catégorie (arrosage, eau-pompe-forage, maçonnerie, matériaux,
-    main-d'œuvre, électricité, administratif…), perspectives (budget du
-    projet, reste à investir, date d'achèvement au rythme actuel, effort
-    mensuel pour tenir l'échéance, valeur projetée) et journal des travaux.
-  - Données et réglages, en trois groupes d'onglets :
-    Saisir (Une opération · Coller une liste · Relevé bancaire),
-    Personnaliser (Postes et libellés · Comptes et biens · Événements et
-    revenus · Programmées · Repères vidange · Projet maison · Saisie · Parités),
-    Sécurité (Sauvegarde et retour). Les explications de chaque onglet
-    s'ouvrent avec « Comment ça marche ? ». Un point orange sur un onglet
-    et un bouton « Enregistrer » encadré signalent des modifications non
-    encore enregistrées ; fermer la page demande alors confirmation.
-Toucher une ligne d'un journal l'ouvre dans « Une opération » ; après
-« Enregistrer » ou « Annuler », on revient là où l'on était.
+  - Engins : vidanges, carburant, consommation, coûts de chaque engin.
+  - House : un terrain, une construction, ses travaux et son projet.
+  - Données et réglages (« Réglages » sur un petit téléphone), en trois
+    groupes d'onglets :
+      Saisir : Une opération · Coller une liste · Relevé bancaire ;
+      Personnaliser : Postes et libellés · Comptes et biens · Événements et
+        revenus · Programmées · Repères vidange · Projet maison · Saisie ·
+        Parités ;
+      Sécurité : Sauvegarde et retour.
+    « Comment ça marche ? » ouvre les explications de chaque onglet. Un
+    point orange sur un onglet et un bouton « Enregistrer » encadré signalent
+    des modifications non enregistrées ; fermer la page demande alors
+    confirmation.
 
-Avant la date de début du suivi quotidien (si elle est réglée), seules les dépenses du
-véhicule, reprises de l'ancien Carnet du véhicule, sont notées : les vues
-Mois et Année l'indiquent (« suivi partiel ») et les statistiques
-journalières ne commencent qu'à cette date.
+Toucher une rubrique l'ouvre en haut de la page ; toucher un onglet amène
+directement à son contenu. Le bouton retour du téléphone ramène à la
+rubrique, à la vue ou à l'onglet précédents (et ferme d'abord une fenêtre
+ouverte) ; seul le premier écran fait sortir de Daftar. Laissé ouvert d'un
+jour à l'autre, Daftar passe de lui-même au nouveau jour.
+
+En bas de page : « © Licence » (licence MIT et composants inclus),
+« À propos » (où sont vos données, liens du code et de la version web) et
+« Démo ».
 
 
-Journal : l'en-tête de chaque jour est coloré selon ses dépenses courantes
-(couleur seule, sans mention écrite ni légende). On prend la journée la moins chère et la plus chère depuis le
-début du suivi, et on partage l'écart en trois tranches égales : vert (tranche du
-bas), jaune (tranche du milieu, autour de la moyenne du plus bas et du plus
-haut), rouge (tranche du haut). Les bornes se mettent à jour avec chaque
-nouvelle dépense. Les virements (retraits, épargne) ne comptent pas.
+######################################################################
+II. USAGE QUOTIDIEN
+######################################################################
 
-Courant et exceptionnel : Données et réglages › Événements et revenus.
-  - Un ÉVÉNEMENT (mariage, baptême, circoncision, funérailles, voyage de
-    tourisme, de mission ou de vacances, projet…) regroupe des dépenses ET
-    des revenus exceptionnels : par exemple, pour une mission, les frais de
-    mission reçus et l'hôtel, ce qui donne le bilan net de la mission.
-    Ses mots-clés rattachent les saisies (« hôtel dakar » → Voyage Dakar), ou
-    on le choisit dans le champ « Événement » d'une opération.
-  - Les TYPES DE REVENUS sont courants (salaire, primes, intérêts) ou
-    ponctuels (mission, atelier, consultance, enseignement, jury…).
-  - Les vues Mois et Année séparent les dépenses courantes (postes,
-    moyennes, couleurs des jours, statistiques) de l'exceptionnel, résumé
-    dans la case « Exceptionnel » ; le détail par événement est dans
-    l'onglet Événements et revenus, les statistiques et l'export. Le solde
-    du mois et les soldes des comptes comptent TOUT.
-  - Une opération saisie affiche ce qui a été reconnu dans le libellé
-    (nature, poste, compte, type de revenu, événement), puis un résumé à
-    confirmer avant l'enregistrement.
+5. UNE NOTE POUR CHAQUE OPÉRATION
+---------------------------------
+Chaque ligne est une opération. Sa NATURE se lit dans le libellé, sans
+signe + ou − ; Daftar affiche ce qu'il a reconnu (nature, poste, compte,
+type de revenu, événement, engin) puis un résumé à confirmer.
 
-Opérations programmées : Données et réglages › Programmées. Frais de tenue
-de compte, abonnements (« frais de tenue de compte », votre banque, 3 500,
-le 30 de chaque mois), intérêts d'un compte épargne (solde × taux du compte).
-Chaque échéance passée s'annonce par un bandeau « … à confirmer » : on coche,
-on corrige la date ou le montant d'après le relevé, puis « Enregistrer » ;
-« Ignorer » écarte une échéance non prélevée. Rien n'est enregistré seul.
-Le 30 ou le 31 devient le dernier jour des mois plus courts.
+    10000 vivres                     dépense, payée en espèces
+    200000 salaire banque            revenu sur le compte Banque
+    5000 intérêts épargne            revenu sur le compte Épargne
+    5000 intérêts                    revenu sur le compte épargne qui porte un taux
+    80000 retrait banque             virement Banque → Espèces (pas une dépense)
+    100000 épargne banque > mobile   virement entre deux comptes
+    4000 abonnement carte            dépense payée avec le compte « carte »
+    prêt 100000 Ali                  prêt accordé : ouvre sa créance
+    remb 75000 Ali                   remboursement reçu : réduit sa créance
+    50000 ciment maison              investissement dans le bien « maison »
+    25000 carburant 35,7L 110882km   dépense du véhicule : 35,7 litres, compteur
+    17000 vidange huile 110818km     entretien ; met à jour le repère de vidange
+    12000 pharmacie                  dépense payée en espèces
 
-Relevé bancaire : Données et réglages › Relevé bancaire. Choisir le PDF
-(ou une photo) du relevé, vérifier le compte et la date « Comparer à partir
-du » (début du suivi par défaut), puis « Analyser ». Daftar range chaque ligne :
-  ✓ déjà notée (même montant, date à ±5 jours) ;
-  ✎ à corriger (montant proche à ±15 % : par exemple salaire 400 000 noté,
-    400 091 versé) ;
-  ➕ à ajouter (nature et poste proposés, modifiables ; un paiement par
-    carte et sa commission, même jour et même libellé, forment une seule
-    ligne ; les frais fixes se rattachent à leur opération programmée) ;
-  ⚠ notée dans le carnet mais absente du relevé (à vérifier, rien n'est
-    modifié).
-On coche ce qu'on accepte, « Appliquer la sélection » montre un résumé à
-confirmer ; le solde du relevé peut être noté sur le compte. Le relevé est
-lu dans l'appareil et n'est envoyé nulle part. PDF de la banque : lecture
-directe (pdf.js, inclus). PDF scanné ou photo : reconnaissance de texte
-(tesseract.js, environ 15 Mo téléchargés la première fois) ; vérifier alors
-les montants avec soin.
-
-Plusieurs engins, plusieurs maisons : dans Comptes et biens, chaque bien a
-un « Rôle » : bien simple, Engin (voiture, moto, bus, camion, groupe
-électrogène, autre : rubrique Engins) ou Maison (rubrique House). Avec deux engins ou plus, Engins affiche
-une barre pour passer de l'un à l'autre (de même pour House). Chaque engin a
-son compteur, ses repères de vidange (Repères vidange › Engin) et son poste
-de frais d'usage ; une saisie qui cite son nom (« carburant yamaha ») va à
-cet engin, sinon à l'engin affiché. Vidange : en cochant « Nouvelle vidange »
-dans Une opération, la prochaine est proposée au compteur + l'intervalle
-(3 000 km par défaut) et reste modifiable ; dans Repères vidange, la
-prochaine se recalcule quand on change la dernière ou l'intervalle.
-
-Engins : rubrique « Engins » (ancien My Car), bouton « + Ajouter un engin » :
-voiture, moto, bus, camion, groupe électrogène, autre. Un groupe électrogène
-se suit en HEURES de marche (compteur, vidange tous les 250 h par défaut,
-consommation en L/h) ; les autres engins en kilomètres.
-
-Premier lancement : avec un carnet vide, une page d'accueil présente Daftar,
-les trois premières étapes (comptes, engins et maison, première opération)
-et un lien vers la DÉMO.
-Démo : adresse terminée par « ?demo » (lien « Voir la démo » en bas de page,
-ou https://yayayou47.github.io/Daftar/?demo). Trois années de données
-simulées (comptes, salaire, dépenses, voiture, moto, groupe électrogène,
-construction d'une villa, mariage, mission, baptême, prêts, frais bancaires).
-Elles sont rangées à part : vos propres données ne sont ni lues ni modifiées.
-« Recréer les données de démo » les remet à zéro ; « Quitter la démo » ramène
-à votre carnet : c'est la seule façon d'en sortir, le bouton « précédent »
-du navigateur ou du téléphone laisse dans la démo.
-
-Annuler et revenir en arrière :
-  - Supprimer une opération, retirer un compte, un bien, un événement, un type
-    de revenu, une opération programmée ou une devise affiche « Annuler »
-    pendant 10 secondes en bas de l'écran.
-  - Chaque changement de réglages enregistré affiche aussi « Annuler ».
-  - Données et réglages › Sauvegarde et retour › Retour en arrière : les 20
-    derniers changements de réglages ; « Rétablir l'état d'avant » y revient
-    (les lignes déplacées retrouvent leur poste). « Revenir aux réglages
-    d'origine » remet postes, budgets, types de revenus et parités comme à
-    l'installation, sans toucher aux opérations, comptes, biens, engins,
-    maisons, événements et opérations programmées ; ce retour s'annule aussi.
-
-Montants masqués : dans la vue Patrimoine seulement, le patrimoine net, les
-soldes des comptes, la valeur des biens et les prêts s'affichent « ••••• »
-à chaque ouverture (et quand l'application passe en arrière-plan). Le bouton
-« 👁 Afficher », en haut de la carte du patrimoine net, les montre ; « 🙈 Masquer » les
-cache. Les autres vues (Mois, Année, Statistiques, carnets) ne sont pas
-masquées.
-
-
-2 bis. SUR LE TÉLÉPHONE (HORS LIGNE, SYNCHRONISÉ)
--------------------------------------------------
-Deux façons d'avoir Daftar sur le téléphone :
-  - VERSION AUTONOME (le plus simple, sans ordinateur) : ouvrez le lien web
-    du projet (https://yayayou47.github.io/Daftar/) dans Chrome, ou installez
-    l'APK (page « Releases » du dépôt GitHub). Les données restent dans le
-    téléphone ; sauvegardez-les avec Données et réglages › Sauvegarde.
-  - VERSION SYNCHRONISÉE avec cet ordinateur (ce qui suit) : le téléphone et
-    l'ordinateur sont reliés par Tailscale (installé et connecté sur les deux,
-    même compte). Sur l'ordinateur :
-        sudo tailscale set --operator=$USER
-        tailscale serve --bg 8780
-    « tailscale status » donne le nom de l'ordinateur en …ts.net. Ouvrez
-    https://<nom-de-l-ordinateur>.ts.net dans Chrome sur le téléphone,
-puis menu ⋮ › « Installer l'application » (ou « Ajouter à l'écran
-d'accueil »). Daftar s'ouvre alors comme une application, même sans réseau.
-
-  - Les saisies (une opération, coller une liste, modifier, supprimer) se
-    font hors ligne : elles sont gardées dans le téléphone et envoyées à
-    l'ordinateur dès qu'il est joignable (partage de connexion, Wi-Fi ou
-    internet, Tailscale actif, ordinateur allumé).
-  - La synchronisation est automatique (ouverture, retour du réseau, toutes
-    les 2 minutes) ; le bouton en haut (« ✓ À jour », « 3 en attente »,
-    « Hors ligne ») la lance tout de suite. Ces vérifications automatiques se
-    font en silence : le bouton garde « ✓ À jour » ; « Synchronisation… »
-    ne s'affiche que s'il y a des saisies à envoyer ou quand on touche le
-    bouton. Si l'ordinateur ne répond pas dans les 20 secondes, le bouton
-    passe à « Hors ligne » au lieu de rester bloqué.
-  - Une ligne modifiée des deux côtés : la modification la plus récente gagne
-    et un message le signale. Les heures sont comparées sur l'horloge de
-    l'ordinateur : un téléphone mal réglé ne fausse pas le résultat. Une ligne refusée par l'ordinateur (montant
-    nul…) reste dans le téléphone, signalée « refusée », à corriger.
-  - Une vidange envoyée par le téléphone met le repère à jour sur
-    l'ordinateur.
-  - « Noter le solde » d'un compte (et la suppression d'un solde noté) se
-    fait aussi hors ligne : le solde est gardé dans le téléphone et envoyé à
-    l'ordinateur avec les saisies. Un solde noté pour aujourd'hui retient
-    son heure : les opérations du jour saisies après lui s'y ajoutent.
-  - Les réglages (postes, comptes, biens, repères, projet maison, parités,
-    reclassements) se font aussi hors ligne et partent avec les saisies,
-    dans l'ordre. Seul le retour en arrière (« Sauvegarde et retour »)
-    demande que le téléphone soit relié à l'ordinateur. Seul ce qui a été
-    changé sur le téléphone est appliqué : un poste ou un compte ajouté sur
-    l'ordinateur entre-temps est gardé. Un même élément changé des deux
-    côtés garde la version du téléphone, et un message le signale.
-  - L'adresse sécurisée est relayée par Tailscale (« tailscale serve ») ;
-    pour la couper : tailscale serve --https=443 off
-  - Daftar s'ouvre tout de suite depuis la copie gardée dans le téléphone,
-    sans attendre l'ordinateur ; la version la plus récente est chargée en
-    arrière-plan et, si elle a changé, un bandeau « Une nouvelle version de
-    Daftar est prête » propose « Recharger ».
-  - Hors ligne, Daftar affiche la dernière version ouverte en ligne. Après
-    une mise à jour sur l'ordinateur, ouvrir une fois Daftar sur le téléphone
-    avec l'ordinateur joignable : la nouvelle version est gardée pour la
-    suite. Si l'ordinateur ne répond pas, la page s'ouvre en 3 à 4 secondes.
-
-Où sont les données du téléphone ? Dans Chrome, sur le téléphone même, dans
-l'espace privé du site Daftar (base IndexedDB « appya ») : les lignes, les
-réglages et la file des saisies non encore envoyées. L'application installée
-et l'onglet Chrome partagent cet espace. La copie de référence reste celle de
-l'ordinateur (~/Daftar/donnees/carnet.json, sauvegardée chaque jour). Ne pas
-effacer les données du site dans Chrome (ni désinstaller Chrome) tant que le
-bouton n'affiche pas « ✓ À jour » : les saisies en attente seraient perdues.
-
-
-3. UNE SEULE NOTE POUR TOUT
----------------------------
-Depuis la version 2.0, le carnet est un suivi financier : dépenses, revenus,
-comptes (espèces, banques, mobile money), prêts accordés et biens sont dans
-le même journal. Chaque ligne est une opération ; sa NATURE se lit dans le
-libellé, sans signe + ou − :
-
-    10 vivres le 02/10/26               dépense, payée en espèces
-    200 salaire banque le 27/10/26      revenu (salaire, prime, intérêts…) sur le compte Banque
-    80 retrait banque                   virement Banque → Espèces (pas une dépense)
-    100 épargne banque > mobile         virement entre deux comptes
-    4 abonnement carte                  dépense payée avec le compte « carte »
-    prêt 100 Ali échéance 30/07/26      prêt accordé : ouvre son compte de créance
-    remb 75 Ali                         remboursement reçu : réduit sa créance
-    50 ciment maison                    investissement dans le bien « maison »
-    25 carburant 35,7L 110882km         dépense Voiture : 35,7 litres, compteur 110 882 km
-    17 vidange huile 110818km           entretien ; met à jour le repère de vidange
-    25 achat pneu                       investissement dans la voiture
-    20 main d'oeuvre maçon maison       travaux de la maison (main-d'œuvre)
-    12 pharmacie                        dépense payée en espèces
-
-Compte qui paie : sans précision, la dépense est faite en espèces. Les
-autres comptes (banque, carte, mobile money…) se créent dans Données et
-réglages › Comptes et biens, chacun avec ses mots-clés (« banque »,
-« mobile »…) : un mot-clé présent dans la ligne désigne le compte.
-
-Véhicule : « L » (litres) et « km » (compteur) se lisent seulement sur les
-lignes de la voiture ; l'ancienne forme « 25 essence (35,71) (106183) »
-reste comprise (nombre décimal = litres, nombre de 10 000 ou plus = km).
-Un petit nombre entier entre parenthèses, comme « (458) », est un cumul
-ignoré. Les mots vidange, carburant, essence, gasoil, garage, pneu… désignent
-toujours la voiture ; pour une réparation, écrivez par exemple
-« réparation voiture radiateur » ou choisissez le poste dans l'aperçu.
+Compte qui paie : sans précision, la dépense est faite en espèces. Un
+mot-clé d'un compte (« banque », « mobile »…) présent dans la ligne désigne
+ce compte (comptes et mots-clés : chapitre 11).
 
 Un retrait n'est jamais une dépense : les dépenses faites avec l'argent
 retiré sont notées une à une. Un prêt sort de votre argent comme une
-dépense, mais la personne garde un compte de ce qu'elle vous doit jusqu'à
-ce qu'il revienne à zéro. Les frais de construction et d'entretien d'un
-bien sont des investissements : ils sortent de vos comptes mais ne
-comptent pas dans les dépenses courantes du mois ; ils s'ajoutent au coût
-du bien.
+dépense, mais la personne garde un compte de ce qu'elle vous doit jusqu'à ce
+qu'il revienne à zéro ; « Adam » retrouve « Adam Issa » s'il est le seul de
+ce nom. Les frais de construction et d'entretien d'un bien sont des
+investissements : ils sortent de vos comptes, s'ajoutent au coût du bien et
+ne comptent pas dans les dépenses courantes du mois.
 
-Les montants se tapent en francs CFA : 10000 = 10 000 CFA. Pour aller plus
+Montants : ils se tapent en francs CFA (10000 = 10 000 CFA). Pour aller plus
 vite, Données et réglages › Saisie › « Taper les montants en milliers »
-(réglage propre à chaque appareil) : 10 = 10 000 CFA, 2,5 = 2 500,
-1750 = 1 750 000 ; un nombre de 10 000 ou plus est alors pris tel quel
-(25000 = 25 000 CFA). Soldes, prix, valeurs et budgets suivent le même
-réglage.
-Sous le champ, le carnet affiche le montant compris (« = 10 000 CFA »).
-Un « − » devant le montant d'une opération veut dire « sortie » (dépense) ;
-le montant enregistré reste positif. Un solde noté peut être négatif
-(découvert, compte d'un tiers avancé de votre poche).
+(réglage propre à chaque appareil) : 10 = 10 000, 2,5 = 2 500,
+1750 = 1 750 000 ; un nombre de 10 000 ou plus, ou écrit avec ses milliers
+séparés (« 5 000 »), est alors pris tel quel. Sous le champ, Daftar affiche
+le montant compris. Un « − » devant le montant veut dire « sortie »
+(dépense) ; le montant enregistré reste positif. Un solde noté peut être
+négatif (découvert).
 
 Clavier Daftar (téléphone) : toucher un champ de montant ouvre un clavier
-propre à l'application, avec les chiffres (1 2 3 en haut, comme sur un
-téléphone), la virgule, le signe −, « 00 » et « 000 ». « ⌨ Clavier du téléphone » revient au clavier habituel pour ce
-champ ; « OK » ferme. Actif par défaut sur écran tactile ; à couper dans
-Données et réglages › Saisie (réglage propre à chaque appareil).
+propre à l'application (1 2 3 en haut, virgule, −, « 00 », « 000 »).
+« ⌨ Clavier du téléphone » revient au clavier habituel pour ce champ ;
+« OK » ferme. À couper dans Données et réglages › Saisie.
 
-Dans « Coller une liste », la date d'une ligne vaut pour les suivantes ;
-vérifiez nature, compte et poste dans l'aperçu avant d'importer. Une case
-par ligne permet d'en écarter une. « Montants en milliers » s'applique au
-collage seulement (coché d'après le réglage de Saisie).
-
-MODIFIER, SUPPRIMER, RÉTABLIR UN COMPTE
-Données et réglages › Comptes et biens présente deux sections : « Mes
-comptes » et « Comptes de tiers » (chacune avec son bouton d'ajout). Tout
-compte se modifie sur sa ligne puis « Enregistrer les comptes ». Le bouton
-✕ (à toucher deux fois) supprime un compte enregistré, même s'il a des
-opérations (sauf Espèces) : il passe dans « Comptes supprimés », masqué
-partout avec ses opérations, et « Rétablir » le ramène tel quel pendant
-30 jours. Passé ce délai, le compte et ses opérations sont effacés pour
-de bon ; une dépense qui y était versée reste dans votre journal.
-
-COMPTES GÉRÉS POUR DES TIERS
-Données et réglages › Comptes et biens › type « Compte d'un tiers » : de
-l'argent que vous gardez ou gérez pour quelqu'un (un frère qui vous a
-confié une somme, la caisse d'une maison familiale…). Renseignez le
-titulaire, personne physique ou morale, votre nom tel qu'il apparaît dans
-ses notes (« ali ») et le libellé de vos versements (« contribution
-maison »).
-  - Ces comptes sont gardés à part : leurs dépenses et leurs entrées ne
-    comptent ni dans vos dépenses, ni dans vos revenus, ni dans vos
-    statistiques. Patrimoine les montre sous « Comptes gérés pour des
-    tiers ».
-  - Un solde positif appartient au tiers : il n'entre pas dans votre
-    patrimoine. Un solde négatif est de l'argent que vous avez avancé ;
-    pour chaque compte, au choix : « compté comme dette » (il entre dans
-    « On vous doit ») ou « en sourdine » (il reste affiché dans le compte
-    mais n'entre pas dans votre patrimoine). Le bouton « Mettre en
-    sourdine » / « Compter comme dette » est sous le compte, dans
-    Patrimoine ; le même choix est dans Comptes et biens.
-  - Votre part (« contribution maison ») reste votre dépense, payée de vos
-    espèces ; le champ « Versé au compte de » (reconnu par son libellé) la
-    fait aussi entrer sur le compte du tiers, sans doublon.
-  - Historique d'un tiers : Coller une liste › « Lignes d'un seul compte »
-    = ce compte. « −40 000 savon » = dépense du compte ; « 20 000 prt
-    Halima » = dépôt de Halima ; « 50 000 prt Ali » = votre part, rattachée
-    à la dépense déjà notée dans votre journal (même montant, à 5 jours
-    près) ou ajoutée comme dépense en espèces ; « ( −244 000 ) » en fin de
-    ligne = solde du compte ce jour-là, après les opérations du jour.
+Coller une liste (Données et réglages) : une ligne par opération, au format
+« montant libellé [le JJ/MM/AA] » ; la date d'une ligne vaut pour les
+suivantes, un nom de mois en fin de ligne et les cumuls entre parenthèses
+sont ignorés. Vérifiez nature, compte et poste dans l'aperçu (une case par
+ligne permet d'en écarter une), puis importez.
 
 
-4. CE QUE FAIT LE SUIVI FINANCIER
-------------------------
-  - Vue Mois : dépenses du mois, moyenne par jour (avec la médiane entre
-    parenthèses : un jour sur deux, on dépense moins que la médiane ; elle
-    dit ce qu'est un jour ordinaire, sans être tirée vers le haut par
-    quelques grosses journées comme la moyenne), taux d'épargne du mois
-    (revenus courants − dépenses courantes, divisé par les revenus courants ;
-    remboursements de prêts et revenus ponctuels non comptés) et, pour le
-    mois en cours, le taux d'épargne PRÉVISIONNEL de fin de mois : revenus
-    courants attendus (comme s'ils étaient déjà tombés) moins dépenses
-    prévues (dépenses à ce jour + moyenne par jour × jours restants, la même
-    projection que dans les Statistiques), divisé par les revenus attendus.
-    Seuls les deux taux s'affichent (« réel · prévisionnel », le second en
-    jaune) ; le détail du calcul apparaît en survolant le taux prévisionnel.
-    Pour le mois en cours, le taux réel reste « — » tant que les revenus
-    habituels (salaire, prime…) ne sont pas arrivés : quelques intérêts face
-    aux dépenses du mois donneraient un taux absurde. Revenu attendu : chaque revenu courant reçu chacun des 3 mois
-    précédents (salaire, prime…) au montant du mois dernier ; sans revenu
-    fixe, le revenu courant moyen des 12 derniers mois suivis. Comparaison avec le mois
-    précédent, entrées, investissements et prêts, solde du mois ;
-    petit graphique des dépenses par semaine (semaine en cours en évidence) ;
-    répartition des dépenses par poste ; journal.
-  - Vue Mois, dans cet ordre : dépenses courantes et entrées courantes côte
-    à côte, solde du mois, comparaison avec le mois précédent, taux
-    d'épargne, investi et prêté, plus grosse journée (montant, date, part du
-    mois), jours sans dépense, moyenne par jour (et médiane), exceptionnel ;
-    puis les dépenses par semaine en 4 barres horizontales (1–7, 8–14,
-    15–21, 22–fin du mois ; la semaine en cours en foncé), en carte compacte
-    avec montants abrégés (182 K) ; de même « Dépenses par mois » de la vue Année.
-  - En bas de page, trois boutons à icône : « © Licence » (licence MIT et
-    composants inclus), « À propos » (ce qu'est Daftar, où sont vos
-    données, liens du code et de la version web) et « Démo » (trois ans de
-    données simulées ; dans la démo, « Quitter la démo »).
-  - Montants abrégés dans les cartes d'indicateurs, par défaut : 355 K
-    (milliers), 1,28 M (millions), avec 3 chiffres significatifs ; le
-    montant exact apparaît en survolant le chiffre (ordinateur). Les km,
-    jours, mois, le journal et les tableaux restent en entier. Même
-    abrègement pour « Dépenses par poste » et les cartes des biens. Pour tout
-    afficher en entier : Données et réglages › Saisie › « Montants abrégés
-    dans les cartes » (réglage propre à chaque appareil).
-  - Chaque case d'indicateur (Mes finances, Engins, House, Statistiques)
-    porte une petite icône colorée : patrimoine, comptes, biens, on vous
-    doit, dépenses, entrées, épargne, carburant, entretien, consommation,
-    vidange, km, coût…
-  - Vue Patrimoine, aussi : barre colorée de répartition (comptes, biens,
-    on vous doit) ; « Disponible » (espèces, comptes courants, cartes,
-    mobile money) et « Épargne » (comptes épargne) ; « Intérêts attendus »
-    sur un an au taux de vos comptes rémunérés ; « Mois d'autonomie » (vos comptes divisés par
-    vos dépenses courantes mensuelles moyennes : combien de mois vous
-    tiendriez sans revenu) et « Non saisi » (somme des écarts de vos soldes
-    notés : sorties et entrées qui n'ont pas été saisies). Masqués comme
-    les autres montants du Patrimoine.
-  - Vue Année, même présentation que la vue Mois : dépenses et entrées
-    côte à côte, solde, comparaison avec l'année précédente à la même date
-    (jours suivis seulement), taux d'épargne, investi et prêté, plus grosse
-    journée, jours sans dépense, moyenne mensuelle, mois le plus cher,
-    exceptionnel, puis les dépenses par mois en barres horizontales. Le
-    taux d'épargne de l'année (réel ·
-    prévisionnel de fin d'année, en jaune), et un tableau mois × poste.
-  - Début du suivi quotidien (02/10/2026) : avant cette date, seules les
-    dépenses du véhicule sont notées. Les indicateurs des vues Mois et Année
-    (totaux, moyennes, médiane, comparaisons, taux d'épargne, postes) ne
-    comptent que les jours suivis ; un mois ou une année entièrement
-    antérieurs n'en affichent aucun. Le journal montre toujours tout.
-  - Vue Patrimoine : solde de chaque compte, biens, prêts en cours,
-    patrimoine net (comptes + biens + ce qu'on vous doit).
-      · Comptes : le solde = dernier solde noté (« Noter le solde ») + les
-        opérations postérieures. Chaque solde noté est comparé au précédent :
-        un écart signale une opération oubliée.
-      · Biens : prix d'achat + investissements = coût de revient ; notez la
-        valeur actuelle (« Mettre à jour la valeur ») et le carnet calcule la
-        plus- ou moins-value et le taux annuel moyen (appréciation pour un
-        bien actif comme un terrain, dépréciation pour un bien passif comme
-        une voiture).
-      · Prêts : prêté, remboursé, reste dû, échéance (en rouge si dépassée).
-  - Devise d'affichage : le menu en haut (FCFA par défaut, €, $, ¥…) convertit
-    tous les montants affichés ; l'onglet « Parités » règle les taux
-    (1 € = 655 FCFA…) et permet d'ajouter une devise. La saisie et l'export
-    restent en francs CFA.
-  - Chaque bouton n'affiche que son contenu : Mois, Année, Patrimoine,
-    Statistiques ; les parités sont dans Données et réglages › Parités.
-  - Patrimoine : le bouton « Afficher / Masquer » est dans la carte du
-    patrimoine net (comptes, biens, on vous doit).
-  - Statistiques, par mois ou par année (flèches ‹ ›), sur une période
-    choisie (du … au …) ou sur tout l'historique : alertes (prêt en retard, rythme de dépense, écarts de
-    relevés, réserve d'espèces…), cumuls avec
-    projection, dépenses et entrées par mois, histogramme des dépenses par jour,
-    moyenne par jour de la semaine, libellés les plus coûteux, composition du
-    patrimoine, puis conclusions et perspectives. Chaque graphique a un
-    « Voir les données ». Les alertes tiennent dans une seule carte (une
-    ligne par type). « Bilan de la période » : revenus et dépenses cumulés
-    (et par mois dès 4 semaines), épargne nette, mis de côté (virements vers
-    l'épargne), investissements (et total investi dans vos biens), biens
-    acquis, prêts et remboursements, solde des opérations. Le graphique
-    « Cumuls » (du mois, de l'année, de la période) additionne jour après
-    jour dépenses courantes, revenus et investissements, avec la courbe des
-    dépenses de la période précédente et la projection de fin de période :
-    choisir « Tout » pour suivre le long terme.
-    Comme les vues Mois et Année, les Statistiques ne
-    comptent que les jours suivis (depuis le 02/10/2026). Les conclusions
-    donnent la moyenne ET la médiane par jour, le taux d'épargne de la
-    période, et les postes en nette hausse ou en baisse par rapport à la
-    période précédente au même stade ; les perspectives, le taux d'épargne
-    prévisionnel et tout ce qu'on vous doit (prêts et avances sur des
-    comptes de tiers, comme dans le Patrimoine).
-  - Budgets : un montant mensuel par poste ; un dépassement s'affiche en rouge.
-  - Touchez une ligne pour la modifier ; ✕ puis « Supprimer ? » pour l'effacer.
-  - Touchez un compte, une personne ou un bien pour filtrer le journal.
-    Toucher un filtre (poste de « Dépenses par poste », compte, personne,
-    bien, mois ou année des carnets Engins et House) amène directement au
-    journal filtré, sans avoir à défiler.
-  - « Exporter Excel » ouvre un menu : Tout (toutes les rubriques, 12
-    feuilles), Suivi financier (journal de la période affichée, postes,
-    récapitulatif mensuel, comptes, prêts, biens), Carnet du véhicule (journal
-    avec km et litres, récapitulatif mensuel avec consommation et coût par km,
-    vidanges) ou Carnet de la maison (travaux, récapitulatif par année et par
-    catégorie, fiche du projet). Montants en francs CFA ; le fichier
-    Daftar_<rubrique>_<date>.xlsx s'ouvre avec LibreOffice Calc.
-  - Onglet « Comptes et biens » : ajouter ou renommer un compte (couleur, mots-clés,
-    taux d'intérêt), ajouter un bien (date et prix d'achat, mots-clés
-    d'investissement, poste de ses frais d'usage).
+6. ENGINS
+---------
+Dans Comptes et biens, chaque bien a un « Rôle » : bien simple, Engin
+(voiture, moto, bus, camion, groupe électrogène, autre) ou Maison. Le bouton
+« + engin » de la rubrique Engins en ajoute un. Un groupe électrogène se suit
+en HEURES de marche (vidange tous les 250 h par défaut, consommation en
+L/h) ; les autres engins en kilomètres. Avec plusieurs engins, une barre
+passe de l'un à l'autre.
+
+À quel engin va une dépense ? À celui que la note cite par son nom
+(« carburant yamaha ») ou par son type s'il est le seul de ce type
+(« essence moto ») ; sinon à l'engin affiché. Un poste réservé aux engins
+(comme « Voiture », dont les mots-clés contiennent carburant, vidange,
+garage…) y met toutes ses dépenses. Un poste partagé avec un engin (Foyer
+pour un groupe électrogène, Transport pour une moto) garde ses dépenses
+ordinaires hors de l'engin : « riz » ou « taxi » ne sont pas des frais
+d'engin ; seules les notes qui citent l'engin ou un mot comme carburant,
+gasoil, vidange, garage, pneu le deviennent. Dans Une opération, le choix
+« Engin » propose alors « — aucun engin — ».
+
+Litres et compteur : « 35,7L » et « 110882km » se lisent sur les lignes d'un
+engin. L'ancienne forme « 25 essence (35,71) (106183) » reste comprise
+(nombre décimal = litres, nombre de 10 000 ou plus = compteur) sur une ligne
+d'engin ; ailleurs, un nombre entre parenthèses est un cumul ignoré. Seul un
+compteur écrit avec « km » désigne un engin à lui seul.
+
+Vidange : en cochant « Nouvelle vidange » dans Une opération, la prochaine
+est proposée au compteur + l'intervalle (modifiable) ; dans Repères vidange,
+la prochaine se recalcule quand on change la dernière ou l'intervalle.
+
+La rubrique Engins montre la barre d'avancement vers la prochaine vidange,
+les dépenses (comparées à l'année précédente à la même date, en vert si
+elles baissent, en rouge si elles montent), le carburant, l'entretien et les
+réparations, le prix moyen du litre, la consommation (en couleur si elle
+s'écarte de plus de 10 % de la moyenne de l'engin), la date estimée de la
+prochaine vidange (au rythme des 6 derniers mois), les km parcourus, le coût
+par km, un récapitulatif mensuel ou annuel, les vidanges et le journal de
+l'engin.
 
 
-5. PERSONNALISER LES POSTES (onglet « Postes et libellés »)
------------------------------------------------------------
-  - Ajouter, renommer, recolorer, supprimer un poste (ses lignes vont dans
-    le poste de votre choix). Le budget mensuel se règle au même endroit.
-  - Mots-clés : un nouveau libellé va dans le PREMIER poste de la liste dont
-    un mot-clé apparaît dans le libellé. Exemple : « famille » dans Foyer,
-    placé au-dessus de Téléphone et Perso, range « crédit téléphone
-    famille » et « parfum famille » au Foyer. Les flèches ↑ ↓ règlent cet ordre.
-  - Tableau des libellés : changez le poste d'un libellé (ex. « freestyle »)
-    et toutes ses lignes suivent ; l'association est retenue pour la suite.
+7. LIRE SES CHIFFRES : MES FINANCES
+-----------------------------------
+Vue Mois, dans cet ordre : dépenses courantes et entrées courantes côte à
+côte, solde du mois, comparaison avec la même période du mois précédent,
+taux d'épargne, investi et prêté, plus grosse journée, jours sans dépense,
+moyenne par jour et médiane, exceptionnel, puis les dépenses par semaine,
+la répartition par poste et le journal.
+  - La médiane dit ce qu'est un jour ordinaire : un jour sur deux, on
+    dépense moins qu'elle ; contrairement à la moyenne, quelques grosses
+    journées ne la tirent pas vers le haut.
+  - Taux d'épargne = (revenus courants − dépenses courantes) / revenus
+    courants ; les remboursements et les revenus ponctuels ne comptent pas.
+    Pour le mois en cours s'ajoute le taux PRÉVISIONNEL de fin de mois (en
+    jaune) : revenus courants attendus moins dépenses prévues (à ce jour +
+    moyenne par jour × jours restants). Revenu attendu : chaque revenu
+    courant reçu chacun des 3 mois précédents, au montant du mois dernier ;
+    sans revenu fixe, la moyenne des 12 derniers mois. Le taux réel reste
+    « — » tant que les revenus habituels ne sont pas arrivés.
+  - Le journal colore l'en-tête de chaque jour selon ses dépenses
+    courantes : on partage l'écart entre la journée la moins chère et la
+    plus chère en trois tranches égales, vert (bas), jaune (milieu), rouge
+    (haut). Les virements ne comptent pas.
+
+Vue Année : même présentation, comparaison avec l'année précédente à la
+même date, moyenne mensuelle, mois le plus cher, dépenses par mois et un
+tableau mois × poste.
+
+Vue Patrimoine : patrimoine net = comptes + biens + ce qu'on vous doit, avec
+sa répartition, le disponible et l'épargne, les intérêts attendus sur un an,
+les mois d'autonomie (combien de mois vos comptes tiendraient sans revenu)
+et le « non saisi » (écarts de vos soldes notés).
+  - Compte : solde = dernier solde noté (« Noter le solde ») + opérations
+    postérieures. Chaque solde noté est comparé au précédent : un écart
+    signale une opération oubliée.
+  - Bien : prix d'achat + investissements = coût de revient ; notez sa
+    valeur actuelle (« Mettre à jour la valeur ») pour voir la plus- ou
+    moins-value et le taux annuel moyen.
+  - Prêts : prêté, remboursé, reste dû, échéance (en rouge si dépassée).
+  - Montants masqués : dans cette vue seulement, les montants s'affichent
+    « ••••• » à chaque ouverture et quand l'application passe en
+    arrière-plan. « 👁 Afficher » dans la carte du patrimoine net les montre.
+
+Statistiques, par mois, par année, sur une période choisie ou sur tout
+l'historique : alertes (prêt en retard, rythme de dépense, écarts de
+relevés…), bilan de la période, cumuls avec projection et comparaison à la
+période précédente, dépenses par jour et par jour de la semaine, libellés
+les plus coûteux, composition du patrimoine, puis conclusions et
+perspectives. Chaque graphique a un « Voir les données ».
+
+Début du suivi : si une date de début du suivi quotidien est réglée, les
+indicateurs des vues Mois, Année et Statistiques ne comptent que les jours
+suivis ; le journal montre toujours tout.
+
+Montants abrégés : dans les cartes d'indicateurs, 355 K (milliers), 1,28 M
+(millions). Le montant exact apparaît en survolant le chiffre, et les
+lecteurs d'écran le lisent en entier. Pour tout afficher en entier :
+Données et réglages › Saisie › « Montants abrégés dans les cartes ».
+
+Filtrer : touchez un poste, un compte, une personne, un bien, un mois ou une
+année pour filtrer le journal ; Daftar y amène directement.
+
+
+8. HOUSE (MAISON)
+-----------------
+Coût de revient (terrain + travaux), valeur actuelle et appréciation,
+travaux par année ou par mois et par catégorie (arrosage, eau-pompe-forage,
+maçonnerie, matériaux, main-d'œuvre, électricité, administratif…),
+perspectives (budget du projet, reste à investir, date d'achèvement au
+rythme actuel, effort mensuel pour tenir l'échéance, valeur projetée) et
+journal des travaux. Le projet se règle dans Données et réglages › Projet
+maison.
+
+
+9. CORRIGER, ANNULER, EXPORTER
+------------------------------
+Toucher une ligne d'un journal l'ouvre dans « Une opération » ; après
+« Enregistrer » ou « Annuler », on revient là où l'on était. ✕ puis
+« Supprimer ? » efface une ligne.
+
+Supprimer une opération, retirer un compte, un bien, un événement, un type
+de revenu, une opération programmée ou une devise, ou enregistrer un
+réglage, affiche « Annuler » pendant 10 secondes en bas de l'écran.
+Données et réglages › Sauvegarde et retour › Retour en arrière garde les 20
+derniers changements de réglages ; « Rétablir l'état d'avant » y revient (les
+lignes déplacées retrouvent leur poste). « Revenir aux réglages d'origine »
+remet postes, budgets, types de revenus et parités comme à l'installation,
+sans toucher aux opérations ni aux comptes ; ce retour s'annule aussi.
+
+Exporter (icône Excel en haut) : Tout, Suivi financier, Engins ou Maison.
+Montants en francs CFA ; le fichier Daftar_<rubrique>_<date>.xlsx s'ouvre
+avec LibreOffice Calc.
+
+Devise d'affichage : le menu en haut (FCFA, €, $, ¥…) convertit les montants
+affichés ; l'onglet « Parités » règle les taux. La saisie et l'export
+restent en francs CFA.
+
+
+10. SAUVEGARDER (TÉLÉPHONE)
+---------------------------
+Données et réglages › Sauvegarde : « Exporter mes données » crée un fichier
+appya-AAAA-MM-JJ.json, à garder en lieu sûr (Drive, ordinateur, envoi à
+vous-même) ; « Importer » le recharge, sur le même appareil ou un autre. Ce
+fichier a le format de donnees/carnet.json de l'ordinateur.
+
+Rappel : si vous avez saisi quelque chose depuis votre dernier export et que
+celui-ci date d'au moins 7 jours (ou si vous n'avez jamais exporté), un
+bandeau « Pensez à sauvegarder vos données » propose « Exporter
+maintenant » ou « Dans 3 jours ». Pas de rappel dans la démo ni sur
+l'ordinateur, qui garde déjà une copie chaque jour.
+
+
+######################################################################
+III. AVANCÉ
+######################################################################
+
+11. COMPTES, POSTES ET MOTS-CLÉS
+--------------------------------
+Données et réglages › Comptes et biens présente « Mes comptes » et
+« Comptes de tiers ». Un compte a un type (espèces, courant, épargne, carte,
+mobile money, tiers), une couleur, des mots-clés et, pour une épargne, un
+taux d'intérêt. Un bien a une date et un prix d'achat, des mots-clés
+d'investissement et le poste de ses frais d'usage.
+
+Supprimer un compte : ✕ (à toucher deux fois), même s'il a des opérations
+(sauf Espèces). Il passe dans « Comptes supprimés », masqué partout avec ses
+opérations, et « Rétablir » le ramène tel quel pendant 30 jours. Passé ce
+délai, le compte et ses opérations sont effacés pour de bon.
+
+Postes (onglet « Postes et libellés ») : ajouter, renommer, recolorer,
+supprimer un poste (ses lignes vont dans le poste de votre choix) ; budget
+mensuel par poste (un dépassement s'affiche en rouge).
+  - Un nouveau libellé va dans le PREMIER poste de la liste dont un
+    mot-clé apparaît au début d'un mot du libellé ; les flèches ↑ ↓ règlent
+    cet ordre. Un libellé associé exactement à un poste l'emporte.
+  - Tableau des libellés : changez le poste d'un libellé et toutes ses
+    lignes suivent ; l'association est retenue pour la suite.
   - « Vérifier avec les mots-clés » propose de reclasser les anciennes
     lignes ; vous cochez ce que vous acceptez.
-
-Postes par défaut (nouveau carnet) : Foyer, vivres · Loyer, logement ·
-Aides et dons · Enfants, école · Santé · Voiture · Téléphone, internet ·
-Transport · Repas, boissons · Perso · Autre.
-
-
-6. LA COMMANDE daftar
-
-(« appya » fonctionne aussi, comme avant le changement de nom.)
-------------------------------
-    daftar                 ouvre le carnet ; s'il est déjà ouvert dans un
-                          onglet, aucun onglet n'est ajouté (voir plus bas)
-    daftar nouvel-onglet   ouvre quand même un nouvel onglet
-    daftar etat            tourne-t-il ? à quelle adresse ?
-    daftar arreter | demarrer | redemarrer
-    daftar reseau oui|non  accès depuis le téléphone (même Wi-Fi)
-    daftar reseau nouvelle-cle   change la clé d'accès du téléphone
-    daftar sauvegarder     copie datée de carnet.json dans Documents
-    daftar journal         messages du serveur (en cas de problème)
-    daftar dossier         ouvre ~/Daftar
-
-Un seul onglet : l'icône Daftar (comme « daftar ») n'ouvre un onglet que s'il
-n'y en a aucun. Sinon, l'onglet déjà ouvert se signale : son titre clignote
-(« ● Daftar est ouvert ici ») et, si vous avez autorisé ses notifications
-(bouton « Autoriser » proposé la première fois), une notification apparaît :
-un clic dessus vous ramène à l'onglet. Pour un second onglet volontaire :
-clic droit sur l'icône › « Ouvrir dans un nouvel onglet », ou
-daftar nouvel-onglet.
-
-Accès depuis le téléphone : il est protégé par une clé. « daftar
-etat » affiche un lien du type  http://192.168.1.20:8780/?cle=k7m2…  ;
-ouvrez-le une fois sur le téléphone, qui s'en souvient ensuite (un an).
-Les autres appareils du Wi-Fi ne voient rien sans ce lien : ne le partagez
-pas. Si vous l'avez donné par erreur, tapez  daftar reseau nouvelle-cle
-(chaque téléphone devra rouvrir le nouveau lien). Sur cet ordinateur, aucune
-clé n'est demandée.
+Postes par défaut : Foyer, vivres · Loyer, logement · Aides et dons ·
+Enfants, école · Santé · Voiture · Téléphone, internet · Transport ·
+Repas, boissons · Perso · Autre.
 
 
-7. VOS DONNÉES
---------------
-    ~/Daftar/donnees/carnet.json       opérations, postes, budgets, comptes et biens
+12. COURANT ET EXCEPTIONNEL, PROGRAMMÉES, RELEVÉS, TIERS
+--------------------------------------------------------
+Événements (Données et réglages › Événements et revenus) : un mariage, un
+baptême, des funérailles, un voyage, une mission… regroupe des dépenses ET
+des revenus exceptionnels, ce qui donne son bilan net. Ses mots-clés
+rattachent les saisies (« hôtel dakar » → Mission à Dakar). Les types de
+revenus sont courants (salaire, primes, intérêts) ou ponctuels (mission,
+atelier, consultance, jury…). Les vues séparent le courant de
+l'exceptionnel ; les soldes des comptes comptent tout.
+
+Opérations programmées (onglet « Programmées ») : frais de tenue de compte,
+abonnements (montant fixe, chaque mois, trimestre…), intérêts d'un compte
+épargne (solde × taux). Chaque échéance passée s'annonce par un bandeau
+« … à confirmer » : on coche, on corrige la date ou le montant d'après le
+relevé, puis « Enregistrer » ; « Ignorer » écarte une échéance non
+prélevée. Rien n'est enregistré seul. Le 30 ou le 31 devient le dernier jour
+des mois plus courts.
+
+Relevé bancaire (onglet « Relevé bancaire ») : choisissez le PDF ou une
+photo du relevé, le compte et la date de départ, puis « Analyser ». Daftar
+range chaque ligne : ✓ déjà notée (même montant, date à ±5 jours) ; ✎ à
+corriger (montant proche à ±15 %) ; ➕ à ajouter (nature et poste proposés ;
+un paiement par carte et sa commission forment une seule ligne) ; ⚠ notée
+dans le carnet mais absente du relevé. On coche ce qu'on accepte ;
+« Appliquer la sélection » montre un résumé à confirmer, et le solde du
+relevé peut être noté sur le compte. Le relevé est lu dans l'appareil et
+n'est envoyé nulle part. Un PDF de banque se lit directement ; un PDF scanné
+ou une photo passe par une reconnaissance de texte (environ 15 Mo
+téléchargés la première fois) : vérifiez alors les montants.
+
+Comptes gérés pour des tiers (type « Compte d'un tiers ») : l'argent que vous
+gardez ou gérez pour quelqu'un (un frère qui vous a confié une somme, la
+caisse d'une maison familiale…). Renseignez le titulaire, votre nom tel
+qu'il apparaît dans ses notes (« ali ») et le libellé de vos versements
+(« contribution maison »).
+  - Leurs dépenses et entrées ne comptent ni dans vos dépenses, ni dans vos
+    revenus, ni dans vos statistiques.
+  - Un solde positif appartient au tiers. Un solde négatif est de l'argent
+    que vous avez avancé : au choix, « compté comme dette » (il entre dans
+    « On vous doit ») ou « en sourdine » (affiché, mais hors de votre
+    patrimoine).
+  - Votre part (« contribution maison ») reste votre dépense ; le champ
+    « Versé au compte de » la fait aussi entrer sur le compte du tiers.
+  - Historique d'un tiers : Coller une liste › « Lignes d'un seul compte ».
+    « −40 000 savon » = dépense du compte ; « 20 000 prt Halima » = dépôt de
+    Halima ; « 50 000 prt Ali » = votre part, rattachée à la dépense déjà
+    notée (même montant, à 5 jours près) ou ajoutée en espèces ;
+    « ( −244 000 ) » en fin de ligne = solde du compte ce jour-là.
+
+
+13. TÉLÉPHONE SYNCHRONISÉ AVEC L'ORDINATEUR
+-------------------------------------------
+Plutôt que la version autonome (chapitre 1), le téléphone peut travailler
+sur les données de l'ordinateur, même hors ligne. Les deux sont reliés par
+Tailscale (installé et connecté sur les deux, même compte). Sur
+l'ordinateur :
+    sudo tailscale set --operator=$USER
+    tailscale serve --bg 8780
+« tailscale status » donne le nom de l'ordinateur en …ts.net. Ouvrez
+https://<nom-de-l-ordinateur>.ts.net dans Chrome sur le téléphone, puis ⋮ ›
+« Installer l'application ». Pour couper cette adresse :
+tailscale serve --https=443 off
+
+  - Saisies, réglages, soldes notés et reclassements se font hors ligne :
+    ils sont gardés dans le téléphone et envoyés dès que l'ordinateur est
+    joignable. Seul le retour en arrière (« Sauvegarde et retour ») demande
+    la liaison.
+  - La synchronisation est automatique (ouverture, retour du réseau, toutes
+    les 2 minutes) ; le bouton en haut (« ✓ À jour », « 3 en attente »,
+    « Hors ligne ») la lance tout de suite. Sans réponse en 20 secondes, il
+    passe à « Hors ligne ».
+  - Une ligne modifiée des deux côtés : la modification la plus récente
+    gagne, et un message le signale. Les heures sont comparées sur
+    l'horloge de l'ordinateur : un téléphone mal réglé ne fausse pas le
+    résultat. Une ligne refusée (montant nul…) reste dans le téléphone,
+    signalée « refusée », à corriger.
+  - Réglages : seul ce qui a été changé sur le téléphone est appliqué ; un
+    poste ou un compte ajouté sur l'ordinateur entre-temps est gardé. Un
+    même élément changé des deux côtés garde la version du téléphone, et un
+    message le signale.
+  - Un solde noté pour aujourd'hui retient son heure : les opérations du
+    jour saisies après lui s'y ajoutent. Une vidange envoyée par le
+    téléphone met le repère à jour sur l'ordinateur.
+  - Daftar s'ouvre tout de suite depuis la copie gardée dans le téléphone ;
+    la version la plus récente est chargée en arrière-plan et un bandeau
+    « Une nouvelle version de Daftar est prête » propose « Recharger ».
+
+Les données du téléphone sont dans l'espace privé du site, dans Chrome
+(base IndexedDB « appya ») ; la copie de référence reste celle de
+l'ordinateur. N'effacez pas les données du site dans Chrome tant que le
+bouton n'affiche pas « ✓ À jour » : les saisies en attente seraient perdues.
+
+Autre accès, sans Tailscale, sur le même Wi-Fi seulement : installer avec
+« bash installer.sh --reseau » (ou « daftar reseau oui »). « daftar etat »
+affiche un lien du type http://192.168.1.20:8780/?cle=k7m2… à ouvrir une
+fois sur le téléphone. Ce lien contient une clé : ne le partagez pas ; s'il
+a fuité, « daftar reseau nouvelle-cle » en crée une autre. La liaison n'est
+pas chiffrée : préférez Tailscale.
+
+
+14. VOS DONNÉES SUR L'ORDINATEUR, LA COMMANDE daftar
+----------------------------------------------------
+    ~/Daftar/donnees/carnet.json       opérations, réglages, comptes et biens
     ~/Daftar/donnees/sauvegardes/      une copie automatique par jour (60 gardées)
 
 Copie miroir dans le dossier d'où Daftar a été installé (par exemple un
-second disque) :
-    <dossier d'installation>/donnees/carnet.json     recopié à chaque modification
-    <dossier d'installation>/donnees/sauvegardes/    les mêmes sauvegardes
-Si ce disque n'est pas monté, la copie est sautée sans gêner Daftar et
-refaite à la modification suivante (ou au prochain démarrage). « daftar etat »
-et le journal du serveur (« daftar journal ») indiquent la copie miroir.
-Si ce dossier est sur le même disque physique que ~, il ne protège pas
-d'une panne du disque : gardez aussi une copie ailleurs (clé USB…) :
+second disque) : carnet.json est recopié à chaque modification, avec les
+sauvegardes. Si ce disque n'est pas monté, la copie est refaite plus tard.
+« daftar etat » indique la copie miroir. Si ce dossier est sur le même
+disque que ~, gardez aussi une copie ailleurs :
     daftar sauvegarder /media/$USER/MA_CLE
 
 Restaurer une sauvegarde :
@@ -551,83 +478,69 @@ Restaurer une sauvegarde :
     cp ~/Daftar/donnees/sauvegardes/carnet-AAAA-MM-JJ.json ~/Daftar/donnees/carnet.json
     daftar demarrer
 
-Mettre à jour : décompressez la nouvelle version et relancez
-« bash installer.sh » ; vos données ne sont jamais écrasées.
-Une mise à jour n'ouvre pas de nouvel onglet : rechargez l'onglet Daftar
-déjà ouvert (F5).
-Daftar ne lit que le format de données actuel (version 5) : les
-conversions des anciens formats et la reprise des anciennes applications
-(Suivi financier, Carnet du véhicule) ont été retirées le 14/11/2026, une
-fois toutes les données converties.
+La commande daftar (« appya » fonctionne aussi) :
+    daftar                 ouvre Daftar ; s'il est déjà ouvert dans un onglet, aucun
+                          onglet n'est ajouté : l'onglet ouvert se signale
+    daftar nouvel-onglet   ouvre quand même un nouvel onglet
+    daftar etat            tourne-t-il ? à quelle adresse ? copie miroir ?
+    daftar arreter | demarrer | redemarrer
+    daftar reseau oui|non|nouvelle-cle   accès d'un téléphone du même Wi-Fi
+    daftar sauvegarder     copie datée de carnet.json dans Documents
+    daftar journal         messages du serveur (en cas de problème)
+    daftar dossier         ouvre ~/Daftar
 
+Un seul onglet : si Daftar est déjà ouvert, son onglet fait clignoter son
+titre et, si vous avez autorisé ses notifications, une notification vous y
+ramène. Pour un second onglet volontaire : clic droit sur l'icône › « Ouvrir
+dans un nouvel onglet », ou daftar nouvel-onglet.
+
+Daftar ne lit que le format de données actuel (version 5).
+
+
+15. CHANGER D'ORDINATEUR, DÉSINSTALLER
+--------------------------------------
+Le dossier d'installation contient tout : le programme et, dans donnees/,
+la copie miroir à jour de vos données.
+
+Sur l'ancien ordinateur :
+  1. Sur le téléphone synchronisé, ouvrez Daftar avec l'ordinateur joignable
+     et attendez « ✓ À jour ».
+  2. Vérifiez la copie miroir : daftar etat.
+  3. Copiez le dossier Daftar entier (clé USB, disque externe…).
+  4. Facultatif : bash desinstaller.sh (vos données restent en place).
+
+Sur le nouvel ordinateur (Ubuntu) :
+  5. Posez le dossier Daftar là où vous voulez garder la copie miroir, puis :
+         cd <dossier Daftar>
+         bash installer.sh
+     Si ~/Daftar n'existe pas encore, l'installation y reprend les données
+     du dossier copié. S'il existe déjà, ses données sont CONSERVÉES ;
+     l'installation compare les deux carnets et, si celui du dossier copié
+     est plus récent, affiche la commande pour l'adopter.
+  6. Téléphone synchronisé : installez Tailscale sur le nouvel ordinateur,
+     refaites les deux commandes du chapitre 13, puis ouvrez la nouvelle
+     adresse …ts.net sur le téléphone et réinstallez l'application.
+
+Venir du téléphone : copiez le fichier exporté (chapitre 10) en
+donnees/carnet.json du dossier Daftar AVANT de lancer bash installer.sh.
 
 Désinstaller :
     bash desinstaller.sh          garde vos données
     bash desinstaller.sh --tout   supprime aussi ~/Daftar (copie finale dans Documents)
-Il se lance indifféremment depuis ~/Daftar ou depuis le dossier d'installation :
-il agit toujours sur l'installation réelle. Avant tout retrait, il recopie
-une dernière fois les données dans la copie miroir (disque branché). Il
-ne supprime jamais le dossier d'origine.
-
-Contenu : serveur.py (Daftar Ousnou 1.4.10, Python, bibliothèque standard), app/index.html,
-app/moteur.js et app/mode.js (version autonome), app/releve.js et
-app/pdf.min.js + app/pdf.worker.min.js (pdf.js 3.11.174, Mozilla, licence
-Apache 2.0 : app/LICENCE-pdfjs.txt ; lecture des relevés), app/sw.js et
-app/manifest.webmanifest (téléphone), app/xlsx.full.min.js
-(SheetJS 0.18.5, licence Apache 2.0), appya (la commande daftar), installer.sh, desinstaller.sh,
-outils/logo.py (dessine le logo et produit toutes ses images ; nécessite Google Chrome),
-donnees/ (copie miroir de vos données, voir la partie 7).
-Code de Daftar sous licence MIT (fichier LICENSE).
+Il agit toujours sur l'installation réelle, recopie une dernière fois les
+données dans la copie miroir et ne supprime jamais le dossier d'origine.
 
 
-8. CHANGER D'ORDINATEUR
------------------------
-Le dossier d'installation contient tout : le programme et, dans
-donnees/, la copie miroir à jour de vos données et de leurs sauvegardes.
-
-Sur l'ancien ordinateur :
-  1. Sur le téléphone, ouvrez Daftar avec l'ordinateur joignable et attendez
-     « ✓ À jour » : les saisies du téléphone arrivent sur l'ordinateur.
-  2. Vérifiez la copie miroir :  daftar etat  (ou la date de
-     <dossier d'installation>/donnees/carnet.json).
-  3. Copiez le dossier Daftar entier (clé USB, disque externe…).
-  4. Facultatif :  bash desinstaller.sh  (vos données restent en place).
-
-Sur le nouvel ordinateur (Ubuntu) :
-  5. Posez le dossier Daftar là où vous voulez garder la copie miroir (par
-     exemple sur un second disque), puis dans un terminal :
-         cd <dossier Daftar>
-         bash installer.sh
-     Comme ~/Daftar n'existe pas encore, l'installation y reprend
-     donnees/carnet.json et donnees/sauvegardes/ du dossier copié. Ce dossier
-     devient la copie miroir du nouvel ordinateur.
-     Si ~/Daftar existe déjà, ses données sont CONSERVÉES ; l'installation
-     compare les deux carnets et, si celui du dossier copié est plus récent,
-     affiche la commande pour l'adopter.
-  6. Téléphone : installez Tailscale sur le nouvel ordinateur et connectez-le
-     au même compte, puis :
-         sudo tailscale set --operator=$USER
-         tailscale serve --bg 8780
-     « tailscale status » donne le nouveau nom en …ts.net. Sur le téléphone,
-     ouvrez https://<nouveau nom>.ts.net dans Chrome et réinstallez
-     l'application (⋮ › Installer l'application). C'est une nouvelle adresse :
-     le téléphone repart des données du nouvel ordinateur ; l'ancienne
-     application du téléphone peut être supprimée une fois l'étape 1 faite.
-
-
-9. VERSION AUTONOME, APK ET SAUVEGARDES
----------------------------------------
-Le code de Daftar est publié sur https://github.com/yayayou47/Daftar (sans
-aucune donnée). Trois versions, construites à partir du même code :
-  - Ordinateur (Ubuntu) : fichier Daftar-ubuntu-<version>.zip de la page
-    « Releases » ; décompressez puis  bash installer.sh  (carnet vide).
-  - Lien web : https://yayayou47.github.io/Daftar/  à ouvrir dans Chrome, puis
-    ⋮ › « Installer l'application ». Mise à jour automatique.
-  - Android : fichier Daftar-<version>.apk de la page « Releases » (autoriser
-    l'installation d'applications de cette source la première fois).
-Dans les deux versions téléphone, les données restent dans l'appareil.
-Données et réglages › Sauvegarde : « Exporter mes données » crée un fichier
-appya-AAAA-MM-JJ.json à garder en lieu sûr ; « Importer » le recharge (sur le
-même appareil ou un autre). Ce fichier a le format de donnees/carnet.json :
-pour passer du téléphone à l'ordinateur, copiez-le en donnees/carnet.json du
-dossier Daftar AVANT de lancer  bash installer.sh  sur un nouvel ordinateur.
+CONTENU
+-------
+serveur.py (serveur local, Python, bibliothèque standard), app/ (la page :
+index.html, style.css et ses scripts noyau.js, vues.js, saisie.js, stats.js,
+reglages.js, demarrage.js ; version.js, seul endroit du numéro de version ;
+moteur.js et mode.js pour la version autonome ; sw.js et
+manifest.webmanifest pour le téléphone ; releve.js avec pdf.min.js et
+pdf.worker.min.js, pdf.js 3.11.174, Mozilla, licence Apache 2.0 :
+app/LICENCE-pdfjs.txt ; xlsx.full.min.js, SheetJS 0.18.5, licence
+Apache 2.0), appya (la commande daftar), installer.sh, desinstaller.sh,
+outils/ (construction de la version web, logo, publication), tests/ (tests
+automatiques), donnees/ (copie miroir de vos données). Code de Daftar sous
+licence MIT (fichier LICENSE).

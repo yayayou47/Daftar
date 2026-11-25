@@ -23,10 +23,16 @@ La version ordinateur peut aussi servir un téléphone synchronisé (via Tailsca
 
 ## Pour le développement
 
-- `app/` : la page (`index.html`), le moteur de la version autonome (`moteur.js`, mêmes règles que
-  `serveur.py`), le service hors ligne (`sw.js`), le manifeste et les icônes.
+- `app/` : la page (`index.html`, `style.css` et six scripts chargés dans l'ordre : `noyau.js`, `vues.js`,
+  `saisie.js`, `stats.js`, `reglages.js`, `demarrage.js`), le numéro de version (`version.js`, seul endroit où il
+  est écrit), le moteur de la version autonome (`moteur.js`, mêmes règles que `serveur.py`), le service hors ligne
+  (`sw.js`), le manifeste et les icônes.
 - `serveur.py` : serveur local de la version ordinateur (Python 3.8+, bibliothèque standard).
 - `outils/construire-web.sh` : construit la version autonome (lien web et APK).
+- `tests/` : `python3 -m unittest discover -s tests` (bibliothèque standard ; Node pour les tests de la page et du
+  moteur, sautés sans lui). API HTTP sur une copie temporaire, synchronisation, parité `serveur.py` ↔ `moteur.js`
+  (toutes les opérations de la démo et des cas limites), fonctions de calcul de la page chargée sous Node avec un faux
+  DOM et les données de démo (`tests/page.js`). Lancés par les deux workflows avant toute publication.
 - Chaque envoi sur `main` met à jour le lien web ; chaque tag `vX.Y.Z` publie l'APK et le zip Ubuntu
   (`.github/workflows/`).
 
@@ -38,6 +44,8 @@ personnes, de lieux…) gardée hors du dépôt : `outils/mots-interdits.txt` en
 Bibliothèques incluses : SheetJS 0.18.5 (`app/xlsx.full.min.js`) et pdf.js 3.11.174 (`app/pdf.min.js`,
 `app/pdf.worker.min.js`), toutes deux sous licence Apache 2.0. L'OCR des relevés photographiés
 utilise tesseract.js 5.1.1, téléchargé à la demande.
+
+Journal des versions : `CHANGELOG.md`.
 
 ## Licence
 
