@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: ${{ steps.deploiement.outputs.page_url }}
+      url: ${{ steps.deploiement.outputs.page_url || steps.deploiement2.outputs.page_url }}
     steps:
       - uses: actions/checkout@v5
       - name: Aucune donnée personnelle dans le dépôt
@@ -32,5 +32,14 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
+      # le déploiement échoue parfois juste après l'envoi de l'archive (« No artifacts named github-pages », incident
+      # passager de GitHub, 3 fois le 2026-11-25) : un second essai 30 s plus tard
       - id: deploiement
+        continue-on-error: true
+        uses: actions/deploy-pages@v4
+      - name: Attente avant un second essai
+        if: steps.deploiement.outcome == 'failure'
+        run: sleep 30
+      - id: deploiement2
+        if: steps.deploiement.outcome == 'failure'
         uses: actions/deploy-pages@v4
