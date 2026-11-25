@@ -90,7 +90,17 @@ seule façon d'en sortir : le bouton « précédent » laisse dans la démo.
 
 4. LES RUBRIQUES
 ----------------
-La barre des rubriques reste en haut de l'écran :
+La ligne du haut porte le logo Daftar (le toucher ramène à l'accueil : Mes
+finances, vue Mois, mois en cours), l'état de la synchronisation, la devise,
+le bouton jour / nuit (☀ / ☾) et le menu ≡ (Données et réglages). Par
+défaut, Daftar suit le mode clair ou sombre du navigateur ; le bouton choisit
+l'autre, et le choix est retenu sur l'appareil. Rebasculer vers le mode du
+navigateur revient au réglage automatique. Sur le téléphone, elle
+s'efface quand on descend dans la page et réapparaît dès qu'on remonte.
+
+La barre des rubriques est en bas de l'écran sur le téléphone (en haut sur
+l'ordinateur) ; elle s'efface pendant qu'on fait défiler la page et revient
+dès qu'on s'arrête :
 
   - Saisir (en bleu) : la carte de saisie d'une opération, le curseur dans
     le champ Montant.
@@ -98,14 +108,16 @@ La barre des rubriques reste en haut de l'écran :
     journal de toutes les opérations.
   - Engins : vidanges, carburant, consommation, coûts de chaque engin.
   - House : un terrain, une construction, ses travaux et son projet.
-  - Données et réglages (« Réglages » sur un petit téléphone), en trois
-    groupes d'onglets :
+  - Données et réglages (menu ≡ en haut à droite) : une liste, chaque
+    réglage avec une courte description, en quatre groupes :
       Saisir : Une opération · Coller une liste · Relevé bancaire ;
       Personnaliser : Postes et libellés · Comptes et biens · Événements et
         revenus · Programmées · Repères vidange · Projet maison · Saisie ·
         Parités ;
-      Sécurité : Sauvegarde et retour.
-    « Comment ça marche ? » ouvre les explications de chaque onglet. Un
+      Sécurité : Sauvegarde et retour ;
+      Fichiers : Exporter vers Excel.
+    Toucher un réglage l'ouvre seul ; « ‹ Réglages » (ou le bouton retour)
+    ramène à la liste. « Comment ça marche ? » ouvre les explications. Un
     point orange sur un onglet et un bouton « Enregistrer » encadré signalent
     des modifications non enregistrées ; fermer la page demande alors
     confirmation.
@@ -317,7 +329,8 @@ lignes déplacées retrouvent leur poste). « Revenir aux réglages d'origine »
 remet postes, budgets, types de revenus et parités comme à l'installation,
 sans toucher aux opérations ni aux comptes ; ce retour s'annule aussi.
 
-Exporter (icône Excel en haut) : Tout, Suivi financier, Engins ou Maison.
+Exporter (menu ≡ › Fichiers › Exporter vers Excel) : Tout, Mes finances,
+Engins ou House.
 Montants en francs CFA ; le fichier Daftar_<rubrique>_<date>.xlsx s'ouvre
 avec LibreOffice Calc.
 

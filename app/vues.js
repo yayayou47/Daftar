@@ -427,9 +427,12 @@ $('aSaisir').onclick=()=>{nouveauJour();navEtape(()=>{retourVue=null;saisieSeule
 // une rubrique s'ouvre toujours en haut de la page (la barre figée la laisse toucher depuis n'importe où)
 const enHaut=()=>window.scrollTo({top:0,behavior:'instant'});
 $('aFin').onclick=()=>{view=vueFin;render();enHaut()};
+/* logo : retour à l'accueil = premier écran (Mes finances, vue Mois, mois en cours, haut de page), comme à l'ouverture */
+$('logoAccueil').onclick=()=>{nouveauJour();if(editId)resetForm();navEtape(()=>{retourVue=null;saisieSeule=false;vueFin='mois';view='mois';
+  cur={y:now.getFullYear(),m:now.getMonth()};filtre='';shown=80;render()});enHaut()};
 $('aVeh').onclick=()=>{view='vehicule';render();enHaut()};
 $('aMai').onclick=()=>{view='maison';render();enHaut()};
-$('aDon').onclick=()=>{retourVue=null;saisieSeule=false;view='donnees';render();enHaut()};
+$('aDon').onclick=()=>{navEtape(()=>{retourVue=null;saisieSeule=false;menuReglages=true;view='donnees';render()});enHaut()};
 function openMonth(ev){const t=ev.target.closest('[data-m]');if(!t)return;cur.m=+t.dataset.m;view='mois';render();window.scrollTo({top:0,behavior:doux()})}
 $('chart').addEventListener('click',openMonth);$('yearTbl').addEventListener('click',openMonth);
 $('accFermer').onclick=()=>{memo('appya-accueil-vu','1');render()};

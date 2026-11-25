@@ -250,7 +250,7 @@ header .ctl>.btn,header .ctl>.devsel,header .ctl .expmenu>.btn{height:44px;displ
 .compteshint code{font-family:var(--f-num);background:var(--bg);padding:1px 5px;border-radius:5px}
 /* téléphone : rubriques en barre d'icônes, libellé dessous */
 @media (max-width:567px){
-  nav.apptabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:2px}
+  nav.apptabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:2px}
   nav.apptabs button{flex-direction:column;justify-content:flex-start;gap:3px;font-size:.72rem;padding:8px 2px;text-align:center;line-height:1.15;min-width:0}
   .apptabs .ic{width:1.6em;height:1.6em}
 }
@@ -335,10 +335,14 @@ tr.sel td{background:var(--accent-soft)}
 .vehf .check input{width:auto}
 .qty{display:flex;gap:6px}.qty input{flex:1;min-width:0}.qty select{width:auto;min-width:6.5em}
 .vidform{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
-/* petit téléphone (≤ 420 px × 1,05) : « Une opération » sur une colonne (montant, aides et listes n'étaient plus lisibles
-   sur deux colonnes de 160 px) ; rubrique « Données et réglages » abrégée en « Réglages » (trois lignes sinon) */
-.nomCourt{display:none}
-@media (max-width:441px){#oneForm{grid-template-columns:1fr}.nomLong{display:none}.nomCourt{display:inline}}
+/* « Une opération » sur deux colonnes, par paires (demande de l'utilisateur, 2026-11-25) : Date | Montant, Nature | Payé avec,
+   Poste | Versé au compte de ; Libellé, Type de revenu et Événement sur toute la largeur (listes lisibles) ; Poste seul sur
+   toute la largeur quand « Versé au compte de » est caché */
+#oneForm #wRev,#oneForm #wEvt{grid-column:1/-1}
+#oneForm:has(#wTiers[hidden]) #wCat{grid-column:1/-1}
+/* petit téléphone : « Versé au compte de » tient sur deux lignes ; le libellé « Poste » prend la même hauteur, pour que
+   les deux listes restent alignées */
+@media (max-width:441px){#oneForm:not(:has(#wTiers[hidden])) #wCat>.label{min-height:2.7em;display:flex;align-items:flex-end}}
 @media (max-width:672px){.vehf,.vidform{grid-template-columns:1fr}}
 /* carnet de la maison */
 :root{--cm-terrain:#8a6d3b;--cm-administratif:#6b7b90;--cm-arrosage:#2f97ad;--cm-eau:#1f5f99;--cm-maconnerie:#b5521d;--cm-materiaux:#c99a2e;--cm-electricite:#7a9a1e;--cm-main-oeuvre:#8e5aa8;--cm-autre:#9a968c}
@@ -495,3 +499,54 @@ html{scroll-padding-top:72px}
 .clav-g button:active{background:var(--accent-soft)}
 .clav-g .clav-ok{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:700}
 body.avec-clavier{padding-bottom:290px}
+
+/* 2026-11-25, demande de l'utilisateur : en-tête = logo (bouton : retour à l'accueil), synchronisation, devise, export et
+   menu ≡ (Données et réglages, comme les applications de messagerie) ; sur téléphone, la barre des rubriques (Saisir, Mes
+   finances, Engins, House) est EN BAS, cachée pendant le défilement et de retour dès qu'on s'arrête (classe .cachee,
+   posée par demarrage.js) */
+.logoacc{border:0;background:none;padding:0;margin:0;cursor:pointer;font:inherit;color:inherit;border-radius:999px;display:inline-flex}
+.logoacc:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+header #aDon[aria-pressed="true"]{background:var(--accent);color:#fff;border-color:var(--accent)}
+@media (max-width:567px){
+  nav.apptabs{position:fixed;top:auto;left:0;right:0;bottom:0;z-index:40;background:var(--surface);border-bottom:0;border-top:1px solid var(--line);
+    padding:2px 4px calc(2px + env(safe-area-inset-bottom));box-shadow:0 -4px 14px rgba(0,0,0,.08);transition:transform .22s ease}
+  nav.apptabs button{border-bottom:0;border-top:3px solid transparent;margin:0;border-radius:0 0 8px 8px}
+  nav.apptabs button[aria-pressed="true"]{border-top-color:var(--accent)}
+  nav.apptabs.cachee{transform:translateY(calc(100% + 6px))}
+  body:has(.clavier:not([hidden])) nav.apptabs{display:none}
+  body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+  html{scroll-padding-top:13px;scroll-padding-bottom:84px}
+  .toast{bottom:calc(84px + env(safe-area-inset-bottom))}
+}
+/* téléphone : la ligne du haut (logo, synchronisation, devise, export, ≡) reste collée en haut ; elle s'efface quand on
+   descend et revient dès qu'on remonte (classe .cachee, posée par demarrage.js) */
+@media (max-width:567px){
+  main.wrap>header{position:sticky;top:0;z-index:41;background:var(--bg);margin:-8px -16.8px 0;padding:8px 16.8px;transition:transform .22s ease}
+  main.wrap>header.cachee{transform:translateY(calc(-100% - 6px))}
+}
+@media (max-width:567px) and (prefers-reduced-motion:reduce){nav.apptabs,main.wrap>header{transition:none}}
+/* Données et réglages (2026-11-25) : le menu ≡ montre la LISTE des réglages, sans aucun panneau ; un réglage choisi
+   s'ouvre seul, avec « ‹ Réglages » pour revenir au menu (classes .regmenu / .regpage posées par majRubSaisie ; pas « .menu » : c'est la classe du menu d'export) */
+.tdesc,.chev,.retmenu{display:none}
+#saisie.regmenu [role="tabpanel"],#saisie.regmenu #editBar{display:none!important}
+#saisie.regpage>.tabs{display:none}
+#saisie.regpage>.retmenu{display:flex;align-items:center;gap:12px;margin:0 0 12px;flex-wrap:wrap}
+.titrepage{font-size:1.2rem;margin:0}
+#saisie.regmenu>.tabs{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,315px),1fr));gap:14px;align-items:start}
+#saisie.regmenu .tgrp{display:flex;flex-direction:column;align-items:stretch;gap:2px;background:var(--bg);border-radius:14px;padding:6px;width:auto}
+#saisie.regmenu .tgl{padding:6px 10px 6px;margin:0;font-size:.72rem}
+#saisie.regmenu .tabs button,#saisie.regmenu .regitem{display:grid;width:100%;border:0;cursor:pointer;grid-template-columns:40px minmax(0,1fr) auto;grid-template-areas:"ic t ch" "ic d ch";align-items:center;
+  column-gap:12px;row-gap:1px;text-align:left;padding:10px 10px;border-radius:10px;color:var(--ink);background:var(--surface);box-shadow:none;
+  font-weight:600;font-size:.98rem;min-height:58px;grid-column:auto}
+#saisie.regmenu .tabs button>.ic,#saisie.regmenu .regitem>.ic{grid-area:ic;width:40px;height:40px;padding:9px;box-sizing:border-box;border-radius:11px;background:var(--accent-soft);color:var(--accent);opacity:1}
+#saisie.regmenu .tabs button>span:not(.tdesc):not(.chev),#saisie.regmenu .regitem>span:not(.tdesc):not(.chev){grid-area:t}
+#saisie.regmenu .tdesc{display:block;grid-area:d;font-weight:400;font-size:.8rem;color:var(--muted);line-height:1.3}
+#saisie.regmenu .chev{display:block;grid-area:ch;font-size:1.4rem;line-height:1;color:var(--muted)}
+#saisie.regmenu .tabs button:hover,#saisie.regmenu .regitem:hover{background:var(--accent-soft)}
+#saisie.regmenu .tabs button.brouillon::after{grid-area:ch;align-self:start;justify-self:end;margin:0}
+/* « Fichiers » (export Excel) : seulement dans le menu des réglages, sous la liste des onglets */
+.regplus{display:none}
+#saisie.regmenu>.regplus{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,315px),1fr));gap:14px;margin-top:14px}
+#saisie.regmenu .regplus .tgrp{display:flex;flex-direction:column;align-items:stretch;background:var(--bg);border-radius:14px;padding:6px}
+#saisie.regmenu .regplus .tgl{padding:6px 10px}
+.regitem{font:inherit;text-align:left}

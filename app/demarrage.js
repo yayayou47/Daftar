@@ -27,6 +27,16 @@ if(!MODE_SYNC&&!MODE_AUTONOME&&'EventSource' in window&&/^(localhost|127\.0\.0\.
 }
 
 /* ================= démarrage ================= */
+/* téléphone (même seuil que style.css) : la barre des rubriques (en bas) se cache pendant le défilement et revient dès
+   qu'on s'arrête ; la ligne du haut (logo, synchronisation, devise, export, ≡) s'efface quand on descend et revient dès
+   qu'on remonte (toujours visible près du haut de la page). Rien ne se cache si le focus clavier ou un menu y est. */
+(()=>{const nav=document.querySelector('nav.apptabs'),hd=document.querySelector('main.wrap>header'),tel=matchMedia('(max-width:567px)');
+  let t=null,y=scrollY;
+  addEventListener('scroll',()=>{if(!tel.matches)return;const d=scrollY-y;y=scrollY;
+    if(Math.abs(d)>2&&!nav.contains(document.activeElement))nav.classList.add('cachee');
+    clearTimeout(t);t=setTimeout(()=>nav.classList.remove('cachee'),350);
+    const occupe=hd.contains(document.activeElement)||!$('exportMenu').hidden;
+    if(scrollY<hd.offsetHeight||d<-2||occupe)hd.classList.remove('cachee');else if(d>2)hd.classList.add('cachee')},{passive:true})})();
 navPret=true;
 render();charger().then(()=>{if(MODE_SYNC)synchroniser();majRappelSauvegarde()});
 if(MODE_SYNC||MODE_AUTONOME){
@@ -64,5 +74,6 @@ if(MODE_DEMO&&window.history&&history.pushState){
   $('demoQuitter').addEventListener('click',ev=>{ev.preventDefault();sortie=true;history.back()});
 }
 else if(MODE_AUTONOME)$('footTxt').textContent='Daftar · suivi financier, engins et maison · version autonome : vos données restent dans cet appareil.';
-if(window.matchMedia){const mq=matchMedia('(prefers-color-scheme: dark)');const f=()=>render();mq.addEventListener?mq.addEventListener('change',f):mq.addListener(f)}
+$('themeBtn').onclick=()=>{basculerTheme();render()};
+if(window.matchMedia){const mq=matchMedia('(prefers-color-scheme: dark)');const f=()=>{majThemeBtn();render()};mq.addEventListener?mq.addEventListener('change',f):mq.addListener(f)}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&ready&&!editId){if(MODE_SYNC)synchroniser();else charger(true).then(majRappelSauvegarde)}});

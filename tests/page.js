@@ -51,7 +51,7 @@ const contexte = {
   addEventListener() {}, removeEventListener() {}, getComputedStyle: () => neutre,
   fetch: () => new Promise(() => {}),              // jamais de réseau : le démarrage reste en attente
   EventSource: function () { return neutre; }, indexedDB: undefined,
-  innerWidth: 1200, innerHeight: 800, devicePixelRatio: 1,
+  innerWidth: 1200, innerHeight: 800, devicePixelRatio: 1, scrollY: 0, scrollX: 0,
 };
 contexte.window = contexte; contexte.self = contexte; contexte.globalThis = contexte;
 vm.createContext(contexte);

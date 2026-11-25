@@ -65,6 +65,16 @@ const MOTS_REVENU=['salaire','salary','prime','revenu','interet','honoraire','in
 
 /* ================= outils ================= */
 const sombre=()=>{const t=document.documentElement.getAttribute('data-theme');return t?t==='dark':!!(window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)};
+/* mode jour / nuit (2026-11-25) : par défaut celui du navigateur ; le bouton de l'en-tête bascule et le choix est retenu sur
+   l'appareil (daftar-theme) ; rebasculer vers le mode du navigateur efface le choix (on suit de nouveau le navigateur) */
+const themeNavigateur=()=>window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';
+function appliquerTheme(){const t=lsGet('daftar-theme');
+  if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);else document.documentElement.removeAttribute('data-theme');majThemeBtn()}
+function majThemeBtn(){const b=document.getElementById('themeBtn');if(!b)return;const s=sombre();b.setAttribute('aria-pressed',s);
+  b.title=s?'Mode nuit (toucher pour le mode jour)':'Mode jour (toucher pour le mode nuit)';b.querySelector('use').setAttribute('href',s?'#i-lune':'#i-soleil')}
+function basculerTheme(){const voulu=sombre()?'light':'dark';
+  if(voulu===themeNavigateur()){try{localStorage.removeItem('daftar-theme')}catch(e){note('thème',e)}}else lsSet('daftar-theme',voulu);appliquerTheme()}
+appliquerTheme();
 /* Les couleurs de poste sont choisies sur fond clair ; en mode sombre on les éclaircit de 35 % vers le blanc. */
 function eclaircir(h,f){const m=/^#([0-9a-f]{6})$/i.exec(h);if(!m)return h;const n=parseInt(m[1],16);return '#'+[16,8,0].map(s=>{const v=(n>>s)&255;return Math.round(v+(255-v)*f).toString(16).padStart(2,'0')}).join('')}
 const color=id=>{const c=((CAT[id]||CAT.autre||{}).couleur)||'#9a968c';return sombre()?eclaircir(c,.35):c};
@@ -111,7 +121,7 @@ const MOIS=['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.',
 /* Saisie des montants. Par défaut : le vrai montant en francs CFA (10000 = 10 000 FCFA).
    Option (Données et réglages › Saisie, propre à chaque appareil) : en milliers, 10 → 10 000 CFA,
    2,65 → 2 650 ; dans ce mode, un nombre de 10 000 ou plus reste un montant complet (25000 → 25 000). */
-var navCle='',navRetour=false,navPret=false;   // bouton retour (voir « bouton retour ») ; var : lisibles dès le premier affichage
+var navCle='',navRetour=false,navPret=false,menuReglages=false;   // menuReglages : Données et réglages montre son MENU (≡), pas une page   // bouton retour (voir « bouton retour ») ; var : lisibles dès le premier affichage
 let saisieSeule=false;   // vrai quand Données et réglages a été ouvert par le bouton « Saisir »
 let SAISIE_K=lsGet('daftar-saisie-milliers')==='1';
 const num=s=>parseFloat(String(s).replace(',','.').replace(/[\s  ]/g,''));
@@ -472,7 +482,7 @@ function guessOp(lib){
    le bouton retour (téléphone, navigateur, APK via @capacitor/app) ramène à l'étape précédente au lieu de fermer Daftar.
    Une fenêtre ouverte (confirmation, engin…) se ferme d'abord. Seul le premier écran laisse sortir de l'application. */
 function ongletActif(){const t=tabs.find(([tt])=>$(tt).getAttribute('aria-selected')==='true');return t?t[0]:'tOne'}
-function etatNav(){return {v:view,t:view==='donnees'?ongletActif():'',s:view==='donnees'&&saisieSeule?1:0}}
+function etatNav(){return {v:view,t:view==='donnees'?ongletActif():'',s:view==='donnees'&&saisieSeule?1:0,m:view==='donnees'&&!saisieSeule&&menuReglages?1:0}}
 /* plusieurs changements (vue + onglet) = une seule étape de l'historique */
 function navEtape(fn){const r=navRetour;navRetour=true;try{fn()}finally{navRetour=r;navNoter()}}
 /* appelée par render() et showTab() ; ignore les affichages faits pendant le chargement du script (navPret) */
@@ -482,5 +492,5 @@ addEventListener('popstate',ev=>{
   const ouv=[...document.querySelectorAll('dialog[open]')];
   if(ouv.length){ouv.forEach(d=>d.close());try{history.pushState(etatNav(),'')}catch(e){note('historique (bouton retour)',e)}return}   // retour = fermer la fenêtre
   const st=ev.state;if(!st||!st.v)return;
-  navRetour=true;try{if(st.v!=='donnees'&&editId)resetForm();view=st.v;saisieSeule=!!st.s;render();if(st.t)showTab(st.t);window.scrollTo(0,0)}finally{navRetour=false}
+  navRetour=true;try{if(st.v!=='donnees'&&editId)resetForm();view=st.v;saisieSeule=!!st.s;menuReglages=!!st.m;if(st.t)showTab(st.t,false,true);render();window.scrollTo(0,0)}finally{navRetour=false}
   navCle=JSON.stringify(etatNav())});

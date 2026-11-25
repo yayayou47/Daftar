@@ -85,7 +85,7 @@ function nouveauJour(){
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')nouveauJour()});
 addEventListener('focus',nouveauJour);addEventListener('pageshow',nouveauJour);setInterval(nouveauJour,60000);
 fillSelects();
-const AMT_HINT=()=>SAISIE_K?'10 = 10 000 CFA · 0,5 = 500 CFA · 1750 = 1 750 000':'montant en francs CFA, par exemple 10000';
+const AMT_HINT=()=>SAISIE_K?'10 = 10 000 · 0,5 = 500':'par exemple 10000';   // court : le champ est sur une demi-ligne
 /* Une opération : le montant est toujours positif ; un signe − tapé devant veut dire « sortie » (dépense) */
 const amtNeg=()=>/^\s*[-−]/.test($('fAmt').value),amtVal=()=>cfa($('fAmt').value.replace(/^\s*[-−]\s*/,''));
 function amtHint(){const v=amtVal();$('fAmtHint').textContent=v>0?`= ${fmtC(v)} FCFA${amtNeg()?' · sortie':''}`:($('fAmt').value.trim()?'Montant non reconnu':AMT_HINT())}
@@ -95,17 +95,22 @@ $('fAmt').addEventListener('input',()=>{amtHint();if(amtNeg()&&!touched.nat&&['r
 $('fKm').addEventListener('input',majChamps);
 $('fVidNext').addEventListener('input',()=>{touched.vidnext=true});
 const tabs=[['tOne','oneForm'],['tPaste','pasteBox'],['tRel','relBox'],['tPostes','posteBox'],['tCB','cbBox'],['tEvt','evtBox'],['tProg','progBox'],['tVid','vidPanel'],['tMai','maiPanel'],['tSai','saisieBox'],['tPar','paritesBox'],['tSav','savBox']];
-function showTab(t,focus){if(t!=='tOne')saisieSeule=false;tabs.forEach(([tt,p])=>{const on=tt===t;$(tt).setAttribute('aria-selected',on);$(tt).tabIndex=on?0:-1;$(p).hidden=!on});majRubSaisie();navNoter();if(focus)$(t).focus()}
+/* garderMenu : rétablissement par le bouton retour (le menu ou la page est décidé par l'étape rétablie) ; sinon, choisir un
+   onglet ouvre sa PAGE (le menu ≡ se ferme) */
+function showTab(t,focus,garderMenu){if(t!=='tOne')saisieSeule=false;if(!garderMenu)menuReglages=false;tabs.forEach(([tt,p])=>{const on=tt===t;$(tt).setAttribute('aria-selected',on);$(tt).tabIndex=on?0:-1;$(p).hidden=!on});majRubSaisie();navNoter();if(focus)$(t).focus()}
 /* « Saisir » montre seulement la carte de saisie (onglets cachés) ; « Données et réglages » montre tout */
-function majRubSaisie(){const d=view==='donnees',s=d&&saisieSeule;$('saisie').classList.toggle('seule',s);$('saisie').setAttribute('aria-label',s?'Saisir une opération':'Données et réglages');$('aSaisir').setAttribute('aria-pressed',s);$('aDon').setAttribute('aria-pressed',d&&!s)}
+/* trois façons de montrer Données et réglages : « seule » (bouton Saisir : la carte de saisie), « menu » (≡ : la liste des
+   réglages, aucun panneau), « page » (un réglage choisi dans le menu, avec « ‹ Réglages » pour y revenir) */
+function majRubSaisie(){const d=view==='donnees',s=d&&saisieSeule,m=d&&!s&&menuReglages;$('saisie').classList.toggle('seule',s);
+  $('saisie').classList.toggle('regmenu',m);$('saisie').classList.toggle('regpage',d&&!s&&!m);
+  const t=ongletActif();$('titrePage').textContent=t?$(t).querySelector('span').textContent:'';$('saisie').setAttribute('aria-label',s?'Saisir une opération':'Données et réglages');$('aSaisir').setAttribute('aria-pressed',s);$('aDon').setAttribute('aria-pressed',d&&!s)}
 tabs.forEach(([t,p])=>{$(t).setAttribute('aria-controls',p);$(t).type='button';$(p).setAttribute('role','tabpanel');$(p).setAttribute('aria-labelledby',t)});
 document.querySelector('.tabs').addEventListener('keydown',ev=>{
   const i=tabs.findIndex(([t])=>t===ev.target.id);if(i<0)return;
   const j={ArrowRight:i+1,ArrowLeft:i-1,Home:0,End:tabs.length-1}[ev.key];if(j===undefined)return;
   ev.preventDefault();showTab(tabs[(j+tabs.length)%tabs.length][0],true)});
-tabs.forEach(([t])=>$(t).onclick=()=>{if(t==='tSav')renderHistorique();if(t==='tEvt'&&!evtDirty)openEvt();if(t==='tProg'&&!progDirty)openProg();if(t==='tRel')initReleve();showTab(t);
-  // amener le contenu de l'onglet touché sous la barre figée (scroll-padding-top), sans attendre l'animation
-  const p=tabs.find(x=>x[0]===t)[1];$(p).scrollIntoView({block:'start',behavior:'instant'})});showTab('tOne');
+tabs.forEach(([t])=>$(t).onclick=()=>{if(t==='tSav')renderHistorique();if(t==='tEvt'&&!evtDirty)openEvt();if(t==='tProg'&&!progDirty)openProg();if(t==='tRel')initReleve();showTab(t);enHaut()});
+$('retourReglages').onclick=()=>{navEtape(()=>{menuReglages=true;render()});enHaut();$(ongletActif()).focus({preventScroll:true})};showTab('tOne');
 /* modifications non enregistrées : point orange sur l'onglet et bouton « Enregistrer » mis en évidence ; avertissement si on ferme la page */
 const BROUILLONS=[['tPostes',()=>dirty,['savePostes']],['tCB',()=>cbDirty,['saveCpt','saveBien']],['tEvt',()=>evtDirty,['evtSave','revSave']],['tProg',()=>progDirty,['progSave']],['tPar',()=>devDirty,['saveDev']]];
 function majBrouillons(){BROUILLONS.forEach(([t,d,bs])=>{const on=!!d();$(t).classList.toggle('brouillon',on);$(t).title=on?'Modifications non enregistrées':'';bs.forEach(b=>$(b).classList.toggle('brouillon',on))})}

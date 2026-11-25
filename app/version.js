@@ -2,4 +2,4 @@
    hors ligne (nom du cache : changer de version renouvelle le cache du téléphone), serveur.py (/api/info, démarrage),
    la publication (publier.yml : titre de la Release, contrôle tag = numéro) et outils/verifier-depot.sh (package.json).
    Pour publier : changer numero (et nom si besoin), puis poser le tag vNUMERO. */
-self.DAFTAR_VERSION = {numero: '1.4.12', nom: 'Ousnou'};
+self.DAFTAR_VERSION = {numero: '1.4.13', nom: 'Ousnou'};

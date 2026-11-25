@@ -4,6 +4,19 @@ Les versions sont numérotées `X.Y.Z` (le nom de série, « Ousnou », figure �
 est écrit à un seul endroit : `app/version.js`. Chaque version publiée a son tag `vX.Y.Z` et sa page dans
 [Releases](https://github.com/yayayou47/Daftar/releases) (APK Android et zip Ubuntu).
 
+## 1.4.13 — 2026-11-25
+
+- En-tête : logo, synchronisation, devise, bouton jour / nuit (par défaut, le mode du navigateur) et menu ≡ ; toucher
+  le logo ramène à l'accueil (Mes finances, vue Mois, mois en cours).
+- Menu ≡ : la liste des réglages seule (icône, nom, description), sans le formulaire de saisie ; un réglage s'ouvre
+  seul avec « ‹ Réglages » pour revenir ; l'export Excel y est rangé (groupe « Fichiers »).
+- Une opération : Date | Montant, Nature | Payé avec, Poste | Versé au compte de sur une même ligne, aussi sur petit
+  téléphone ; Événement sur toute la largeur.
+- Téléphone : barre des rubriques (Saisir, Mes finances, Engins, House) en bas de l'écran, cachée pendant le
+  défilement et de retour dès qu'on s'arrête.
+- Téléphone : la ligne du haut reste collée en haut de l'écran ; elle s'efface quand on descend et réapparaît dès
+  qu'on remonte.
+
 ## 1.4.12 — 2026-11-25
 
 - Reconnaissance des notes : les pièces d'un engin (filtre, boîte, radiateur, démarreur, injecteur, frein…) et le nom

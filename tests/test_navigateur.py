@@ -28,8 +28,20 @@ addEventListener('load',()=>setTimeout(async()=>{const vu=[];const pause=()=>new
       document.getElementById(rub).click();await pause();vu.push(rub);
       for(const v of vues){document.getElementById(v).click();await pause();vu.push(v)}}
     document.getElementById('aDon').click();await pause();
-    for(const [t] of tabs){document.getElementById(t).click();await pause();vu.push(t)}
+    // menu ≡ : aucun panneau visible ; export Excel ouvert depuis le menu
+    const S=document.getElementById('saisie');
+    if(S.classList.contains('regmenu')&&tabs.every(([,p])=>getComputedStyle(document.getElementById(p)).display==='none'))vu.push('menu');
+    document.getElementById('exportBtn').click();await pause();if(!document.getElementById('exportMenu').hidden)vu.push('export');
+    document.getElementById('exportBtn').click();await pause();
+    // mode jour / nuit : le bouton bascule, et revenir au mode du navigateur efface le choix
+    const t0=sombre();document.getElementById('themeBtn').click();await pause();const t1=sombre();
+    document.getElementById('themeBtn').click();await pause();if(t1!==t0&&sombre()===t0&&localStorage.getItem('daftar-theme')===null)vu.push('theme');
+    for(const [t] of tabs){document.getElementById('aDon').click();await pause();document.getElementById(t).click();await pause();
+      if(S.classList.contains('regpage')&&getComputedStyle(document.getElementById(tabs.find(x=>x[0]===t)[1])).display!=='none')vu.push(t)}
     document.getElementById('aSaisir').click();await pause();vu.push('aSaisir');
+    // logo : retour à l'accueil (Mes finances, vue Mois)
+    document.getElementById('aVeh').click();await pause();document.getElementById('logoAccueil').click();await pause();
+    if(view==='mois'&&vueFin==='mois')vu.push('logoAccueil');
     const ok=typeof ready!=='undefined'&&ready&&all.length>0;
     document.title='BILAN '+JSON.stringify({ok,n:all.length,vu,err:__err})}
   catch(e){document.title='BILAN '+JSON.stringify({ok:false,exception:e.message,vu,err:__err})}},1500));
@@ -94,6 +106,9 @@ class Navigateur(unittest.TestCase):
         self.assertTrue(b.get("ok"), "données non chargées : %r" % b)
         self.assertIn("vStats", b["vu"])
         self.assertIn("aSaisir", b["vu"])
+        self.assertIn("logoAccueil", b["vu"], "le logo ne ramène pas à l'accueil")
+        for etape in ("menu", "export", "theme", "tOne", "tSav"):
+            self.assertIn(etape, b["vu"], "étape manquante : " + etape)
 
     def test_ordinateur(self):
         self.verifier(self.bilan("index.html"))
