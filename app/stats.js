@@ -254,7 +254,12 @@ function analyser(P,M,H,S,L){
     if(M.enCours&&!ofNat(monthItems(cur.y,cur.m),'revenu'))al.push({n:0,t:'Entrées du mois',m:`Aucun revenu noté pour ${P.nom} : pensez au salaire et à la prime dès leur arrivée.`});
   }
   COMPTES.forEach(c=>{const s=etatCompte(c);
-    if(s.ecarts.length){const tot=s.ecarts.reduce((a,e)=>a+e.ecart,0);al.push({n:1,t:'Écarts de relevés (opérations probablement non notées)',m:`${c.nom} ${sgn(tot)} ${U()} (${s.ecarts.length} écart${s.ecarts.length>1?'s':''})`})}
+    // écarts des soldes notés DANS la période analysée ; sorties et entrées non notées séparées (2026-11-25 : la somme
+    // affichait « 0 FCFA (2 écarts) » quand un écart de +1 et un de −1 s'annulaient)
+    const ec=s.ecarts.filter(e=>e.date>=P.debut&&e.date<=P.fin);
+    if(ec.length){const somme=f=>ec.filter(f).reduce((a,e)=>a+e.ecart,0),moins=somme(e=>e.ecart<0),plus=somme(e=>e.ecart>0);
+      const parts=[moins?`sorties non notées ${sgn(moins)} ${U()}`:'',plus?`entrées non notées ${sgn(plus)} ${U()}`:''].filter(Boolean).join(' · ');
+      al.push({n:1,t:'Écarts de relevés (opérations probablement non notées)',m:`${c.nom} : ${parts} (${ec.length} écart${ec.length>1?'s':''}, le dernier au solde noté le ${dmy(ec[ec.length-1].date)})`})}
     if(s.last&&nbJ(s.last.date,today)>31&&c.type!=='especes'&&!estTiers(c.id))al.push({n:0,t:'Solde à vérifier',m:`${c.nom} : dernier relevé noté le ${dmy(s.last.date)} (il y a ${nbJ(s.last.date,today)-1} jours).`})});
   const esp=CPT.especes?etatCompte(CPT.especes).solde:null,j30=periodeJours(addJ(today,-29),today),m30=moyenne(j30);
   if(esp!==null&&m30>0&&esp<m30*7)al.push({n:1,t:'Réserve d\'espèces',m:`${fmt(esp)} ${U()} en espèces, soit environ ${Math.max(0,Math.floor(esp/m30))} jours de dépenses au rythme des 30 derniers jours (${fmt(m30)} ${U()} par jour).`});

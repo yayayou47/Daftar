@@ -187,16 +187,27 @@ en HEURES de marche (vidange tous les 250 h par défaut, consommation en
 L/h) ; les autres engins en kilomètres. Avec plusieurs engins, une barre
 passe de l'un à l'autre.
 
-À quel engin va une dépense ? À celui que la note cite par son nom
-(« carburant yamaha ») ou par son type s'il est le seul de ce type
-(« essence moto ») ; sinon à l'engin affiché. Un poste réservé aux engins
+Une note est une dépense d'engin si elle cite l'engin par son nom
+(« réparation corolla »), si elle contient un mot propre aux engins
+(carburant, essence, gasoil, vidange, garage, pneu, ou une pièce : filtre,
+boîte, radiateur, démarreur, injecteur, bobine, frein, embrayage,
+suspension, diagnostic…), ou si elle tombe dans un poste réservé aux engins
 (comme « Voiture », dont les mots-clés contiennent carburant, vidange,
-garage…) y met toutes ses dépenses. Un poste partagé avec un engin (Foyer
-pour un groupe électrogène, Transport pour une moto) garde ses dépenses
-ordinaires hors de l'engin : « riz » ou « taxi » ne sont pas des frais
-d'engin ; seules les notes qui citent l'engin ou un mot comme carburant,
-gasoil, vidange, garage, pneu le deviennent. Dans Une opération, le choix
-« Engin » propose alors « — aucun engin — ».
+garage…). Ces mots passent avant l'ordre des postes et avant les mots-clés
+des biens : « filtre huile boîte » va à la voiture et non au Foyer,
+« réparation pompe boîte » à la voiture et non à la pompe du terrain.
+
+Quel engin ? Celui que la note nomme, ou dont elle cite le type s'il est le
+seul de ce type (« essence moto » → la moto) ; sinon l'engin d'un poste
+réservé aux engins, sinon l'engin affiché. Le type seul ne suffit pas à
+faire une dépense d'engin : « taxi moto » reste un transport payé.
+
+Un poste partagé avec un engin (Foyer pour un groupe électrogène, Transport
+pour une moto) garde ses dépenses ordinaires hors de l'engin : « riz » ou
+« taxi » ne sont pas des frais d'engin. Dans Une opération, le choix
+« Engin » propose alors « — aucun engin — ». Une note trop vague
+(« réparation vitre ») ne désigne aucun engin : choisissez le poste dans le
+formulaire, ou ajoutez le mot aux mots-clés du poste.
 
 Litres et compteur : « 35,7L » et « 110882km » se lisent sur les lignes d'un
 engin. L'ancienne forme « 25 essence (35,71) (106183) » reste comprise
@@ -261,8 +272,8 @@ et le « non saisi » (écarts de vos soldes notés).
     arrière-plan. « 👁 Afficher » dans la carte du patrimoine net les montre.
 
 Statistiques, par mois, par année, sur une période choisie ou sur tout
-l'historique : alertes (prêt en retard, rythme de dépense, écarts de
-relevés…), bilan de la période, cumuls avec projection et comparaison à la
+l'historique : alertes (prêt en retard, rythme de dépense, écarts des soldes
+notés dans la période, avec les sorties et les entrées non notées à part…), bilan de la période, cumuls avec projection et comparaison à la
 période précédente, dépenses par jour et par jour de la semaine, libellés
 les plus coûteux, composition du patrimoine, puis conclusions et
 perspectives. Chaque graphique a un « Voir les données ».

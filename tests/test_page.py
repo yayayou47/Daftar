@@ -95,6 +95,26 @@ class Reconnaissance(unittest.TestCase):
                 if catv:
                     self.assertEqual(o["cat_vehicule"], catv)
 
+    def test_pieces_et_nom_de_l_engin(self):
+        """Pièces d'un engin et nom propre de l'engin : la note va à l'engin, avant l'ordre des postes (2026-11-25)."""
+        attendu = {"Nettoyage filtre huile boîte": ("voiture", "corolla"),   # « huile » du Foyer ne l'emporte pas
+                   "vidange huile": ("voiture", "corolla"),                  # poste dédié, pas le groupe du Foyer
+                   "Réparation Corolla": ("voiture", "corolla"),             # cité par son nom, même sans mot fort
+                   "Dépannage démarreur": ("voiture", "corolla")}
+        for lib, (cat, veh) in attendu.items():
+            with self.subTest(libelle=lib):
+                o = self.op(lib)
+                self.assertEqual((o["categorie"], o.get("vehicule")), (cat, veh))
+        # mot-clé d'un bien qui n'est pas un engin : la pièce d'engin l'emporte, pas sans elle
+        r = page("BIEN.villa.mots.push('pompe');[guessOp('Réparation pompe boîte'),guessOp('pompe villa')].map(g=>[g.nature,g.vehicule||g.bien])")[0]
+        self.assertEqual(r, [["depense", "corolla"], ["investissement", "villa"]])
+
+    def test_type_seul_ne_fait_pas_une_depense_d_engin(self):
+        """« taxi moto » est un transport payé, pas une dépense de la moto ; « bougies » d'éclairage restent hors engin."""
+        for lib in ("taxi moto", "moto taxi", "achat bougies"):
+            with self.subTest(libelle=lib):
+                self.assertEqual(self.op(lib).get("vehicule", ""), "")
+
     def test_depense_courante_sans_engin(self):
         """Engin lié à un poste PARTAGÉ (groupe électrogène → Foyer, moto → Transport) : seulement s'il est cité ou qu'un
         mot fort est écrit (corrigé le 2026-11-25 : « riz » devenait une dépense du groupe, « taxi » de la moto)."""
@@ -163,6 +183,22 @@ class Formulaire(unittest.TestCase):
 
     def test_poste_sans_engin(self):
         self.assertTrue(self.champs("médicaments", "sante")[0])
+
+
+@unittest.skipUnless(shutil.which("node"), "Node absent")
+class AlerteEcarts(unittest.TestCase):
+    """Alerte « Écarts de relevés » des Statistiques : sorties et entrées non notées séparées, période analysée seulement."""
+    TEXTE = "render();$('statsAlertes').innerHTML.replace(/<[^>]+>/g,'\\n').split('\\n').filter(x=>/^ — Épargne :/.test(x)).join('')"
+
+    def test_tout_l_historique(self):
+        # la démo a deux écarts d'arrondi sur l'épargne (+1 et −1) : ils ne s'annulent plus en « 0 FCFA »
+        t = page("statsMode='tout';view='stats';" + self.TEXTE)[0]
+        self.assertIn("sorties non notées −1 FCFA", t)
+        self.assertIn("entrées non notées +1 FCFA", t)
+        self.assertIn("2 écarts", t)
+
+    def test_periode_sans_ecart(self):
+        self.assertEqual(page("statsMode='mois';view='stats';" + self.TEXTE)[0], "")
 
 
 @unittest.skipUnless(shutil.which("node"), "Node absent")

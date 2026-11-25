@@ -4,6 +4,15 @@ Les versions sont numérotées `X.Y.Z` (le nom de série, « Ousnou », figure �
 est écrit à un seul endroit : `app/version.js`. Chaque version publiée a son tag `vX.Y.Z` et sa page dans
 [Releases](https://github.com/yayayou47/Daftar/releases) (APK Android et zip Ubuntu).
 
+## 1.4.12 — 2026-11-25
+
+- Reconnaissance des notes : les pièces d'un engin (filtre, boîte, radiateur, démarreur, injecteur, frein…) et le nom
+  propre de l'engin désignent l'engin, avant l'ordre des postes et avant les mots-clés des biens (« filtre huile
+  boîte », « réparation pompe boîte ») ; sans engin nommé, c'est l'engin d'un poste réservé aux engins qui est choisi.
+  Le type seul (« moto ») ne fait plus d'une note une dépense d'engin : « taxi moto » reste un transport.
+- Statistiques : l'alerte « Écarts de relevés » ne compte que les écarts de la période analysée et sépare les sorties
+  et les entrées non notées (avant : « 0 FCFA (2 écarts) » quand deux écarts s'annulaient).
+
 ## 1.4.11 — 2026-11-25
 
 **Fiabilité**

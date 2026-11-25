@@ -442,15 +442,22 @@ function guessOp(lib){
   else if(hasWord(L,'remb')){r.nature='remboursement';r.personne=extrairePersonne(lib)}
   else if(hasWord(L,'pret')||hasWord(L,'avance')){r.nature='pret';r.personne=extrairePersonne(lib)}
   else if(MOTS_REVENU.some(k=>hasWord(L,k))||(hasWord(L,'virement')&&hasWord(L,'recu'))){r.nature='revenu';r.compte=cites[0]||dc}
-  else{const b=BIENS.find(b=>b.mots.some(m=>{const k=normTxt(m);return k&&hasWord(L,k)}));if(b){r.nature='investissement';r.bien=b.id}}
+  // mot-clé d'un bien → investissement, sauf un bien qui n'est pas un engin quand la note parle d'un engin (« réparation pompe
+  // boîte » : la pompe du terrain ne l'emporte pas sur la boîte de la voiture)
+  else{const b=BIENS.find(b=>b.mots.some(m=>{const k=normTxt(m);return k&&hasWord(L,k)}));if(b&&(b.vehicule||!(VEHS().length&&motVehFort(L)))){r.nature='investissement';r.bien=b.id}}
   if(r.nature==='depense')r.categorie=guessCat(lib);
   // véhicule : dépense du poste du véhicule, ou investissement dans un bien véhicule.
   // Quelques mots désignent sans ambiguïté la voiture et passent avant l'ordre des postes (« vidange huile » ≠ huile du Foyer)
-  const v=enginDe(lib,r.nature==='depense'?r.categorie:'',r.nature==='investissement'?r.bien:'');
-  const fort=MOTS_VEH_FORTS.some(k=>hasWord(L,k));
-  if(v&&v.poste&&r.nature==='depense'&&fort)r.categorie=v.poste;
-  // poste partagé (posteDedie) : engin seulement s'il est cité ou qu'un mot fort est écrit
-  if(v&&((r.nature==='depense'&&r.categorie===v.poste&&(posteDedie(v.poste)||fort||enginCite(lib)===v))||(r.nature==='investissement'&&BIEN[r.bien]&&BIEN[r.bien].vehicule))){
+  let v=enginDe(lib,r.nature==='depense'?r.categorie:'',r.nature==='investissement'?r.bien:'');
+  // mot fort (carburant, vidange, pièce…) ou engin cité par son nom : le poste de l'engin passe avant l'ordre des postes
+  const fort=motVehFort(L);
+  // mot fort sans engin cité : l'engin d'un poste dédié (l'engin affiché d'abord), pas celui qui partage par hasard le poste
+  // trouvé (« vidange huile » rangé au Foyer par « huile » n'est pas une vidange du groupe électrogène)
+  if(r.nature==='depense'&&fort&&!enginCite(lib)){const d=[VEH(),...VEHS()].find(x=>x&&posteDedie(x.poste));if(d)v=d}
+  const nom=!!v&&enginCiteNom(lib)===v;
+  if(v&&v.poste&&r.nature==='depense'&&(fort||nom))r.categorie=v.poste;
+  // poste partagé (posteDedie) : engin seulement s'il est cité par son nom ou qu'un mot fort est écrit
+  if(v&&((r.nature==='depense'&&r.categorie===v.poste&&(posteDedie(v.poste)||fort||nom))||(r.nature==='investissement'&&BIEN[r.bien]&&BIEN[r.bien].vehicule))){
     r.vehicule=r.nature==='investissement'?r.bien:v.id;const c=guessCatV(lib);r.cat_vehicule=r.nature==='investissement'?(c==='achat'?'achat':'investissement'):c}
   if(r.nature==='investissement'&&BIEN[r.bien]&&BIEN[r.bien].maison)r.cat_maison=guessCatM(lib);
   if(r.nature==='revenu')r.cat_revenu=guessCatR(lib);

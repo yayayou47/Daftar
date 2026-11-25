@@ -471,9 +471,14 @@ const MOTS_GENERIQUES=new Set(['voiture','moto','camion','vehicule','engin','aut
    est de ce type (« essence moto » → la moto, « gasoil groupe » → le groupe) ; sinon null */
 const MOTS_TYPE_ENGIN={voiture:['voiture','auto'],moto:['moto'],bus:['bus'],camion:['camion'],groupe:['groupe','generateur','electrogene']};
 const motEntier=(L,w)=>new RegExp(`(^|[^a-z0-9])${w}s?([^a-z0-9]|$)`).test(L);
+/* engin cité par un mot PROPRE de son nom (« corolla », « hyundai ») : cela suffit à faire de la note une dépense d'engin */
+function enginCiteNom(lib){const L=normTxt(lib);
+  return VEHS().find(v=>normTxt(v.nom).split(/[^a-z0-9]+/).some(w=>w.length>=4&&!MOTS_GENERIQUES.has(w)&&hasWord(L,w)))||null}
+/* le type seul (« moto ») ne fait que CHOISIR l'engin quand la note est déjà une dépense d'engin (mot fort, poste dédié) :
+   « essence moto » → la moto, mais « taxi moto » reste un transport payé */
 function enginCite(lib){
   const L=normTxt(lib),l=VEHS();
-  const nom=l.find(v=>normTxt(v.nom).split(/[^a-z0-9]+/).some(w=>w.length>=4&&!MOTS_GENERIQUES.has(w)&&hasWord(L,w)));
+  const nom=enginCiteNom(lib);
   if(nom)return nom;
   for(const [t,mots] of Object.entries(MOTS_TYPE_ENGIN))if(mots.some(w=>motEntier(L,w))){const u=l.filter(v=>(v.engin||'voiture')===t);if(u.length===1)return u[0]}
   return null;
@@ -492,6 +497,12 @@ function enginDe(lib,categorie,bien){
   return l.find(v=>categorie&&v.poste===categorie)||cur;
 }
 const MOTS_VEH_FORTS=['vidange','carburant','essence','gasoil','gazoil','diesel','vulcanis','garage','mecanicien','pneu'];   // forme sans accents (normTxt)
+/* pièces et organes d'un engin (2026-11-25) : désignent aussi l'engin et passent avant l'ordre des postes (« filtre huile
+   boîte » ≠ huile du Foyer ; « réparation pompe boîte » ≠ pompe du terrain). Pas « bougie » (bougie d'éclairage au Foyer).
+   Ils ne servent pas à reconnaître un poste dédié (posteDedie). */
+const MOTS_VEH_PIECES=['filtre','boite','radiateur','demarreur','injecteur','bobine','alternateur','carburateur','embrayage','frein',
+  'courroie','suspension','amortisseur','parallelisme','calandre','diagnostic'];
+const motVehFort=L=>MOTS_VEH_FORTS.some(k=>hasWord(L,k))||MOTS_VEH_PIECES.some(k=>hasWord(L,k));
 const vidangeDe=v=>({intervalle:INTERVALLE_DEFAUT(v&&v.engin),dernier:0,prochain:0,...((v&&v.vidange)||{})});
 const isVidange=e=>/vidange/i.test(e.libelle)&&!/bo[iî]te/i.test(e.libelle);
 const nb=(n,d=0)=>(+n).toLocaleString('fr-FR',{minimumFractionDigits:0,maximumFractionDigits:d});   // km, litres : jamais convertis en devise
