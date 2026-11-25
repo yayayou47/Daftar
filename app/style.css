@@ -471,8 +471,8 @@ tr.solde td{color:var(--muted)}
    « auto » retient la hauteur réelle une fois la section vue, pour un défilement stable */
 main>section.panel{content-visibility:auto;contain-intrinsic-size:auto 800px}
 /* barre des rubriques figée en haut au défilement ; les défilements automatiques s'arrêtent sous elle */
-nav.apptabs{position:sticky;top:0;z-index:30;background:var(--bg)}
-html{scroll-padding-top:72px}
+nav.apptabs{position:sticky;top:var(--hh,74px);z-index:30;background:var(--bg)}
+html{scroll-padding-top:calc(var(--hh,74px) + 60px)}
 /* téléphone : logo, synchronisation, devise et export sur une seule ligne (logo un peu réduit) */
 @media (max-width:567px){
   header{flex-wrap:nowrap;gap:6px}
@@ -515,16 +515,14 @@ header #aDon[aria-pressed="true"]{background:var(--accent);color:#fff;border-col
   nav.apptabs.cachee{transform:translateY(calc(100% + 6px))}
   body:has(.clavier:not([hidden])) nav.apptabs{display:none}
   body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
-  html{scroll-padding-top:13px;scroll-padding-bottom:84px}
+  html{scroll-padding-top:calc(var(--hh,58px) + 8px);scroll-padding-bottom:84px}
   .toast{bottom:calc(84px + env(safe-area-inset-bottom))}
 }
-/* téléphone : la ligne du haut (logo, synchronisation, devise, export, ≡) reste collée en haut ; elle s'efface quand on
-   descend et revient dès qu'on remonte (classe .cachee, posée par demarrage.js) */
-@media (max-width:567px){
-  main.wrap>header{position:sticky;top:0;z-index:41;background:var(--bg);margin:-8px -16.8px 0;padding:8px 16.8px;transition:transform .22s ease}
-  main.wrap>header.cachee{transform:translateY(calc(-100% - 6px))}
-}
-@media (max-width:567px) and (prefers-reduced-motion:reduce){nav.apptabs,main.wrap>header{transition:none}}
+/* la ligne du haut (logo, synchronisation, devise, jour / nuit, ≡) est FIGÉE en haut, toujours visible (demande de
+   l'utilisateur, 2026-11-25 : la version qui s'effaçait en descendant ne revenait pas assez vite en remontant) ; sur
+   ordinateur, la barre des rubriques se fige juste dessous (--hh = hauteur de la ligne, mesurée par demarrage.js) */
+main.wrap>header{position:sticky;top:0;z-index:41;background:var(--bg);margin:-8px -16.8px 0;padding:8px 16.8px}
+@media (max-width:567px) and (prefers-reduced-motion:reduce){nav.apptabs{transition:none}}
 /* Données et réglages (2026-11-25) : le menu ≡ montre la LISTE des réglages, sans aucun panneau ; un réglage choisi
    s'ouvre seul, avec « ‹ Réglages » pour revenir au menu (classes .regmenu / .regpage posées par majRubSaisie ; pas « .menu » : c'est la classe du menu d'export) */
 .tdesc,.chev,.retmenu{display:none}

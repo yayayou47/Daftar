@@ -4,6 +4,12 @@ Les versions sont numérotées `X.Y.Z` (le nom de série, « Ousnou », figure �
 est écrit à un seul endroit : `app/version.js`. Chaque version publiée a son tag `vX.Y.Z` et sa page dans
 [Releases](https://github.com/yayayou47/Daftar/releases) (APK Android et zip Ubuntu).
 
+## 1.4.14 — 2026-11-25
+
+- La ligne du haut (logo, synchronisation, devise, jour / nuit, ≡) reste figée en haut de l'écran pendant le
+  défilement, sur téléphone comme sur ordinateur (elle s'effaçait en descendant et revenait mal en remontant) ; sur
+  ordinateur, la barre des rubriques est figée juste dessous.
+
 ## 1.4.13 — 2026-11-25
 
 - En-tête : logo, synchronisation, devise, bouton jour / nuit (par défaut, le mode du navigateur) et menu ≡ ; toucher

@@ -28,7 +28,7 @@ const elements = new Map();
 function element(id) {
   if (!elements.has(id)) {
     const etat = {id, value: VALEURS[id] ?? '', checked: false, hidden: false, disabled: false, textContent: '', innerHTML: '',
-                  style: {}, dataset: {}, children: [], options: [], selectedIndex: 0, open: false, scrollTop: 0, offsetWidth: 800, clientWidth: 800,
+                  style: {setProperty() {}, removeProperty() {}}, dataset: {}, children: [], options: [], offsetHeight: 60, selectedIndex: 0, open: false, scrollTop: 0, offsetWidth: 800, clientWidth: 800,
                   classList: {add() {}, remove() {}, toggle() {}, contains: () => false}};
     elements.set(id, new Proxy(etat, {get: (t, k) => (k in t ? t[k] : neutre[k]), set: (t, k, v) => { t[k] = v; return true; }}));
   }

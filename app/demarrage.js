@@ -28,15 +28,15 @@ if(!MODE_SYNC&&!MODE_AUTONOME&&'EventSource' in window&&/^(localhost|127\.0\.0\.
 
 /* ================= démarrage ================= */
 /* téléphone (même seuil que style.css) : la barre des rubriques (en bas) se cache pendant le défilement et revient dès
-   qu'on s'arrête ; la ligne du haut (logo, synchronisation, devise, export, ≡) s'efface quand on descend et revient dès
-   qu'on remonte (toujours visible près du haut de la page). Rien ne se cache si le focus clavier ou un menu y est. */
+   qu'on s'arrête (sauf si le focus clavier est dedans). La ligne du haut, elle, reste figée (style.css) ; sa hauteur
+   (--hh) place la barre des rubriques juste dessous sur ordinateur et règle les défilements automatiques. */
 (()=>{const nav=document.querySelector('nav.apptabs'),hd=document.querySelector('main.wrap>header'),tel=matchMedia('(max-width:567px)');
+  const hauteur=()=>document.documentElement.style.setProperty('--hh',hd.offsetHeight+'px');hauteur();
+  if(window.ResizeObserver)new ResizeObserver(hauteur).observe(hd);else addEventListener('resize',hauteur);
   let t=null,y=scrollY;
   addEventListener('scroll',()=>{if(!tel.matches)return;const d=scrollY-y;y=scrollY;
     if(Math.abs(d)>2&&!nav.contains(document.activeElement))nav.classList.add('cachee');
-    clearTimeout(t);t=setTimeout(()=>nav.classList.remove('cachee'),350);
-    const occupe=hd.contains(document.activeElement)||!$('exportMenu').hidden;
-    if(scrollY<hd.offsetHeight||d<-2||occupe)hd.classList.remove('cachee');else if(d>2)hd.classList.add('cachee')},{passive:true})})();
+    clearTimeout(t);t=setTimeout(()=>nav.classList.remove('cachee'),350)},{passive:true})})();
 navPret=true;
 render();charger().then(()=>{if(MODE_SYNC)synchroniser();majRappelSauvegarde()});
 if(MODE_SYNC||MODE_AUTONOME){

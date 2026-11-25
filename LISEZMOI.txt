@@ -95,12 +95,12 @@ finances, vue Mois, mois en cours), l'état de la synchronisation, la devise,
 le bouton jour / nuit (☀ / ☾) et le menu ≡ (Données et réglages). Par
 défaut, Daftar suit le mode clair ou sombre du navigateur ; le bouton choisit
 l'autre, et le choix est retenu sur l'appareil. Rebasculer vers le mode du
-navigateur revient au réglage automatique. Sur le téléphone, elle
-s'efface quand on descend dans la page et réapparaît dès qu'on remonte.
+navigateur revient au réglage automatique. Elle reste figée en haut
+de l'écran pendant le défilement.
 
-La barre des rubriques est en bas de l'écran sur le téléphone (en haut sur
-l'ordinateur) ; elle s'efface pendant qu'on fait défiler la page et revient
-dès qu'on s'arrête :
+La barre des rubriques est en bas de l'écran sur le téléphone, où elle
+s'efface pendant qu'on fait défiler la page et revient dès qu'on s'arrête ;
+sur l'ordinateur, elle est figée juste sous la ligne du haut :
 
   - Saisir (en bleu) : la carte de saisie d'une opération, le curseur dans
     le champ Montant.
