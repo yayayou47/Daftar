@@ -123,6 +123,7 @@ class Parite(unittest.TestCase):
             # « pour » (foyers, 2026-11-27)
             {"pour": ["adam"]}, {"pour": ["adam", "zara", "adam"]}, {"pour": "halima"}, {"pour": ["foyer1"]}, {"pour": []},
             {"pour": ["foyer1", "adam"]}, {"pour": ["inconnu"]}, {"nature": "revenu", "pour": ["adam"]},
+            {"pour": ["moi"]}, {"pour": ["moi", "adam"]}, {"pour": ["moi", "moi"]},
             {"prog": "frais-banque", "prog_date": "2026-11-30"}, {"cree": "2026-11-20T08:00:00Z"}, {"cree": "n'importe quoi"},
         ]
         docs = [{**base, **v} for v in variantes]
@@ -145,6 +146,7 @@ class Parite(unittest.TestCase):
             {"postes": [p for p in postes if p["id"] != "repas"], "deplacer": {"repas": "foyer"}},
             {"postes": [p for p in postes if p["id"] != "repas"]},
             {"postes": [{**postes[0], "label": postes[1]["label"]}] + postes[1:]},
+            {"postes": [{**p, "pour": {"sante": "moi", "voiture": "n'importe quoi", "foyer": ""}.get(p["id"], p.get("pour"))} for p in postes]},
             {"postes": [{**postes[0], "id": "mauvais id !"}] + postes[1:]},
             {"budgets": {"foyer": 150000, "inconnu": 5, "loyer": 0}},
             {"budgets": {"foyer": "abc"}},

@@ -333,8 +333,12 @@ Pour qui ? Le prénom d'un membre dans une note désigne ce membre :
   8000 coiffure halima   → Coiffure, parfumerie, pour Halima
   75000 rentrée adam zara → partagée : 37 500 pour Adam, 37 500 pour Zara
   25000 vivres           → Foyer, commun du foyer 1 (règle par défaut)
-Sans prénom, une dépense du poste Foyer est commune au premier foyer ; les
-autres sont pour vous. Dans Une opération, le champ « Pour » propose Moi,
+Sans prénom, c'est le poste qui décide (Postes et libellés, réglage « Pour »
+de chaque poste) : « moi » (repas, perso, téléphone…), « le foyer » (commun
+du premier foyer : vivres, enfants…) ou « personne en particulier »
+(voiture, aides et dons, bureau… : dépenses du poste, montrées à part dans
+la vue Foyer). Pour ces derniers, le champ « Pour » reste replié ; « Préciser
+pour qui » l'ouvre. Dans Une opération, le champ « Pour » propose Moi,
 Foyer 1, Foyer 2… ; un foyer choisi ouvre son menu : « Tous (commun) », ou
 cochez un ou plusieurs de ses membres (l'épouse, 2 enfants…) ; plusieurs
 membres = parts égales. Chaque foyer a ses propres membres, épouse comprise.

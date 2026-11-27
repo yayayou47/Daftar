@@ -5,23 +5,23 @@
 (function () {
   'use strict';
   const POSTES_DEFAUT = [
-    {id: 'foyer', label: 'Foyer, vivres', couleur: '#2f6fa8',
+    {id: 'foyer', label: 'Foyer, vivres', pour: 'foyer', couleur: '#2f6fa8',
      mots: ['riz', 'huile', 'savon', 'sucre', 'farine', 'alimentaire', 'vivres', 'lait', 'pain', 'viande', 'poisson', 'légumes', 'marché', 'famille']},
     {id: 'loyer', label: 'Loyer, logement', couleur: '#c58b2a', mots: ['loyer', 'contribution', 'logement']},
     {id: 'aides', label: 'Aides et dons', couleur: '#c0533a',
      mots: ['aide', 'aumône', 'aumone', 'prestation', 'baptême', 'mariage', 'funéraire', 'don']},
-    {id: 'enfants', label: 'Enfants, école', couleur: '#2e8a57', mots: ['scolarité', 'école', 'fourniture', 'enfant']},
+    {id: 'enfants', label: 'Enfants, école', pour: 'foyer', couleur: '#2e8a57', mots: ['scolarité', 'école', 'fourniture', 'enfant']},
     {id: 'sante', label: 'Santé', couleur: '#d9772f', mots: ['médic', 'soin', 'examen', 'pharmacie', 'hôpital', 'analyse', 'clinique']},
     {id: 'voiture', label: 'Voiture', couleur: '#6b7b90',
      mots: ['carburant', 'essence', 'gasoil', 'assurance', 'fiche technique', 'amende', 'vidange', 'lavage', 'garage', 'pneu', 'mécan', 'voiture']},
-    {id: 'tel', label: 'Téléphone, internet', couleur: '#2f97ad', mots: ['crédit', 'forfait', 'internet', 'téléphone']},
+    {id: 'tel', label: 'Téléphone, internet', pour: 'moi', couleur: '#2f97ad', mots: ['crédit', 'forfait', 'internet', 'téléphone']},
     {id: 'transport', label: 'Transport', couleur: '#8a9a2e', mots: ['transport', 'taxi', 'moto', 'clando', 'bus']},
-    {id: 'repas', label: 'Repas, boissons', couleur: '#9363b0',
+    {id: 'repas', label: 'Repas, boissons', pour: 'moi', couleur: '#9363b0',
      mots: ['dej', 'déj', 'diner', 'dîner', 'café', 'jus', 'boisson', 'repas']},
     // 2026-11-27 : habillement et coiffure séparés de « Perso » (dépenses ciblées sur un membre du foyer)
     {id: 'habillement', label: 'Habillement', couleur: '#4f6dbf', mots: ['vêtement', 'habit', 'chaussure', 'tissu', 'pagne', 'couture', 'tailleur']},
     {id: 'coiffure', label: 'Coiffure, parfumerie', couleur: '#a0663c', mots: ['coiff', 'tresse', 'mèche', 'parfum', 'crème', 'cosmétique']},
-    {id: 'perso', label: 'Perso', couleur: '#cc5f86', mots: ['cadeau']},
+    {id: 'perso', label: 'Perso', pour: 'moi', couleur: '#cc5f86', mots: ['cadeau']},
     {id: 'autre', label: 'Autre', couleur: '#9a968c', mots: []},
   ];
   const COMPTES_DEFAUT = [{id: 'especes', nom: 'Espèces', type: 'especes', mots: ['espèces', 'especes', 'cash', 'liquide'], releves: []}];
@@ -61,7 +61,7 @@
   const texte = (v, n) => String(v == null ? '' : v).split(/\s+/).filter(Boolean).join(' ').slice(0, n);
   const ids = (d, cle) => new Set(((d.parametres || {})[cle] || []).map(x => x.id));
   // « Pour » d'une dépense (2026-11-27) : {id: 'foyer' | 'membre'} des foyers et de leurs membres (même règle que serveur.py)
-  const idsPour = d => { const out = {}; for (const f of (d.parametres || {}).foyers || []) { out[f.id] = 'foyer'; for (const m of f.membres || []) out[m.id] = 'membre'; } return out; };
+  const idsPour = d => { const out = {moi: 'moi'}; for (const f of (d.parametres || {}).foyers || []) { out[f.id] = 'foyer'; for (const m of f.membres || []) out[m.id] = 'membre'; } return out; };
   const idsPostes = d => { const s = ids(d, 'postes'); return s.size ? s : new Set(POSTES_DEFAUT.map(x => x.id)); };
   const biens = d => (d.parametres || {}).biens || [];
   const idsRevenus = d => { const s = ids(d, 'revenus'); return s.size ? s : new Set(REVENUS_DEFAUT.map(x => x.id)); };
@@ -157,7 +157,7 @@
       // pour qui : un foyer (dépense commune) OU un ou plusieurs membres (part égale de chacun)
       const pour = Array.isArray(doc.pour) ? doc.pour : [doc.pour], connus = idsPour(d), vus = [];
       for (const p of pour) { if (!(p in connus)) erreur('Membre du foyer inconnu : ' + p); if (!vus.includes(p)) vus.push(p); }
-      if (vus.length > 1 && vus.some(p => connus[p] === 'foyer')) erreur('Une dépense commune au foyer ne vise pas en plus un membre.');
+      if (vus.length > 1 && vus.some(p => connus[p] === 'foyer' || connus[p] === 'moi')) erreur('Une dépense pour vous ou commune au foyer ne vise pas en plus un membre.');
       out.pour = vus;
     }
     if ((nature === 'depense' || nature === 'revenu') && doc.evenement) {
@@ -373,7 +373,7 @@
       }
       out.push({id: fid, nom, membres});
     }
-    const manquants = [...new Set(d.operations.flatMap(o => o.pour || []))].filter(p => !vus.has(p));
+    const manquants = [...new Set(d.operations.flatMap(o => o.pour || []))].filter(p => !vus.has(p) && p !== 'moi');
     if (manquants.length) erreur('Impossible de supprimer un foyer ou un membre qui a des dépenses : ' + manquants.sort().join(', '));
     return out;
   }
@@ -407,6 +407,7 @@
         vus.add(pid); noms.add(label.toLowerCase());
         const coul = String(x.couleur || '#9a968c');
         postes.push({id: pid, label, couleur: RE_COULEUR.test(coul) ? coul : '#9a968c', mots: pid !== 'autre' ? nettoyerMots(x.mots) : []});
+        if (x.pour === 'moi' || x.pour === 'foyer') postes[postes.length - 1].pour = x.pour;   // pour qui, par défaut (même règle que serveur.py)
       }
       if (!vus.has('autre')) postes.push(copie(POSTES_DEFAUT[POSTES_DEFAUT.length - 1]));
       else postes = postes.filter(x => x.id !== 'autre').concat(postes.filter(x => x.id === 'autre'));

@@ -74,7 +74,11 @@ addEventListener('load',()=>setTimeout(async()=>{const vu=[];const pause=()=>new
       document.getElementById('fLib').value='pain';document.getElementById('fLib').dispatchEvent(new Event('input'));await pause();
       document.querySelector('#fPour [data-p="'+F.id+'"]').click();await pause();const tous=JSON.stringify(pourEffectif())===JSON.stringify([F.id]);
       const c=document.querySelector('#fPour [data-m="'+m.id+'"]');c.checked=true;c.dispatchEvent(new Event('change',{bubbles:true}));await pause();
-      if(tous&&JSON.stringify(pourEffectif())===JSON.stringify([m.id])&&!document.querySelector('#fPour [data-p="'+m.id+'"]'))vu.push('pour');resetForm()}
+      if(tous&&JSON.stringify(pourEffectif())===JSON.stringify([m.id])&&!document.querySelector('#fPour [data-p="'+m.id+'"]'))vu.push('pour');resetForm();
+      // poste sans destinataire (voiture) : champ replié derrière « Préciser pour qui », qui l'ouvre
+      document.getElementById('fLib').value='lavage voiture';document.getElementById('fLib').dispatchEvent(new Event('input'));await pause();
+      const plus=document.querySelector('#fPour [data-plus]');if(plus&&!document.querySelector('#fPour [data-p]')){plus.click();await pause();
+        if(document.querySelector('#fPour [data-p="moi"]'))vu.push('pourReplie')}resetForm()}
     // logo : retour à l'accueil (Mes finances, vue Mois)
     document.getElementById('aVeh').click();await pause();document.getElementById('logoAccueil').click();await pause();
     if(view==='mois'&&vueFin==='mois')vu.push('logoAccueil');
@@ -143,7 +147,7 @@ class Navigateur(unittest.TestCase):
         self.assertIn("vStats", b["vu"])
         self.assertIn("aSaisir", b["vu"])
         self.assertIn("logoAccueil", b["vu"], "le logo ne ramène pas à l'accueil")
-        for etape in ("menu", "export", "theme", "tOne", "tSav", "bHub", "hub", "hubmod", "vidange", "fiches", "tRev", "foyMois", "foyAn", "balayage", "tFoy", "pour"):
+        for etape in ("menu", "export", "theme", "tOne", "tSav", "bHub", "hub", "hubmod", "vidange", "fiches", "tRev", "foyMois", "foyAn", "balayage", "tFoy", "pour", "pourReplie"):
             self.assertIn(etape, b["vu"], "étape manquante : " + etape)
 
     def test_ordinateur(self):

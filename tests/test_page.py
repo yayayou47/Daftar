@@ -292,18 +292,23 @@ class Calculs(unittest.TestCase):
 
     def test_foyer_pour_qui(self):
         # reconnaissance du prénom, règle par défaut (poste Foyer = commun), partage à parts égales
-        g, deux, defaut, moi = page("guessOp('15000 pharmacie adam')", "guessOp('rentrée adam zara').pour",
-                                    "pourDe({nature:'depense',categorie:'foyer'})", "pourDe({nature:'depense',categorie:'sante'})")
+        # « pour » du poste : Foyer → commun du foyer 1 ; Repas → moi ; Santé (sans réglage) → personne en particulier
+        g, deux, defaut, moi, poste, choisi = page("guessOp('15000 pharmacie adam')", "guessOp('rentrée adam zara').pour",
+                                                   "pourDe({nature:'depense',categorie:'foyer'})", "pourDe({nature:'depense',categorie:'repas'})",
+                                                   "pourDe({nature:'depense',categorie:'sante'})", "pourDe({nature:'depense',categorie:'sante',pour:['moi']})")
         self.assertEqual((g["categorie"], g["pour"]), ("sante", ["adam"]))
         self.assertEqual(deux, ["adam", "zara"])
         self.assertEqual(defaut, ["foyer1"])
-        self.assertEqual(moi, [])
+        self.assertEqual(moi, ["moi"])
+        self.assertEqual(poste, [])
+        self.assertEqual(choisi, ["moi"])
         d = demo()
         ops = [o for o in d["operations"] if o["date"].startswith("2026") and o["nature"] == "depense" and o["date"] >= d["parametres"]["debut_suivi"]]
         parts = page("(()=>{const r=partsPour(yearItems(2026).filter(e=>!DEBUT_SUIVI||e.date>=DEBUT_SUIVI));return Object.fromEntries(Object.entries(r).map(([k,v])=>[k,Math.round(v.tot)]))})()")[0]
         attendu = {}
         for o in ops:
-            p = o.get("pour") or (["foyer1"] if o["categorie"] == "foyer" else [""])
+            regle = {x["id"]: x.get("pour", "") for x in d["parametres"]["postes"]}.get(o["categorie"], "")
+            p = o.get("pour") or {"foyer": ["foyer1"], "moi": ["moi"]}.get(regle, ["_hors"])
             for k in p:
                 attendu[k] = attendu.get(k, 0) + o["montant"] / len(p)
         self.assertEqual(parts, {k: round(v) for k, v in attendu.items()})

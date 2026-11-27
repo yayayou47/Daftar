@@ -22,7 +22,7 @@ function filtreOk(e,f){
   if(t==='x')return estExc(e)||partPonct(e)>0;
   if(t==='c')return e.compte===v||e.vers===v||e.tiers===v;
   if(t==='m')return pourDe(e).includes(v)||(!!FOYER[v]&&pourDe(e).some(x=>(MEMBRE[x]||{}).foyer===v));   // foyer : commun + ses membres
-  if(t==='o')return e.nature==='depense'&&perso(e)&&!pourDe(e).length;   // Moi
+  if(t==='o')return e.nature==='depense'&&perso(e)&&pourDe(e).includes('moi');   // Moi
   if(t==='p')return normTxt(e.personne)===v;
   if(t==='b'){const b=BIEN[v];return e.bien===v||(!!b&&!!b.poste&&e.nature==='depense'&&e.categorie===b.poste&&(!b.date_achat||e.date>=b.date_achat))}
   return true;
@@ -336,7 +336,7 @@ function opTag(e){
   const progTag=e.prog?' · <span class="nat" title="opération programmée">programmée</span>':'';
   const evTag=progTag+(e.evenement?` · <span class="nat exc">★ ${esc((EVT[e.evenement]||{}).nom||e.evenement)}</span>`:'');
   switch(e.nature){
-    case 'depense':{const p=CAT[e.categorie]||CAT.autre,po=pourDe(e);return `<span class="dot" aria-hidden="true" style="background:${color(p.id)}"></span>${esc(p.label)}${po.length&&(e.pour||[]).length?` · <span class="nat">pour ${esc(po.map(x=>MEMBRE[x]?MEMBRE[x].nom:(FOYER[x]||{}).nom||x).join(', '))}</span>`:''}${e.compte!=='especes'?` · ${cn}`:''}${evTag}`}
+    case 'depense':{const p=CAT[e.categorie]||CAT.autre,po=pourDe(e);return `<span class="dot" aria-hidden="true" style="background:${color(p.id)}"></span>${esc(p.label)}${po.length&&(e.pour||[]).length?` · <span class="nat">pour ${esc(po.map(x=>x==='moi'?'moi':MEMBRE[x]?MEMBRE[x].nom:(FOYER[x]||{}).nom||x).join(', '))}</span>`:''}${e.compte!=='especes'?` · ${cn}`:''}${evTag}`}
     case 'revenu':{const r=REV[catRev(e)]||{label:'',courant:true};return `<span class="nat in">Revenu</span> · ${esc(r.label)}${!r.courant&&!e.evenement?' <span class="nat exc">ponctuel</span>':''}${partPonct(e)?` · <span class="nat exc">dont ${fmt(partPonct(e))} ${U()} ${esc(((REV[e.cat_ponctuel]||{label:'autre revenu'}).label).toLowerCase())} (ponctuel)</span>`:''} · ${cn}${evTag}`}
     case 'virement':return `<span class="nat">Virement</span> · ${cn} → ${dotCpt(e.vers)}${esc(nomCpt(e.vers))}`;
     case 'pret':return `<span class="nat out">Prêt</span> · ${esc(e.personne)} · ${cn}${e.echeance?` · échéance ${dmy(e.echeance)}`:''}`;
@@ -807,7 +807,7 @@ $('pjSave').onclick=async()=>{const par={};
 let foyMode='mois';
 function partsPour(items){const r={};
   const add=(k,e,v)=>{const x=r[k]=r[k]||{tot:0,cats:{},n:0};x.tot+=v;x.cats[e.categorie]=(x.cats[e.categorie]||0)+v;x.n++};
-  for(const e of items){if(e.nature!=='depense'||!perso(e))continue;const p=pourDe(e);if(!p.length)add('',e,e.montant);else p.forEach(id=>add(id,e,e.montant/p.length))}
+  for(const e of items){if(e.nature!=='depense'||!perso(e))continue;const p=pourDe(e);if(!p.length)add('_hors',e,e.montant);else p.forEach(id=>add(id,e,e.montant/p.length))}
   return r}
 // mois de l'année y comptés pour la moyenne mensuelle : depuis le début du suivi, jusqu'au mois en cours
 function moisDeLAnnee(y){let a=0,b=11;if(y===now.getFullYear())b=now.getMonth();if(DEBUT_SUIVI&&+DEBUT_SUIVI.slice(0,4)===y)a=+DEBUT_SUIVI.slice(5,7)-1;return Math.max(1,b-a+1)}
@@ -819,18 +819,21 @@ function renderFoyer(){
   const nm=foyMode==='mois'?1:moisDeLAnnee(cur.y),r0=v=>Math.round(v);
   const lignes=[];
   for(const f of FOYERS)lignes.push({k:f.id,lab:'Commun',f},...f.membres.map(m=>({k:m.id,lab:m.nom,sous:ROLES[m.role]+(m.naissance&&ageDe(m.naissance)!==null?` · ${ageDe(m.naissance)} ans`:''),f})));
-  const tousTot=lignes.reduce((a,l)=>a+((P[l.k]||{}).tot||0),0)+((P['']||{}).tot||0)||1;
-  const barre=l=>{const x=P[l.k]||{tot:0,n:0};return `<button type="button" class="foyl" data-f="${l.k?'m:'+l.k:'o:'}"><span class="foyn"><b>${esc(l.lab)}</b>${l.sous?`<span class="hint">${esc(l.sous)}</span>`:''}</span>
+  const tousTot=lignes.reduce((a,l)=>a+((P[l.k]||{}).tot||0),0)+((P.moi||{}).tot||0)||1;
+  const barre=l=>{const x=P[l.k]||{tot:0,n:0};return `<button type="button" class="foyl" data-f="${l.f===undefined&&l.k!=='moi'?l.k:l.k==='moi'?'o:':'m:'+l.k}"><span class="foyn"><b>${esc(l.lab)}</b>${l.sous?`<span class="hint">${esc(l.sous)}</span>`:''}</span>
     <span class="foyb"><i style="width:${Math.max(x.tot?1.5:0,x.tot/tousTot*100)}%"></i></span><span class="foym num">${fmtM(r0(x.tot))}${foyMode!=='mois'&&x.tot?`<span class="hint">${fmtM(r0(x.tot/nm))}/mois</span>`:''}</span></button>`};
   const table=ls=>{const cats=CATS.filter(c=>ls.some(l=>(P[l.k]||{cats:{}}).cats[c.id]));if(!cats.length)return '';return `<div class="tbl"><table><thead><tr><th>Pour</th>${cats.map(c=>`<th>${esc(c.label)}</th>`).join('')}<th>Total</th></tr></thead><tbody>${ls.map(l=>{const x=P[l.k]||{tot:0,cats:{}};
-    return `<tr class="click" data-f="${l.k?'m:'+l.k:'o:'}"><td>${esc(l.lab)}</td>${cats.map(c=>`<td>${x.cats[c.id]?fmtM(r0(x.cats[c.id])):'–'}</td>`).join('')}<td><b>${fmtM(r0(x.tot))}</b></td></tr>`}).join('')}</tbody></table></div>`};
+    return `<tr class="click" data-f="m:${l.k}"><td>${esc(l.lab)}</td>${cats.map(c=>`<td>${x.cats[c.id]?fmtM(r0(x.cats[c.id])):'–'}</td>`).join('')}<td><b>${fmtM(r0(x.tot))}</b></td></tr>`}).join('')}</tbody></table></div>`};
   let h='';
   for(const f of FOYERS){const ls=lignes.filter(l=>l.f===f),tot=ls.reduce((a,l)=>a+((P[l.k]||{}).tot||0),0);
     const enf=f.membres.filter(m=>m.role==='enfant'),te=enf.reduce((a,m)=>a+((P[m.id]||{}).tot||0),0);
     h+=`<div class="foycard"><div class="phead"><h3 class="sub">${esc(f.nom)}</h3><span class="hint">${fmtM(r0(tot))} ${U()}${foyMode!=='mois'?` · ${fmtM(r0(tot/nm))} ${U()}/mois`:''}${enf.length&&te?` · enfants ${fmtM(r0(te/enf.length/nm))} ${U()} par enfant et par mois`:''}</span></div>
       <div class="foybars">${ls.map(barre).join('')}</div>${table(ls)}</div>`}
-  const moi={k:'',lab:'Moi',sous:'dépenses pour vous-même'};
+  const moi={k:'moi',lab:'Moi',sous:'dépenses pour vous-même'};
   h+=`<div class="foycard"><div class="foybars">${barre(moi)}</div></div>`;
+  // dépenses de poste, pour personne en particulier (voiture, aides, bureau…) : par poste, pour mémoire
+  const H=P._hors;if(H&&H.tot){const cs=CATS.filter(c=>H.cats[c.id]).sort((a,b)=>H.cats[b.id]-H.cats[a.id]),mx=H.cats[cs[0].id];
+    h+=`<div class="foycard"><div class="phead"><h3 class="sub">Dépenses de poste</h3><span class="hint">${fmtM(r0(H.tot))} ${U()} · pour personne en particulier (voiture, aides, bureau…)</span></div><div class="foybars">${cs.map(c=>`<button type="button" class="foyl" data-f="k:${c.id}"><span class="foyn"><b>${esc(c.label)}</b></span><span class="foyb"><i style="width:${Math.max(1.5,H.cats[c.id]/mx*100)}%;background:${color(c.id)}"></i></span><span class="foym num">${fmtM(r0(H.cats[c.id]))}</span></button>`).join('')}</div></div>`}
   $('foyBody').innerHTML=h;
 }
 // une ligne (commun, membre, Moi) : son journal, sur la même période

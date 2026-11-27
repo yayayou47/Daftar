@@ -64,28 +64,28 @@ APP_ID = "appya"
 # Postes par défaut (l'ordre compte : le premier poste dont un mot-clé apparaît dans le libellé l'emporte).
 # Modifiables depuis l'application : onglet « Postes et libellés ».
 POSTES_DEFAUT = [   # mêmes valeurs que POSTES_DEFAUT dans app/moteur.js (version autonome)
-    {"id": "foyer", "label": "Foyer, vivres", "couleur": "#2f6fa8",
+    {"id": "foyer", "label": "Foyer, vivres", "pour": "foyer", "couleur": "#2f6fa8",
      "mots": ["riz", "huile", "savon", "sucre", "farine", "alimentaire", "vivres", "lait", "pain", "viande", "poisson",
               "légumes", "marché", "famille"]},
     {"id": "loyer", "label": "Loyer, logement", "couleur": "#c58b2a", "mots": ["loyer", "contribution", "logement"]},
     {"id": "aides", "label": "Aides et dons", "couleur": "#c0533a",
      "mots": ["aide", "aumône", "aumone", "prestation", "baptême", "mariage", "funéraire", "don"]},
-    {"id": "enfants", "label": "Enfants, école", "couleur": "#2e8a57", "mots": ["scolarité", "école", "fourniture", "enfant"]},
+    {"id": "enfants", "label": "Enfants, école", "pour": "foyer", "couleur": "#2e8a57", "mots": ["scolarité", "école", "fourniture", "enfant"]},
     {"id": "sante", "label": "Santé", "couleur": "#d9772f",
      "mots": ["médic", "soin", "examen", "pharmacie", "hôpital", "analyse", "clinique"]},
     {"id": "voiture", "label": "Voiture", "couleur": "#6b7b90",
      "mots": ["carburant", "essence", "gasoil", "assurance", "fiche technique", "amende", "vidange",
               "lavage", "garage", "pneu", "mécan", "voiture"]},
-    {"id": "tel", "label": "Téléphone, internet", "couleur": "#2f97ad", "mots": ["crédit", "forfait", "internet", "téléphone"]},
+    {"id": "tel", "label": "Téléphone, internet", "pour": "moi", "couleur": "#2f97ad", "mots": ["crédit", "forfait", "internet", "téléphone"]},
     {"id": "transport", "label": "Transport", "couleur": "#8a9a2e", "mots": ["transport", "taxi", "moto", "clando", "bus"]},
-    {"id": "repas", "label": "Repas, boissons", "couleur": "#9363b0",
+    {"id": "repas", "label": "Repas, boissons", "pour": "moi", "couleur": "#9363b0",
      "mots": ["dej", "déj", "diner", "dîner", "café", "jus", "boisson", "repas"]},
     # 2026-11-27 : habillement et coiffure séparés de « Perso » (dépenses ciblées sur un membre du foyer)
     {"id": "habillement", "label": "Habillement", "couleur": "#4f6dbf",
      "mots": ["vêtement", "habit", "chaussure", "tissu", "pagne", "couture", "tailleur"]},
     {"id": "coiffure", "label": "Coiffure, parfumerie", "couleur": "#a0663c",
      "mots": ["coiff", "tresse", "mèche", "parfum", "crème", "cosmétique"]},
-    {"id": "perso", "label": "Perso", "couleur": "#cc5f86", "mots": ["cadeau"]},
+    {"id": "perso", "label": "Perso", "pour": "moi", "couleur": "#cc5f86", "mots": ["cadeau"]},
     {"id": "autre", "label": "Autre", "couleur": "#9a968c", "mots": []},
 ]
 RE_ID = re.compile(r"^[a-z0-9_-]{1,40}$")
@@ -149,7 +149,7 @@ def ids_de(d, cle):
 
 def ids_pour(d):
     """« Pour » d'une dépense (2026-11-27) : {id: "foyer" | "membre"} des foyers et de leurs membres."""
-    out = {}
+    out = {"moi": "moi"}   # « Moi » choisi à la main (un poste sans destinataire par défaut)
     for f in d.get("parametres", {}).get("foyers", []):
         out[f["id"]] = "foyer"
         for m in f.get("membres", []):
@@ -721,8 +721,8 @@ def nettoyer(doc, d):
                 raise ValueError("Membre du foyer inconnu : %s" % p)
             if p not in vus:
                 vus.append(p)
-        if len(vus) > 1 and any(connus[p] == "foyer" for p in vus):
-            raise ValueError("Une dépense commune au foyer ne vise pas en plus un membre.")
+        if len(vus) > 1 and any(connus[p] in ("foyer", "moi") for p in vus):
+            raise ValueError("Une dépense pour vous ou commune au foyer ne vise pas en plus un membre.")
         out["pour"] = vus
     if nature in ("depense", "revenu") and doc.get("evenement"):
         if doc["evenement"] not in ids_de(d, "evenements"):
@@ -1007,7 +1007,7 @@ def nettoyer_foyers(liste, d):
             membres.append({"id": mid, "nom": mnom, "role": m.get("role") if m.get("role") in ROLES_MEMBRE else "autre",
                             "naissance": nais, "mots": nettoyer_mots(m.get("mots"))})
         out.append({"id": fid, "nom": nom, "membres": membres})
-    manquants = {p for o in d.get("operations", []) for p in (o.get("pour") or [])} - vus
+    manquants = {p for o in d.get("operations", []) for p in (o.get("pour") or [])} - vus - {"moi"}
     if manquants:
         raise ValueError("Impossible de supprimer un foyer ou un membre qui a des dépenses : %s" % ", ".join(sorted(manquants)))
     return out
@@ -1057,6 +1057,8 @@ def regler(d, corps, resume=None):
             postes.append({"id": pid, "label": label,
                            "couleur": coul if RE_COULEUR.match(coul) else "#9a968c",
                            "mots": nettoyer_mots(x.get("mots")) if pid != "autre" else []})
+            if x.get("pour") in ("moi", "foyer"):   # pour qui, par défaut, une dépense de ce poste (2026-11-27)
+                postes[-1]["pour"] = x["pour"]
         if "autre" not in vus:
             postes.append(dict(POSTES_DEFAUT[-1]))
         else:  # « Autre » reste toujours en dernier

@@ -4,6 +4,13 @@ Les versions sont numérotées `X.Y.Z` (le nom de série, « Ousnou », figure �
 est écrit à un seul endroit : `app/version.js`. Chaque version publiée a son tag `vX.Y.Z` et sa page dans
 [Releases](https://github.com/yayayou47/Daftar/releases) (APK Android et zip Ubuntu).
 
+## 1.4.22 — 2026-11-27
+
+- Pour qui : chaque poste a un réglage « Pour » (moi, le foyer, ou personne en particulier). Seuls les postes réglés
+  « moi » (repas, perso, téléphone…) comptent pour vous ; voiture, aides et dons, bureau… sont des dépenses du poste,
+  montrées à part dans la vue Foyer (« Dépenses de poste »). Dans Une opération, le champ « Pour » reste replié pour ces
+  postes (« Préciser pour qui » l'ouvre) ; « Moi » peut aussi être choisi à la main.
+
 ## 1.4.21 — 2026-11-27
 
 - Foyer : le bouton est à côté du mois ou de l'année (Mes finances › Mois ou Année) et montre le foyer de cette

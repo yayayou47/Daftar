@@ -27,11 +27,13 @@ let pourSel=null,pourAuto=null;
 const pourEffectif=()=>pourSel||pourAuto||pourDe({nature:'depense',categorie:$('fCat').value,pour:[]});
 /* Champ « Pour » (2026-11-27, demande de l'utilisateur) : Moi | Foyer 1 | Foyer 2… ; un foyer choisi ouvre son menu
    déroulant : « Tous (commun) » ou un ou plusieurs de ses membres (épouse, enfants…), cochés (parts égales). */
-let pourOuvert=false;
+let pourOuvert=false,pourMontre=false;   // pourMontre : « Préciser pour qui » touché (poste sans destinataire)
 const foyerDe=p=>p.length?(FOYER[p[0]]?p[0]:(MEMBRE[p[0]]||{}).foyer||''):'';
 function renderPour(){if($('wPour').hidden)return;const p=pourEffectif(),fo=foyerDe(p),F=FOYER[fo];
-  const chip=(id,lab)=>`<button type="button" data-p="${id}" aria-pressed="${id===''?!p.length:id===fo}">${esc(lab)}</button>`;
-  let h=`<div class="chips">${chip('','Moi')}${FOYERS.map(f=>chip(f.id,f.nom)).join('')}</div>`;
+  // poste sans destinataire (voiture, aides, bureau…) : le champ reste replié, « Préciser pour qui » l'ouvre
+  if(!p.length&&!pourMontre){$('fPour').innerHTML=`<button type="button" class="linkbtn" data-plus>Préciser pour qui (Moi, un foyer…)</button>`;$('fPourHint').hidden=true;return}
+  const chip=(id,lab)=>`<button type="button" data-p="${id}" aria-pressed="${id==='moi'?p.includes('moi'):id===fo}">${esc(lab)}</button>`;
+  let h=`<div class="chips">${chip('moi','Moi')}${FOYERS.map(f=>chip(f.id,f.nom)).join('')}</div>`;
   if(F){const mb=p.filter(x=>MEMBRE[x]),tous=!mb.length;
     const lab=tous?'Tous (commun)':mb.map(x=>MEMBRE[x].nom).join(', ')+(mb.length>1?` (${mb.length})`:'');
     h+=`<div class="pourdd"><button type="button" class="pourBtn" aria-expanded="${pourOuvert}" aria-controls="pourList">${esc(F.nom)} : <b>${esc(lab)}</b> <span aria-hidden="true">▾</span></button>
@@ -40,10 +42,11 @@ function renderPour(){if($('wPour').hidden)return;const p=pourEffectif(),fo=foye
         ${F.membres.map(m=>`<label class="check"><input type="checkbox" data-m="${m.id}"${mb.includes(m.id)?' checked':''}> ${esc(m.nom)} <span class="hint">${esc(ROLES[m.role]||'')}</span></label>`).join('')||'<span class="hint">Aucun membre : ajoutez-les dans Données et réglages › Foyers.</span>'}
       </div></div>`}
   $('fPour').innerHTML=h;$('fPourHint').hidden=!F}
-$('fPour').addEventListener('click',ev=>{const t=ev.target.closest('[data-p],.pourBtn');if(!t)return;
+$('fPour').addEventListener('click',ev=>{const t=ev.target.closest('[data-p],.pourBtn,[data-plus]');if(!t)return;
+  if(t.dataset.plus!==undefined){pourMontre=true;renderPour();return}
   if(t.classList.contains('pourBtn')){pourOuvert=!pourOuvert;renderPour();return}
   const id=t.dataset.p,p=pourEffectif();
-  if(!id){pourSel=[];pourOuvert=false}
+  if(id==='moi'){pourSel=['moi'];pourOuvert=false}
   else{if(foyerDe(p)!==id)pourSel=[id];else pourSel=p.slice();pourOuvert=true}
   touched.pour=true;renderPour()});
 $('fPour').addEventListener('change',ev=>{const c=ev.target;if(c.type!=='checkbox')return;const fo=foyerDe(pourEffectif());if(!fo)return;
@@ -199,7 +202,7 @@ majClavier();
 function majAbrege(){$('abregeK').checked=ABREGE;$('abregeKInfo').textContent=ABREGE?'Activé : les grands montants des cartes sont abrégés (K = milliers, M = millions) ; le montant exact apparaît en survolant le chiffre. Le journal et les tableaux restent en entier.':'Désactivé : les cartes affichent les montants en entier.'}
 $('abregeK').addEventListener('change',()=>{ABREGE=$('abregeK').checked;lsSet('daftar-abrege',ABREGE?'1':'0');majAbrege();render();status(ABREGE?'Montants abrégés dans les cartes.':'Montants en entier dans les cartes.')});
 majAbrege();
-function resetForm(){['fAmt','fLib','fRem','fPers','fEch','fKm','fQty'].forEach(i=>$(i).value='');$('fTiers').value='';$('fPonct').value='';pourSel=null;pourAuto=null;pourOuvert=false;$('fLibHint').textContent='';$('fUnit').value='L';$('fVid').checked=true;touched={};$('fVidNext').value='';$('fNat').value='depense';$('fCpt').value='especes';$('fCat').value='autre';$('fEvt').value='';editId=null;$('editBar').hidden=true;$('addBtn').textContent='Ajouter';majChamps();amtHint();render()}
+function resetForm(){['fAmt','fLib','fRem','fPers','fEch','fKm','fQty'].forEach(i=>$(i).value='');$('fTiers').value='';$('fPonct').value='';pourSel=null;pourAuto=null;pourOuvert=false;pourMontre=false;$('fLibHint').textContent='';$('fUnit').value='L';$('fVid').checked=true;touched={};$('fVidNext').value='';$('fNat').value='depense';$('fCpt').value='especes';$('fCat').value='autre';$('fEvt').value='';editId=null;$('editBar').hidden=true;$('addBtn').textContent='Ajouter';majChamps();amtHint();render()}
 /* fenêtre de confirmation : résumé lisible de l'opération avant l'enregistrement (Échap ou « Modifier » = annuler) */
 /* ================= annuler : message en bas de l'écran, 10 secondes ================= */
 let toastT=null,HIST=null;
@@ -257,7 +260,7 @@ function confirmerOp(doc,opt={}){
   if(doc.nature==='depense')lignes.push(['Poste',(CAT[doc.categorie]||{}).label||doc.categorie]);
   if(doc.cat_revenu){const r=REV[doc.cat_revenu]||{label:doc.cat_revenu};lignes.push(['Type de revenu',`${r.label} (${r.courant?'courant':'ponctuel'})`])}
   if(doc.ponctuel){const p=REV[doc.cat_ponctuel]||{label:'Autre revenu'};lignes.push(['Dont ponctuel',`${fmtC(doc.ponctuel)} FCFA ${p.label.toLowerCase()} · courant : ${fmtC(doc.montant-doc.ponctuel)} FCFA`])}
-  if(doc.nature==='depense'&&FOYERS.length&&!estTiers(doc.compte)){const p=pourDe(doc);lignes.push(['Pour',p.length?p.map(nomPour).join(', ')+(p.length>1?` : ${fmtC(Math.round(doc.montant/p.length))} FCFA chacun`:''):'Moi'])}
+  if(doc.nature==='depense'&&FOYERS.length&&!estTiers(doc.compte)){const p=pourDe(doc);if(p.length)lignes.push(['Pour',p.map(nomPour).join(', ')+(p.length>1?` : ${fmtC(Math.round(doc.montant/p.length))} FCFA chacun`:'')])}
   if(doc.tiers)lignes.push(['Versé au compte',`${nomCpt(doc.tiers)} : votre dépense alimente aussi ce compte`]);
   if(estTiers(doc.compte))lignes.push(['Compte d\'un tiers','gardé à part : ne compte pas dans vos dépenses ni vos revenus']);
   if(doc.evenement)lignes.push(['Événement',`★ ${(EVT[doc.evenement]||{}).nom||doc.evenement} : opération exceptionnelle`]);
@@ -504,7 +507,7 @@ let draft=[], dirty=false;
 const PALETTE=['#2f6fa8','#c58b2a','#c0533a','#2e8a57','#d9772f','#6b7b90','#2f97ad','#8a9a2e','#9363b0','#cc5f86','#4f8f8f','#a0522d'];
 function statsPoste(id){const it=allP().filter(e=>e.nature==='depense'&&e.categorie===id);return {n:it.length,t:sum(it)}}
 function openPostes(){
-  draft=CATS.map(c=>({id:c.id,label:c.label,couleur:c.couleur,mots:c.mots.join(', '),budget:budgets[c.id]?versSaisie(budgets[c.id]):'',del:false,cible:'autre'}));
+  draft=CATS.map(c=>({id:c.id,label:c.label,couleur:c.couleur,pour:c.pour||'',mots:c.mots.join(', '),budget:budgets[c.id]?versSaisie(budgets[c.id]):'',del:false,cible:'autre'}));
   dirty=false;renderDraft();
 }
 function renderDraft(){
@@ -516,6 +519,7 @@ function renderDraft(){
       <div class="pmain">
         <input class="pname" value="${esc(d.label)}" aria-label="Nom du poste" maxlength="60" ${d.del?'disabled':''}>
         ${isA?'<span class="hint">Lignes dont aucun mot-clé n\'est reconnu. Toujours en dernier.</span>':`<textarea class="pmots" rows="2" placeholder="mots-clés séparés par des virgules : riz, vivres, marché…" aria-label="Mots-clés de ${esc(d.label)}" ${d.del?'disabled':''}>${esc(d.mots)}</textarea>`}
+        <select class="ppour" aria-label="Pour qui, par défaut" ${d.del?'disabled':''}><option value=""${!d.pour?' selected':''}>Pour : personne en particulier (dépense du poste)</option><option value="moi"${d.pour==='moi'?' selected':''}>Pour : moi</option><option value="foyer"${d.pour==='foyer'?' selected':''}>Pour : le foyer (commun)</option></select>
         <span class="pcount">${d.id?`${st.n} ligne${st.n>1?'s':''} · ${fmtM(st.t)} ${U()}`:'nouveau poste'}</span>
       </div>
       <input class="pbud" inputmode="decimal" value="${esc(d.budget)}" placeholder="budget / mois" aria-label="Budget mensuel ${U_SAISIE()}" ${d.del?'disabled':''}>
@@ -527,7 +531,7 @@ function renderDraft(){
   fiches($('posteList'),resumePoste,'savePostes',openPostes);
 }
 function resumePoste(r){const d=draft[+r.dataset.i],st=d.id?statsPoste(d.id):{n:0,t:0},m=String(d.mots||'').trim();
-  return `<i class="pdot" style="background:${d.couleur}" aria-hidden="true"></i><b>${esc(d.label)}</b> <span class="hint">${m?esc(m.length>70?m.slice(0,70)+'…':m)+' · ':''}${d.budget?`budget ${mtS(d.budget)}/mois · `:''}${st.n} ligne${st.n>1?'s':''}</span>`}
+  return `<i class="pdot" style="background:${d.couleur}" aria-hidden="true"></i><b>${esc(d.label)}</b> <span class="hint">${m?esc(m.length>70?m.slice(0,70)+'…':m)+' · ':''}${d.pour?`pour ${d.pour==='moi'?'moi':'le foyer'} · `:''}${d.budget?`budget ${mtS(d.budget)}/mois · `:''}${st.n} ligne${st.n>1?'s':''}</span>`}
 $('posteList').addEventListener('click',ev=>{const b=ev.target.closest('.fmod');if(b){const r=b.closest('.prow');if(r)draft[+r.dataset.i].edit=true}},true);
 function touch(){const first=!dirty;dirty=true;$('posteMsg').textContent='Modifications non enregistrées.';if(first)renderLibs()}
 $('posteList').addEventListener('input',ev=>{
@@ -535,6 +539,7 @@ $('posteList').addEventListener('input',ev=>{
   if(ev.target.classList.contains('pname'))d.label=ev.target.value;
   else if(ev.target.classList.contains('pmots'))d.mots=ev.target.value;
   else if(ev.target.classList.contains('pbud'))d.budget=ev.target.value;
+  else if(ev.target.classList.contains('ppour'))d.pour=ev.target.value;
   else if(ev.target.classList.contains('pcol'))d.couleur=ev.target.value;
   touch();
 });
@@ -563,7 +568,7 @@ $('savePostes').onclick=async()=>{
     const id=d.id||nouvelId(label,ids);
     const mots=d.id==='autre'?[]:d.mots.split(/[,;\n]/).map(x=>x.trim()).filter(Boolean);
     if(d.budget.trim()){const n=cfa(d.budget);if(!(n>0)){$('posteMsg').textContent=`Budget invalide pour « ${label} ».`;return}budg[id]=n}
-    postes.push({id,label,couleur:d.couleur,mots});
+    postes.push({id,label,couleur:d.couleur,mots,...(d.pour?{pour:d.pour}:{})});
   }
   $('savePostes').disabled=true;
   try{const r=await api.params({postes,budgets:budg,deplacer});dirty=false;await charger();

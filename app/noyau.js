@@ -13,7 +13,7 @@ const lsSet=(k,v)=>{try{localStorage.setItem(k,v);return true}catch(e){note('ré
 /* ================= référentiels : postes, comptes, biens (chargés depuis parametres) ================= */
 let CATS=[{id:'autre',label:'Autre',couleur:'#9a968c',mots:[]}], CAT={autre:CATS[0]};
 function setPostes(p){
-  if(Array.isArray(p)&&p.length)CATS=p.map(x=>({id:x.id,label:x.label,couleur:x.couleur||'#9a968c',mots:Array.isArray(x.mots)?x.mots:[]}));
+  if(Array.isArray(p)&&p.length)CATS=p.map(x=>({id:x.id,label:x.label,couleur:x.couleur||'#9a968c',mots:Array.isArray(x.mots)?x.mots:[],pour:x.pour==='moi'||x.pour==='foyer'?x.pour:''}));
   if(!CATS.some(c=>c.id==='autre'))CATS.push({id:'autre',label:'Autre',couleur:'#9a968c',mots:[]});
   CAT=Object.fromEntries(CATS.map(c=>[c.id,c]));
 }
@@ -54,18 +54,20 @@ function setEvenements(l){
   EVT=Object.fromEntries(EVTS.map(x=>[x.id,x]));
 }
 /* Foyers (2026-11-27, demande de l'utilisateur) : un ou plusieurs foyers, chacun avec ses membres (épouse, enfants…).
-   Une dépense porte « pour » = [foyer] (commune) ou [membres] (part égale de chacun) ; sans « pour », une dépense du poste
-   Foyer va au commun du premier foyer, les autres sont pour soi (« Moi »). Le poste dit QUOI, « pour » dit POUR QUI. */
+   Une dépense porte « pour » = ['moi'], [foyer] (commune) ou [membres] (part égale de chacun). Sans « pour », c'est le
+   réglage de son poste qui décide (« pour » du poste : moi, ou foyer = commun du premier foyer) ; un poste sans réglage
+   (voiture, aides, bureau…) donne [] : une dépense du poste, pour personne en particulier. Le poste dit QUOI, « pour »
+   dit POUR QUI. */
 let FOYERS=[],FOYER={},MEMBRE={};
 const ROLES={epouse:'Épouse',enfant:'Enfant',autre:'Autre membre'};
 function setFoyers(l){FOYERS=(Array.isArray(l)?l:[]).map(f=>({id:f.id,nom:f.nom,membres:(Array.isArray(f.membres)?f.membres:[]).map(m=>({id:m.id,nom:m.nom,role:m.role||'autre',naissance:m.naissance||'',mots:Array.isArray(m.mots)?m.mots:[],foyer:f.id}))}));
   FOYER=Object.fromEntries(FOYERS.map(f=>[f.id,f]));MEMBRE=Object.fromEntries(FOYERS.flatMap(f=>f.membres).map(m=>[m.id,m]))}
 const MEMBRES=()=>FOYERS.flatMap(f=>f.membres);
 // pour qui : liste enregistrée, sinon la règle par défaut (poste Foyer → commun du premier foyer ; sinon [] = Moi)
-function pourDe(e){if(e.nature!=='depense')return [];const p=(e.pour||[]).filter(x=>FOYER[x]||MEMBRE[x]);if(p.length)return p;
-  return e.categorie==='foyer'&&FOYERS.length?[FOYERS[0].id]:[]}
-const nomPour=id=>FOYER[id]?FOYER[id].nom+' (commun)':MEMBRE[id]?MEMBRE[id].nom:id;
-const textePour=e=>{const p=pourDe(e);return p.length?p.map(nomPour).join(', '):'Moi'};
+function pourDe(e){if(e.nature!=='depense')return [];const p=(e.pour||[]).filter(x=>x==='moi'||FOYER[x]||MEMBRE[x]);if(p.length)return p;
+  const d=(CAT[e.categorie]||{}).pour;return d==='moi'?['moi']:d==='foyer'&&FOYERS.length?[FOYERS[0].id]:[]}
+const nomPour=id=>id==='moi'?'Moi':FOYER[id]?FOYER[id].nom+' (commun)':MEMBRE[id]?MEMBRE[id].nom:id;
+const textePour=e=>pourDe(e).map(nomPour).join(', ');
 // membres cités dans une note (prénom ou mot-clé du membre) : « pharmacie adam » → Adam
 function guessPour(lib){const L=normTxt(lib);return MEMBRES().filter(m=>[m.nom,...m.mots].some(k=>{const n=normTxt(k);return n&&hasWord(L,n)})).map(m=>m.id)}
 let PROGS=[];
