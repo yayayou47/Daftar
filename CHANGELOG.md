@@ -4,6 +4,11 @@ Les versions sont numérotées `X.Y.Z` (le nom de série, « Ousnou », figure �
 est écrit à un seul endroit : `app/version.js`. Chaque version publiée a son tag `vX.Y.Z` et sa page dans
 [Releases](https://github.com/yayayou47/Daftar/releases) (APK Android et zip Ubuntu).
 
+## 1.4.20 — 2026-11-27
+
+- Serveur : une requête dont le corps n'a pas la bonne forme (une liste au lieu d'un objet, des éléments qui ne sont pas
+  des objets) est refusée avec un message (erreur 400) au lieu de provoquer une erreur du serveur (500).
+
 ## 1.4.19 — 2026-11-27
 
 - **Foyers** : un ou plusieurs foyers (Foyer 1, Foyer 2…), chacun avec ses membres (épouse, enfants…), dans Données et

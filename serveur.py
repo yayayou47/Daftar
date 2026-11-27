@@ -1179,11 +1179,16 @@ class Gestionnaire(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(corps)
 
-    def _corps(self):
+    def _corps(self, liste=False):
+        """Corps JSON de la requête : un objet (ou, si liste, un objet ou une liste d'objets). Autre chose → ValueError
+        (400), et non une erreur du serveur (500) plus loin (2026-11-27 : une liste envoyée à /api/reclasser)."""
         n = int(self.headers.get("Content-Length") or 0)
         if n > 2_000_000:
             raise ValueError("Requête trop volumineuse.")
-        return json.loads(self.rfile.read(n) or b"{}")
+        corps = json.loads(self.rfile.read(n) or b"{}")
+        if isinstance(corps, dict) or (liste and isinstance(corps, list) and all(isinstance(x, dict) for x in corps)):
+            return corps
+        raise ValueError("Corps de requête invalide : un objet JSON est attendu%s." % (" (ou une liste d'objets)" if liste else ""))
 
     def _origine_ok(self):
         # refuse les requêtes d'écriture venant d'un autre site ouvert dans le navigateur
@@ -1317,7 +1322,7 @@ class Gestionnaire(SimpleHTTPRequestHandler):
         p = urlparse(self.path).path
         if p == "/api/operations":
             try:
-                corps = self._corps()
+                corps = self._corps(liste=True)
             except ValueError as e:
                 return self._json(400, {"erreur": str(e)})
             lignes = corps if isinstance(corps, list) else [corps]
@@ -1358,7 +1363,10 @@ class Gestionnaire(SimpleHTTPRequestHandler):
             def reclasser(d):
                 ids = ids_postes(d)
                 voulu = {}
-                for c in (corps.get("changements") or []):
+                changements = corps.get("changements") or []
+                if not isinstance(changements, list) or not all(isinstance(c, dict) for c in changements):
+                    raise ValueError("« changements » doit être une liste de {id, categorie}.")
+                for c in changements:
                     if c.get("categorie") not in ids:
                         raise ValueError("Poste inconnu : %s" % c.get("categorie"))
                     voulu[str(c.get("id"))] = c["categorie"]

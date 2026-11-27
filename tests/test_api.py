@@ -181,6 +181,27 @@ class Api(unittest.TestCase):
         self.assertEqual(e.exception.code, 400)
         e.exception.close()
 
+    def test_corps_de_mauvaise_forme(self):
+        # 2026-11-27 : une liste envoyée à /api/reclasser donnait une erreur 500 ; tout corps mal formé est refusé (400)
+        avant = self.fichier()
+        for methode, chemin, corps in [("POST", "/api/reclasser", [{"id": "x", "categorie": "foyer"}]),
+                                       ("POST", "/api/reclasser", {"changements": ["x"]}),
+                                       ("POST", "/api/reclasser", {"changements": {"id": "x"}}),
+                                       ("PUT", "/api/parametres", [{"postes": []}]),
+                                       ("POST", "/api/sync", ["x"]),
+                                       ("POST", "/api/operations", ["pas un objet"]),
+                                       ("POST", "/api/operations", 42),
+                                       ("PUT", "/api/operations/abc", "texte")]:
+            with self.subTest(chemin=chemin, corps=corps):
+                code, rep = self.req(methode, chemin, corps)
+                self.assertEqual(code, 400, rep)
+                self.assertIn("erreur", rep)
+        self.assertEqual(self.fichier(), avant)
+        # les formes correctes passent toujours : un objet, un lot d'objets
+        self.assertEqual(self.req("POST", "/api/reclasser", {"changements": []})[0], 200)
+        code, lot = self.req("POST", "/api/operations", [self.op(), self.op(libelle="lait")])
+        self.assertEqual((code, len(lot)), (200, 2))
+
     # --- fichiers ---
     def test_sauvegarde_et_ecriture_atomique(self):
         self.req("POST", "/api/operations", self.op(libelle="déclenche une sauvegarde"))
