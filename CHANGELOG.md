@@ -4,6 +4,11 @@ Les versions sont numérotées `X.Y.Z` (le nom de série, « Ousnou », figure �
 est écrit à un seul endroit : `app/version.js`. Chaque version publiée a son tag `vX.Y.Z` et sa page dans
 [Releases](https://github.com/yayayou47/Daftar/releases) (APK Android et zip Ubuntu).
 
+## 1.4.16 — 2026-11-27
+
+- Téléphone : bouton Saisir de la barre du bas agrandi, rond, cerclé d'or, au-dessus de la barre.
+- Mes biens : plus de « Modifier » sur chaque carte ; on modifie par « Modifier les biens ».
+
 ## 1.4.15 — 2026-11-27
 
 - Barre des rubriques : Mes finances à gauche, Saisir au milieu, **Mes biens** à droite. Mes biens présente tous les

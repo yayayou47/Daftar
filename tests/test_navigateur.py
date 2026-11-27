@@ -27,13 +27,13 @@ addEventListener('load',()=>setTimeout(async()=>{const vu=[];const pause=()=>new
     for(const [rub,vues] of [['aFin',['vMois','vAn','vPat','vStats']],['aBiens',['aVeh','aMai','bHub']]]){
       document.getElementById(rub).click();await pause();vu.push(rub);
       for(const v of vues){document.getElementById(v).click();await pause();vu.push(v)}}
-    // Mes biens : un engin s'ouvre dans Engins ; « Modifier » mène à sa ligne dans Comptes et biens
+    // Mes biens : un engin s'ouvre dans Engins ; « Modifier les biens » mène à Comptes et biens (pas de « Modifier » par carte)
     // (machine lente : attendre que les données, donc les biens, soient chargées)
     for(let i=0;i<60&&!(ready&&BIENS.length);i++)await pause();document.getElementById('bHub').click();await pause();
     const go=document.querySelector('#hubList [data-hv]');if(go){const id=go.dataset.hv;go.click();await pause();if(view==='vehicule'&&VEH().id===id)vu.push('hub')}
     document.getElementById('aBiens').click();await pause();
-    const mod=document.querySelector('#hubList [data-hh]+.hubmod');if(mod){mod.click();await pause();await pause();
-      const r=document.activeElement&&document.activeElement.closest('.cbrow');if(view==='donnees'&&r&&r.dataset.id===mod.dataset.hmod)vu.push('hubmod')}
+    if(!document.querySelector('#hubList .hubmod')){document.getElementById('hubGerer').click();await pause();
+      if(view==='donnees'&&!document.getElementById('cbBox').hidden)vu.push('hubmod')}
     document.getElementById('aDon').click();await pause();
     // menu ≡ : aucun panneau visible ; export Excel ouvert depuis le menu
     const S=document.getElementById('saisie');

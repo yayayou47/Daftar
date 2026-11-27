@@ -298,7 +298,7 @@ h1.titre{display:flex;align-items:center;gap:10px}
 /* Mes biens : page d'ensemble */
 .hubsec{display:flex;align-items:center;gap:8px;margin:14px 0 8px}.hubsec .ic{width:1.2em;height:1.2em;color:var(--accent)}
 .hubgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(15.75em,1fr));gap:10px}
-.hubcard{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px 10px 4px 4px}
+.hubcard{display:flex;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px}
 .hubgo{flex:1;min-width:0;display:grid;grid-template-columns:1fr auto;column-gap:8px;text-align:left;background:transparent;border:0;padding:10px 8px;border-radius:9px;color:var(--ink);font:inherit;cursor:pointer}
 .hubgo b{grid-column:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.hubgo .hint{grid-column:1}.hubgo .chev{display:block;grid-column:2;grid-row:1/3;align-self:center;font-size:1.4rem;color:var(--muted)}
 .hubgo:hover{background:var(--bg)}
@@ -522,6 +522,11 @@ header #aDon[aria-pressed="true"]{background:var(--accent);color:#fff;border-col
   nav.apptabs button{border-bottom:0;border-top:3px solid transparent;margin:0;border-radius:0 0 8px 8px}
   nav.apptabs button[aria-pressed="true"]{border-top-color:var(--accent)}
   nav.apptabs.cachee{transform:translateY(calc(100% + 6px))}
+  /* Saisir, au milieu : bouton rond agrandi, cerclé d'or (couleur des barres du logo), qui dépasse de la barre */
+  nav.apptabs .asaisir{border-top-color:transparent!important;font-weight:700;overflow:visible}
+  nav.apptabs .asaisir .ic{width:4em;height:4em;padding:.5em;margin-top:-2.1em;border-radius:50%;background:var(--accent);color:#fff;
+    border:3px solid #f2b93f;box-shadow:0 4px 12px rgba(0,0,0,.28);box-sizing:border-box;flex:none}
+  nav.apptabs .asaisir[aria-pressed="true"] .ic{box-shadow:0 0 0 3px rgba(242,185,63,.35),0 4px 12px rgba(0,0,0,.28)}
   body:has(.clavier:not([hidden])) nav.apptabs{display:none}
   body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
   html{scroll-padding-top:calc(var(--hh,58px) + 8px);scroll-padding-bottom:84px}

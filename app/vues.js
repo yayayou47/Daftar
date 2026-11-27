@@ -433,12 +433,12 @@ $('aFin').onclick=()=>{view=vueFin;render();enHaut()};
 $('logoAccueil').onclick=()=>{nouveauJour();if(editId)resetForm();navEtape(()=>{retourVue=null;saisieSeule=false;vueFin='mois';view='mois';
   cur={y:now.getFullYear(),m:now.getMonth()};filtre='';shown=80;render()});enHaut()};
 $('aVeh').onclick=()=>{view='vehicule';render();enHaut()};
-/* Mes biens : page d'ensemble (engins, maisons, autres biens) ; un bien s'ouvre dans sa rubrique, « Modifier » mène à
-   Comptes et biens sur sa ligne */
+/* Mes biens : page d'ensemble (engins, maisons, autres biens) ; un bien s'ouvre dans sa rubrique. Modifier se fait
+   seulement par « Modifier les biens » (Comptes et biens), pas sur chaque carte (demande de l'utilisateur, 2026-11-27) */
 $('aBiens').onclick=$('bHub').onclick=()=>{view='biens';render();enHaut()};
 function renderHub(){
   const V=VEHS(),M=MAISONS(),A=BIENS.filter(b=>!b.vehicule&&!b.maison);
-  const carte=(b,sous,attr)=>`<div class="hubcard"><button type="button" class="hubgo" ${attr}><b>${esc(b.nom)}</b><span class="hint">${sous}</span><span class="chev" aria-hidden="true">›</span></button><button type="button" class="linkbtn hubmod" data-hmod="${b.id}" aria-label="Modifier ${esc(b.nom)}">Modifier</button></div>`;
+  const carte=(b,sous,attr)=>`<div class="hubcard"><button type="button" class="hubgo" ${attr}><b>${esc(b.nom)}</b><span class="hint">${sous}</span><span class="chev" aria-hidden="true">›</span></button></div>`;
   const groupe=(titre,ic,l,f)=>l.length?`<h3 class="cbsec hubsec"><svg class="ic" aria-hidden="true" focusable="false"><use href="#${ic}"/></svg>${titre}</h3><div class="hubgrid">${l.map(f).join('')}</div>`:'';
   $('hubList').innerHTML=(BIENS.length?'':'<div class="empty">Aucun bien pour l\'instant : ajoutez un engin, une maison ou un terrain.</div>')+
     groupe('Engins','i-car',V,b=>{const k=kmNow(b);return carte(b,`${ENGINS[b.engin]||'Engin'}${k?` · ${nb(k)} ${UK(b)}`:''}`,`data-hv="${b.id}"`)})+
@@ -450,7 +450,6 @@ function modifierBien(id,nouveau){navEtape(()=>{retourVue=view;view='donnees';sh
     const r=nouveau?$('bienEdit').lastElementChild:id?document.querySelector(`#bienEdit .cbrow[data-id="${CSS.escape(id)}"]`):$('bienEdit').previousElementSibling;
     if(!r)return;r.scrollIntoView({block:'center',behavior:doux()});const n=r.querySelector('.bNom');if(n)n.focus({preventScroll:true})},0)}
 $('hubList').addEventListener('click',ev=>{const t=ev.target.closest('button');if(!t)return;const d=t.dataset;
-  if(d.hmod){modifierBien(d.hmod);return}
   if(d.hv){choisirEngin(d.hv);view='vehicule'}else if(d.hh){choisirMaison(d.hh);view='maison'}else if(d.hp){vueFin='patrimoine';view='patrimoine'}else return;
   render();enHaut();if(d.hp)setTimeout(()=>allerJournal('biensPanel'),0)});
 $('hubEngin').onclick=()=>$('addEngin').click();

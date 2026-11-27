@@ -104,13 +104,13 @@ sur l'ordinateur, elle est figée juste sous la ligne du haut :
 
   - Mes finances (à gauche) : vues Mois, Année, Patrimoine et
     Statistiques, avec le journal de toutes les opérations.
-  - Saisir (au milieu, en bleu) : la carte de saisie d'une opération, le
+  - Saisir (au milieu, gros bouton bleu cerclé d'or sur le téléphone) : la carte de saisie d'une opération, le
     curseur dans le champ Montant.
   - Mes biens (à droite) : la liste des biens (engins, maisons, autres
     biens). Toucher un bien l'ouvre : Engins (vidanges, carburant,
     consommation, coûts de chaque engin), Maison (terrain, construction,
-    travaux, projet), ou Patrimoine pour un autre bien. « Modifier » mène à
-    sa ligne dans Comptes et biens ; « + Ajouter un engin » et « + Ajouter
+    travaux, projet), ou Patrimoine pour un autre bien. « Modifier les
+    biens » ouvre Comptes et biens ; « + Ajouter un engin » et « + Ajouter
     un bien » en créent. La barre Tous | Engins | Maison passe de l'un à
     l'autre.
   - Données et réglages (menu ≡ en haut à droite) : une liste, chaque
