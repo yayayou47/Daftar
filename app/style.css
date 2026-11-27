@@ -258,7 +258,7 @@ header .ctl>.btn,header .ctl>.devsel,header .ctl .expmenu>.btn{height:44px;displ
 .segic button{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 .segic .ic{width:1.15em;height:1.15em}
 @media (max-width:567px){
-  div.segic{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));width:100%;flex-wrap:nowrap}
+  div.segic{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);width:100%;flex-wrap:nowrap}
   div.segic button{flex-direction:column;gap:2px;font-size:.72rem;padding:6px 2px;text-align:center;min-width:0}
   div.segic .ic{width:1.45em;height:1.45em}
 }
@@ -346,7 +346,9 @@ tr.sel td{background:var(--accent-soft)}
 /* « Une opération » sur deux colonnes, par paires (demande de l'utilisateur, 2026-11-25) : Date | Montant, Nature | Payé avec,
    Poste | Versé au compte de ; Libellé, Type de revenu et Événement sur toute la largeur (listes lisibles) ; Poste seul sur
    toute la largeur quand « Versé au compte de » est caché */
-#oneForm #wRev,#oneForm #wEvt,#oneForm #wPonct{grid-column:1/-1}
+#oneForm #wRev,#oneForm #wEvt,#oneForm #wPonct,#oneForm #wPour{grid-column:1/-1}
+.chips{display:flex;flex-wrap:wrap;gap:6px}.chips button{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:6px 12px;font:inherit;font-size:.9rem;cursor:pointer}
+.chips button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--surface);font-weight:600}
 .ponct{display:flex;gap:8px}.ponct>input{flex:1 1 40%;min-width:0}.ponct>select{flex:1 1 60%;min-width:0}
 #oneForm:has(#wTiers[hidden]) #wCat{grid-column:1/-1}
 /* petit téléphone : « Versé au compte de » tient sur deux lignes ; le libellé « Poste » prend la même hauteur, pour que
@@ -579,6 +581,14 @@ main.wrap>header{position:sticky;top:0;z-index:41;background:var(--bg);margin:-8
 .prow.fiche:not(.edit)>.pdel{flex-basis:100%}
 .prow.fiche:not(.edit){flex-wrap:wrap}
 #posteBox .phdr,#cbBox .cbhead{display:none}
-#savePostes,#saveCpt,#saveBien,#evtSave,#pjSave,#revSave{display:none}
-#savePostes.voir,#saveCpt.voir,#saveBien.voir,#evtSave.voir,#pjSave.voir,#revSave.voir{display:inline-flex}
+#savePostes,#saveCpt,#saveBien,#evtSave,#pjSave,#revSave,#foySave{display:none}
+#savePostes.voir,#saveCpt.voir,#saveBien.voir,#evtSave.voir,#pjSave.voir,#revSave.voir,#foySave.voir{display:inline-flex}
+.foyblk{border-left:3px solid var(--accent);padding-left:10px;margin-bottom:10px;display:flex;flex-direction:column;gap:4px}.foyblk .mbList{padding-left:14px}
+.foyhead .fiche:not(.edit){background:transparent;border:0;padding:4px 0}
 .libp{white-space:nowrap}
+/* vue Foyer */
+.foycard{margin-bottom:14px}.foybars{display:flex;flex-direction:column;gap:4px;margin:6px 0 10px}
+.foyl{display:grid;grid-template-columns:minmax(6em,9em) 1fr auto;gap:10px;align-items:center;background:transparent;border:0;padding:6px 4px;border-radius:8px;text-align:left;color:var(--ink);font:inherit;cursor:pointer}
+.foyl:hover{background:var(--bg)}.foyn{display:flex;flex-direction:column;min-width:0}.foyn .hint{font-size:.78rem}
+.foyb{height:10px;background:var(--bg);border-radius:6px;overflow:hidden}.foyb i{display:block;height:100%;background:var(--accent);border-radius:6px}
+.foym{display:flex;flex-direction:column;align-items:flex-end;font-weight:600}.foym .hint{font-weight:400;font-size:.75rem}

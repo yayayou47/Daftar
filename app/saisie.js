@@ -21,8 +21,19 @@ function fillSelects(){
   const cv=$('fCatV').value;$('fCatV').innerHTML=CATS_V.map(c=>`<option value="${c.id}"${c.id===cv?' selected':''}>${c.l}</option>`).join('');
   if(!editId&&!touched.nat)deviner();majChamps();
 }
+/* « Pour » (foyers) : pourSel = choix fait à la main ; sinon membres reconnus dans la note (pourAuto) ; sinon la règle par
+   défaut (poste Foyer → commun du premier foyer, sinon Moi). Seul un choix à la main ou reconnu est enregistré. */
+let pourSel=null,pourAuto=null;
+const pourEffectif=()=>pourSel||pourAuto||pourDe({nature:'depense',categorie:$('fCat').value,pour:[]});
+function renderPour(){if($('wPour').hidden)return;const p=pourEffectif();
+  const b=(id,lab)=>`<button type="button" data-p="${id}" aria-pressed="${id===''?!p.length:p.includes(id)}">${esc(lab)}</button>`;
+  $('fPour').innerHTML=b('','Moi')+FOYERS.map(f=>b(f.id,FOYERS.length>1||f.membres.length?f.nom+' (commun)':f.nom)+f.membres.map(m=>b(m.id,m.nom)).join('')).join('')}
+$('fPour').addEventListener('click',ev=>{const t=ev.target.closest('[data-p]');if(!t)return;const id=t.dataset.p;let p=pourEffectif().slice();
+  if(!id)p=[];else if(FOYER[id])p=[id];else{p=p.filter(x=>MEMBRE[x]);p=p.includes(id)?p.filter(x=>x!==id):p.concat([id])}
+  pourSel=p;touched.pour=true;renderPour()});
 function majChamps(){
   const n=$('fNat').value;
+  $('wPour').hidden=!(n==='depense'&&FOYERS.length&&!estTiers($('fCpt').value));renderPour();
   $('wCat').hidden=n!=='depense';$('wTiers').hidden=!(n==='depense'&&TIERS().length&&!estTiers($('fCpt').value));$('wVers').hidden=n!=='virement';$('wPers').hidden=!(n==='pret'||n==='remboursement');
   $('wEch').hidden=n!=='pret';$('wBien').hidden=n!=='investissement';
   $('wRev').hidden=n!=='revenu';$('wEvt').hidden=!((n==='depense'||n==='revenu')&&EVTS.length);
@@ -57,6 +68,7 @@ function deviner(){
   if(!touched.rev&&g.cat_revenu)$('fCatR').value=g.cat_revenu;
   if(!touched.evt)$('fEvt').value=g.evenement||'';
   if(!touched.tiers)$('fTiers').value=g.tiers||'';
+  pourAuto=g.pour&&g.pour.length?g.pour:null;
   majChamps();
   // ce que la reconnaissance a réglé (champs non modifiés à la main), affiché sous le libellé
   const n=$('fNat').value,bits=[];
@@ -69,6 +81,7 @@ function deviner(){
   if(!$('wEvt').hidden&&!touched.evt&&EVT[$('fEvt').value])bits.push('★ '+EVT[$('fEvt').value].nom+' (exceptionnel)');
   if((n==='pret'||n==='remboursement')&&!touched.pers&&$('fPers').value)bits.push($('fPers').value);
   if(!$('wTiers').hidden&&!touched.tiers&&$('fTiers').value)bits.push('versé au compte '+nomCpt($('fTiers').value));
+  if(!$('wPour').hidden&&!touched.pour&&pourAuto)bits.push('pour '+pourAuto.map(nomPour).join(', '));
   $('fLibHint').textContent=bits.length?'Reconnu : '+bits.join(' · ')+' (modifiable ci-dessous)':'';
 }
 $('fDate').value=today;
@@ -97,7 +110,7 @@ $('fAmt').addEventListener('input',()=>{amtHint();if(amtNeg()&&!touched.nat&&['r
 [['fNat','nat'],['fCpt','cpt'],['fCat','cat'],['fVers','vers'],['fBien','bien'],['fPers','pers'],['fCatV','catv'],['fCatM','catm'],['fCatR','rev'],['fEvt','evt'],['fVeh','veh'],['fTiers','tiers']].forEach(([i,k])=>$(i).addEventListener(i==='fPers'?'input':'change',()=>{touched[k]=true;majChamps()}));
 $('fKm').addEventListener('input',majChamps);
 $('fVidNext').addEventListener('input',()=>{touched.vidnext=true});
-const tabs=[['tOne','oneForm'],['tPaste','pasteBox'],['tRel','relBox'],['tPostes','posteBox'],['tCB','cbBox'],['tEvt','evtBox'],['tRev','revBox'],['tProg','progBox'],['tSai','saisieBox'],['tPar','paritesBox'],['tSav','savBox']];
+const tabs=[['tOne','oneForm'],['tPaste','pasteBox'],['tRel','relBox'],['tPostes','posteBox'],['tCB','cbBox'],['tEvt','evtBox'],['tRev','revBox'],['tFoy','foyBox'],['tProg','progBox'],['tSai','saisieBox'],['tPar','paritesBox'],['tSav','savBox']];
 /* garderMenu : rétablissement par le bouton retour (le menu ou la page est décidé par l'étape rétablie) ; sinon, choisir un
    onglet ouvre sa PAGE (le menu ≡ se ferme) */
 function showTab(t,focus,garderMenu){if(t!=='tOne')saisieSeule=false;if(!garderMenu)menuReglages=false;tabs.forEach(([tt,p])=>{const on=tt===t;$(tt).setAttribute('aria-selected',on);$(tt).tabIndex=on?0:-1;$(p).hidden=!on});majRubSaisie();navNoter();if(focus)$(t).focus()}
@@ -112,10 +125,10 @@ document.querySelector('.tabs').addEventListener('keydown',ev=>{
   const i=tabs.findIndex(([t])=>t===ev.target.id);if(i<0)return;
   const j={ArrowRight:i+1,ArrowLeft:i-1,Home:0,End:tabs.length-1}[ev.key];if(j===undefined)return;
   ev.preventDefault();showTab(tabs[(j+tabs.length)%tabs.length][0],true)});
-tabs.forEach(([t])=>$(t).onclick=()=>{if(t==='tSav')renderHistorique();if((t==='tEvt'||t==='tRev')&&!evtDirty)openEvt();if(t==='tProg'&&!progDirty)openProg();if(t==='tRel')initReleve();showTab(t);enHaut()});
+tabs.forEach(([t])=>$(t).onclick=()=>{if(t==='tSav')renderHistorique();if((t==='tEvt'||t==='tRev')&&!evtDirty)openEvt();if(t==='tFoy'&&!foyDirty)openFoyers();if(t==='tProg'&&!progDirty)openProg();if(t==='tRel')initReleve();showTab(t);enHaut()});
 $('retourReglages').onclick=()=>{navEtape(()=>{menuReglages=true;render()});enHaut();$(ongletActif()).focus({preventScroll:true})};showTab('tOne');
 /* modifications non enregistrées : point orange sur l'onglet et bouton « Enregistrer » mis en évidence ; avertissement si on ferme la page */
-const BROUILLONS=[['tPostes',()=>dirty,['savePostes']],['tCB',()=>cbDirty,['saveCpt','saveBien']],['tEvt',()=>evtDirty,['evtSave','pjSave']],['tRev',()=>evtDirty,['revSave']],['tProg',()=>progDirty,['progSave']],['tPar',()=>devDirty,['saveDev']]];
+const BROUILLONS=[['tPostes',()=>dirty,['savePostes']],['tCB',()=>cbDirty,['saveCpt','saveBien']],['tEvt',()=>evtDirty,['evtSave','pjSave']],['tRev',()=>evtDirty,['revSave']],['tFoy',()=>foyDirty,['foySave']],['tProg',()=>progDirty,['progSave']],['tPar',()=>devDirty,['saveDev']]];
 function majBrouillons(){BROUILLONS.forEach(([t,d,bs])=>{const on=!!d();$(t).classList.toggle('brouillon',on);$(t).title=on?'Modifications non enregistrées':'';bs.forEach(b=>$(b).classList.toggle('brouillon',on))})}
 ['input','change','click'].forEach(e=>$('saisie').addEventListener(e,()=>setTimeout(majBrouillons,0)));
 setInterval(majBrouillons,1500);
@@ -167,7 +180,7 @@ majClavier();
 function majAbrege(){$('abregeK').checked=ABREGE;$('abregeKInfo').textContent=ABREGE?'Activé : les grands montants des cartes sont abrégés (K = milliers, M = millions) ; le montant exact apparaît en survolant le chiffre. Le journal et les tableaux restent en entier.':'Désactivé : les cartes affichent les montants en entier.'}
 $('abregeK').addEventListener('change',()=>{ABREGE=$('abregeK').checked;lsSet('daftar-abrege',ABREGE?'1':'0');majAbrege();render();status(ABREGE?'Montants abrégés dans les cartes.':'Montants en entier dans les cartes.')});
 majAbrege();
-function resetForm(){['fAmt','fLib','fRem','fPers','fEch','fKm','fQty'].forEach(i=>$(i).value='');$('fTiers').value='';$('fPonct').value='';$('fLibHint').textContent='';$('fUnit').value='L';$('fVid').checked=true;touched={};$('fVidNext').value='';$('fNat').value='depense';$('fCpt').value='especes';$('fCat').value='autre';$('fEvt').value='';editId=null;$('editBar').hidden=true;$('addBtn').textContent='Ajouter';majChamps();amtHint();render()}
+function resetForm(){['fAmt','fLib','fRem','fPers','fEch','fKm','fQty'].forEach(i=>$(i).value='');$('fTiers').value='';$('fPonct').value='';pourSel=null;pourAuto=null;$('fLibHint').textContent='';$('fUnit').value='L';$('fVid').checked=true;touched={};$('fVidNext').value='';$('fNat').value='depense';$('fCpt').value='especes';$('fCat').value='autre';$('fEvt').value='';editId=null;$('editBar').hidden=true;$('addBtn').textContent='Ajouter';majChamps();amtHint();render()}
 /* fenêtre de confirmation : résumé lisible de l'opération avant l'enregistrement (Échap ou « Modifier » = annuler) */
 /* ================= annuler : message en bas de l'écran, 10 secondes ================= */
 let toastT=null,HIST=null;
@@ -198,7 +211,7 @@ function fiches(liste,resume,saveId,rouvrir){
     else if(b.classList.contains('fok'))$(saveId).click();
     else rouvrir();majSale()})}
 const SALES=[['savePostes',()=>dirty,['posteList']],['saveCpt',()=>cbDirty,['cptEdit','cptEditT']],['saveBien',()=>cbDirty,['bienEdit']],
-  ['evtSave',()=>evtDirty,['evtList']],['pjSave',()=>evtDirty,['pjList']],['revSave',()=>evtDirty,['revList']]];
+  ['evtSave',()=>evtDirty,['evtList']],['pjSave',()=>evtDirty,['pjList']],['revSave',()=>evtDirty,['revList']],['foySave',()=>foyDirty,['foyList']]];
 function majSale(){for(const [b,d,ls] of SALES){const el=$(b);if(el)el.classList.toggle('voir',!!d()&&!ls.some(l=>$(l)&&$(l).querySelector('.fiche.edit')))}}
 ['input','change','click'].forEach(t=>document.addEventListener(t,()=>setTimeout(majSale,0)));
 /* annuler le dernier changement de réglages = revenir au point de restauration le plus récent */
@@ -225,6 +238,7 @@ function confirmerOp(doc,opt={}){
   if(doc.nature==='depense')lignes.push(['Poste',(CAT[doc.categorie]||{}).label||doc.categorie]);
   if(doc.cat_revenu){const r=REV[doc.cat_revenu]||{label:doc.cat_revenu};lignes.push(['Type de revenu',`${r.label} (${r.courant?'courant':'ponctuel'})`])}
   if(doc.ponctuel){const p=REV[doc.cat_ponctuel]||{label:'Autre revenu'};lignes.push(['Dont ponctuel',`${fmtC(doc.ponctuel)} FCFA ${p.label.toLowerCase()} · courant : ${fmtC(doc.montant-doc.ponctuel)} FCFA`])}
+  if(doc.nature==='depense'&&FOYERS.length&&!estTiers(doc.compte)){const p=pourDe(doc);lignes.push(['Pour',p.length?p.map(nomPour).join(', ')+(p.length>1?` : ${fmtC(Math.round(doc.montant/p.length))} FCFA chacun`:''):'Moi'])}
   if(doc.tiers)lignes.push(['Versé au compte',`${nomCpt(doc.tiers)} : votre dépense alimente aussi ce compte`]);
   if(estTiers(doc.compte))lignes.push(['Compte d\'un tiers','gardé à part : ne compte pas dans vos dépenses ni vos revenus']);
   if(doc.evenement)lignes.push(['Événement',`★ ${(EVT[doc.evenement]||{}).nom||doc.evenement} : opération exceptionnelle`]);
@@ -258,9 +272,10 @@ function startEdit(id){
   $('fCat').value=e.categorie||'autre';$('fVers').value=e.vers;$('fPers').value=e.personne;$('fEch').value=e.echeance;$('fBien').value=e.bien;$('fRem').value=e.remarque;
   $('fCatM').value=e.cat_maison||guessCatM(e.libelle);$('fCatV').value=e.cat_vehicule||guessCatV(e.libelle);$('fKm').value=e.km||'';$('fQty').value=e.quantite?String(e.quantite).replace('.',','):'';$('fUnit').value=e.unite==='u'?'u':'L';$('fVid').checked=false;
   $('fCatR').value=e.nature==='revenu'?catRev(e):'autre';$('fEvt').value=e.evenement||'';$('fTiers').value=e.tiers||'';
+  pourSel=e.pour&&e.pour.length?e.pour.slice():null;pourAuto=null;
   $('fPonct').value=e.nature==='revenu'&&e.ponctuel?versSaisie(e.ponctuel):'';if(e.cat_ponctuel&&REV[e.cat_ponctuel])$('fCatP').value=e.cat_ponctuel;
   $('fVeh').value=e.vehicule&&BIEN[e.vehicule]?e.vehicule:'';
-  touched={nat:1,cpt:1,cat:1,vers:1,pers:1,bien:1,catv:1,catm:1,rev:1,evt:1,veh:1,tiers:1};majChamps();
+  touched={nat:1,cpt:1,cat:1,vers:1,pers:1,bien:1,catv:1,catm:1,rev:1,evt:1,veh:1,tiers:1,pour:1};majChamps();
   $('editBar').hidden=false;$('editWhat').textContent=`${e.libelle}, ${fmtC(e.montant)} FCFA`;
   $('addBtn').textContent='Enregistrer les modifications';$('addMsg').textContent='';amtHint();render();
   window.scrollTo({top:0,behavior:doux()});
@@ -277,6 +292,7 @@ function docOp(o){
   if(o.nature==='investissement'&&o.cat_maison)d.cat_maison=o.cat_maison;
   if(o.nature==='revenu'){d.cat_revenu=o.cat_revenu||guessCatR(o.libelle);if(o.ponctuel>0){d.ponctuel=o.ponctuel;d.cat_ponctuel=o.cat_ponctuel||'autre'}}
   if((o.nature==='depense'||o.nature==='revenu')&&o.evenement)d.evenement=o.evenement;
+  if(o.nature==='depense'&&Array.isArray(o.pour)&&o.pour.length)d.pour=o.pour.slice();
   if(o.prog&&o.prog_date){d.prog=o.prog;d.prog_date=o.prog_date}
   if(o.remarque)d.remarque=o.remarque;
   return d;
@@ -303,7 +319,7 @@ $('oneForm').addEventListener('submit',async ev=>{
     const doc=docOp({date:$('fDate').value,montant,libelle,nature,compte:$('fCpt').value,categorie:$('fCat').value,vers:$('fVers').value,
       personne:nature==='pret'||nature==='remboursement'?personneConnue($('fPers').value.trim()):'',echeance:$('fEch').value,bien:$('fBien').value,
       vehicule:vehChoisi,cat_maison:$('wMai').hidden?'':$('fCatM').value,cat_vehicule:$('fCatV').value,km,quantite:qte,unite:$('fUnit').value,
-      cat_revenu:$('fCatR').value,ponctuel:ponct,cat_ponctuel:$('fCatP').value,evenement:$('wEvt').hidden?'':$('fEvt').value,tiers:$('wTiers').hidden?'':$('fTiers').value,
+      pour:$('wPour').hidden?[]:(pourSel||pourAuto||[]),cat_revenu:$('fCatR').value,ponctuel:ponct,cat_ponctuel:$('fCatP').value,evenement:$('wEvt').hidden?'':$('fEvt').value,tiers:$('wTiers').hidden?'':$('fTiers').value,
       remarque:$('fRem').value.trim(),cree:old?old.cree:new Date().toISOString()});
     const nouvVid=avecVeh&&!$('vidBox').hidden&&$('fVid').checked&&km>0,vehOp=BIEN[doc.vehicule];
     const prochVid=nouvVid?Math.round(num($('fVidNext').value))||km+vidangeDe(vehOp).intervalle:0;

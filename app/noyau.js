@@ -53,6 +53,21 @@ function setEvenements(l){
   EVTS=(Array.isArray(l)?l:[]).map(x=>({id:x.id,nom:x.nom,type:x.type||'autre',debut:x.debut||'',fin:x.fin||'',budget:+x.budget||0,mots:Array.isArray(x.mots)?x.mots:[],note:x.note||''}));
   EVT=Object.fromEntries(EVTS.map(x=>[x.id,x]));
 }
+/* Foyers (2026-11-27, demande de l'utilisateur) : un ou plusieurs foyers, chacun avec ses membres (épouse, enfants…).
+   Une dépense porte « pour » = [foyer] (commune) ou [membres] (part égale de chacun) ; sans « pour », une dépense du poste
+   Foyer va au commun du premier foyer, les autres sont pour soi (« Moi »). Le poste dit QUOI, « pour » dit POUR QUI. */
+let FOYERS=[],FOYER={},MEMBRE={};
+const ROLES={epouse:'Épouse',enfant:'Enfant',autre:'Autre membre'};
+function setFoyers(l){FOYERS=(Array.isArray(l)?l:[]).map(f=>({id:f.id,nom:f.nom,membres:(Array.isArray(f.membres)?f.membres:[]).map(m=>({id:m.id,nom:m.nom,role:m.role||'autre',naissance:m.naissance||'',mots:Array.isArray(m.mots)?m.mots:[],foyer:f.id}))}));
+  FOYER=Object.fromEntries(FOYERS.map(f=>[f.id,f]));MEMBRE=Object.fromEntries(FOYERS.flatMap(f=>f.membres).map(m=>[m.id,m]))}
+const MEMBRES=()=>FOYERS.flatMap(f=>f.membres);
+// pour qui : liste enregistrée, sinon la règle par défaut (poste Foyer → commun du premier foyer ; sinon [] = Moi)
+function pourDe(e){if(e.nature!=='depense')return [];const p=(e.pour||[]).filter(x=>FOYER[x]||MEMBRE[x]);if(p.length)return p;
+  return e.categorie==='foyer'&&FOYERS.length?[FOYERS[0].id]:[]}
+const nomPour=id=>FOYER[id]?FOYER[id].nom+' (commun)':MEMBRE[id]?MEMBRE[id].nom:id;
+const textePour=e=>{const p=pourDe(e);return p.length?p.map(nomPour).join(', '):'Moi'};
+// membres cités dans une note (prénom ou mot-clé du membre) : « pharmacie adam » → Adam
+function guessPour(lib){const L=normTxt(lib);return MEMBRES().filter(m=>[m.nom,...m.mots].some(k=>{const n=normTxt(k);return n&&hasWord(L,n)})).map(m=>m.id)}
 let PROGS=[];
 function setProgrammees(l){PROGS=(Array.isArray(l)?l:[]).map(x=>({...x,ignorees:Array.isArray(x.ignorees)?x.ignorees:[],actif:x.actif!==false,periode:+x.periode||1,jour:+x.jour||1,montant:+x.montant||0}))}
 const PERIODES={1:'chaque mois',2:'tous les 2 mois',3:'chaque trimestre',6:'chaque semestre',12:'chaque année'};
@@ -314,7 +329,7 @@ const norm=x=>{const n=NAT[x.nature]?x.nature:'depense';return {id:x.id,date:Str
   compte:x.compte||'especes',vers:x.vers||'',personne:String(x.personne||''),echeance:x.echeance||'',bien:x.bien||'',
   categorie:n==='depense'?(CAT[x.categorie]?x.categorie:'autre'):'',remarque:String(x.remarque||''),cree:String(x.cree||''),
   tiers:x.tiers||'',vehicule:x.vehicule||'',cat_vehicule:x.cat_vehicule||'',cat_maison:x.cat_maison||'',km:+x.km||0,quantite:+x.quantite||0,unite:x.unite||'',
-  cat_revenu:n==='revenu'?String(x.cat_revenu||''):'',ponctuel:n==='revenu'?+x.ponctuel||0:0,cat_ponctuel:n==='revenu'&&x.ponctuel?String(x.cat_ponctuel||'autre'):'',evenement:(n==='depense'||n==='revenu')?String(x.evenement||''):'',prog:x.prog||'',prog_date:x.prog_date||''}};
+  cat_revenu:n==='revenu'?String(x.cat_revenu||''):'',pour:n==='depense'&&Array.isArray(x.pour)?x.pour.slice():[],ponctuel:n==='revenu'?+x.ponctuel||0:0,cat_ponctuel:n==='revenu'&&x.ponctuel?String(x.cat_ponctuel||'autre'):'',evenement:(n==='depense'||n==='revenu')?String(x.evenement||''):'',prog:x.prog||'',prog_date:x.prog_date||''}};
 const api={
   async add(doc){const x=await req('POST','/api/operations',doc);all.push(norm(x));return x},
   async addMany(docs){const xs=await req('POST','/api/operations',docs);xs.forEach(x=>all.push(norm(x)));return xs},
@@ -334,7 +349,7 @@ function status(msg,err){const s=$('status');s.hidden=!msg;s.setAttribute('role'
 /* Panneaux de Données et réglages (postes, comptes, événements, programmées, libellés) : préparés tout de suite si on les
    regarde, sinon juste après l'affichage de la vue, pour que les chiffres apparaissent d'abord */
 let panT=0;
-function panneauxReglages(){clearTimeout(panT);const go=()=>{if(!dirty)openPostes();if(!cbDirty)openCB();if(!evtDirty)openEvt();if(!progDirty)openProg();renderLibs()};
+function panneauxReglages(){clearTimeout(panT);const go=()=>{if(!dirty)openPostes();if(!cbDirty)openCB();if(!evtDirty)openEvt();if(!progDirty)openProg();if(!foyDirty)openFoyers();renderLibs()};
   if(view==='donnees')go();else requestAnimationFrame(()=>{panT=setTimeout(go,0)})}
 let REV_VU=null;   // ordinateur : révision des données déjà affichée (rien à redessiner si elle n'a pas changé)
 async function charger(silencieux){
@@ -343,7 +358,7 @@ async function charger(silencieux){
     if(silencieux&&ready&&!MODE_SYNC&&!MODE_AUTONOME&&d.rev!=null&&d.rev===REV_VU)return;
     REV_VU=d.rev;
     const p=d.parametres||{};
-    setPostes(p.postes);setComptes(p.comptes);setBiens(p.biens);setRevenus(p.revenus);setEvenements(p.evenements);setProgrammees(p.programmees);setDevises(p.devises);DEBUT_SUIVI=p.debut_suivi||'';
+    setPostes(p.postes);setComptes(p.comptes);setBiens(p.biens);setRevenus(p.revenus);setEvenements(p.evenements);setProgrammees(p.programmees);setFoyers(p.foyers);setDevises(p.devises);DEBUT_SUIVI=p.debut_suivi||'';
     const enCorb=new Set(CORB.map(c=>c.id));OPS_CORB={};
     all=(d.operations||[]).map(norm).filter(e=>{if(!e.date)return false;const k=enCorb.has(e.compte)?e.compte:enCorb.has(e.vers)?e.vers:'';if(k){OPS_CORB[k]=(OPS_CORB[k]||0)+1;return false}return true});HIST=Array.isArray(d.historique)?d.historique:null;if(!$('savBox').hidden)renderHistorique();
     budgets=p.budgets||{};
@@ -479,6 +494,7 @@ function guessOp(lib){
   if(r.nature==='investissement'&&BIEN[r.bien]&&BIEN[r.bien].maison)r.cat_maison=guessCatM(lib);
   if(r.nature==='revenu')r.cat_revenu=guessCatR(lib);
   if(r.nature==='depense'||r.nature==='revenu')r.evenement=guessEvt(lib);
+  if(r.nature==='depense'){const p=guessPour(lib);if(p.length)r.pour=p}
   // votre part versée au compte d'un tiers (« contribution maison ») : reste votre dépense, et alimente ce compte
   if(r.nature==='depense'){const t=TIERS().find(c=>c.contrib.some(m=>{const k=normTxt(m);return k&&(L===k||hasWord(L,k))}));if(t&&t.id!==r.compte)r.tiers=t.id}
   return r;

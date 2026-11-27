@@ -120,6 +120,9 @@ class Parite(unittest.TestCase):
             {"nature": "revenu", "cat_revenu": "salaire", "ponctuel": "500,5"}, {"nature": "revenu", "ponctuel": 1500},
             {"nature": "revenu", "ponctuel": -3}, {"nature": "revenu", "ponctuel": "abc"}, {"nature": "revenu", "ponctuel": 0},
             {"nature": "revenu", "ponctuel": 200, "cat_ponctuel": "inconnu"}, {"ponctuel": 200, "cat_ponctuel": "mission"},
+            # « pour » (foyers, 2026-11-27)
+            {"pour": ["adam"]}, {"pour": ["adam", "zara", "adam"]}, {"pour": "halima"}, {"pour": ["foyer1"]}, {"pour": []},
+            {"pour": ["foyer1", "adam"]}, {"pour": ["inconnu"]}, {"nature": "revenu", "pour": ["adam"]},
             {"prog": "frais-banque", "prog_date": "2026-11-30"}, {"cree": "2026-11-20T08:00:00Z"}, {"cree": "n'importe quoi"},
         ]
         docs = [{**base, **v} for v in variantes]
@@ -157,6 +160,13 @@ class Parite(unittest.TestCase):
                                        "projet": {"budget": 500000, "echeance": "2027-06-30", "note": "clôture"}}]},
             {"biens": prm["biens"] + [{"id": "champ", "nom": "Champ", "type": "actif", "mots": [], "projet": {"echeance": "demain"}}]},
             {"biens": [{**b, "maison": False, "projet": None} if b["id"] == "villa" else b for b in prm["biens"]]},
+            # foyers : membre ajouté, membre utilisé retiré (refus), identifiants en double, date invalide, foyer sans nom
+            {"foyers": [{**prm["foyers"][0], "membres": prm["foyers"][0]["membres"] + [{"id": "ali", "nom": "Ali", "role": "enfant", "mots": ["ali"]}]},
+                        {"id": "foyer2", "nom": "Foyer 2", "membres": []}]},
+            {"foyers": [{**prm["foyers"][0], "membres": prm["foyers"][0]["membres"][:1]}]},
+            {"foyers": [{**prm["foyers"][0], "membres": prm["foyers"][0]["membres"] + [{"id": "adam", "nom": "Adam 2"}]}]},
+            {"foyers": [{**prm["foyers"][0], "membres": prm["foyers"][0]["membres"] + [{"id": "ali", "nom": "Ali", "naissance": "2020-13-45"}]}]},
+            {"foyers": prm["foyers"] + [{"id": "foyer2", "nom": ""}]},
             {"devises": [{"code": "XAF", "taux": 1}, {"code": "EUR", "taux": 655}, {"code": "usd", "taux": "592,13"}]},
             {"devises": [{"code": "EURO", "taux": 655}]},
             {"revenus": [{"id": "salaire", "label": "Salaire", "courant": True, "mots": ["salaire"]}]},

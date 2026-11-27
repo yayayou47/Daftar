@@ -290,6 +290,25 @@ class Calculs(unittest.TestCase):
         exc = page(mod, "(()=>{const e=%s;e.evenement='x';return [partPonct(e),revExc(e)===e.montant]})()" % sal)[1]
         self.assertEqual(exc, [0, True])
 
+    def test_foyer_pour_qui(self):
+        # reconnaissance du prénom, règle par défaut (poste Foyer = commun), partage à parts égales
+        g, deux, defaut, moi = page("guessOp('15000 pharmacie adam')", "guessOp('rentrée adam zara').pour",
+                                    "pourDe({nature:'depense',categorie:'foyer'})", "pourDe({nature:'depense',categorie:'sante'})")
+        self.assertEqual((g["categorie"], g["pour"]), ("sante", ["adam"]))
+        self.assertEqual(deux, ["adam", "zara"])
+        self.assertEqual(defaut, ["foyer1"])
+        self.assertEqual(moi, [])
+        d = demo()
+        ops = [o for o in d["operations"] if o["date"].startswith("2026") and o["nature"] == "depense" and o["date"] >= d["parametres"]["debut_suivi"]]
+        parts = page("(()=>{const r=partsPour(yearItems(2026).filter(e=>!DEBUT_SUIVI||e.date>=DEBUT_SUIVI));return Object.fromEntries(Object.entries(r).map(([k,v])=>[k,Math.round(v.tot)]))})()")[0]
+        attendu = {}
+        for o in ops:
+            p = o.get("pour") or (["foyer1"] if o["categorie"] == "foyer" else [""])
+            for k in p:
+                attendu[k] = attendu.get(k, 0) + o["montant"] / len(p)
+        self.assertEqual(parts, {k: round(v) for k, v in attendu.items()})
+        self.assertEqual(sum(parts.values()), sum(o["montant"] for o in ops))
+
     def test_patrimoine(self):
         p, liq, biens = page("patrimoine()", "MES().reduce((s,c)=>s+etatCompte(c).solde,0)", "BIENS.map(b=>etatBien(b).valeur)")
         self.assertEqual(p["liq"], liq)

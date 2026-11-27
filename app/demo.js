@@ -41,6 +41,14 @@
     P.evenements = [ev('mariage-awa', 'Mariage de Awa', 'mariage', 7, ['mariage', 'dot'], 600000),
                     ev('mission-dakar', 'Mission à Dakar', 'voyage-mission', 16, ['dakar'], 0),
                     ev('bapteme', 'Baptême de Moussa', 'bapteme', 28, ['baptême', 'bapteme', 'mouton'], 250000)];
+    // foyer (2026-11-27) : épouse et deux enfants ; certaines dépenses leur sont destinées (« pour »)
+    P.foyers = [{id: 'foyer1', nom: 'Foyer 1', membres: [
+      {id: 'halima', nom: 'Halima', role: 'epouse', naissance: '', mots: []},
+      {id: 'adam', nom: 'Adam', role: 'enfant', naissance: iso(new Date(fin.getFullYear() - 9, 2, 14)), mots: []},
+      {id: 'zara', nom: 'Zara', role: 'enfant', naissance: iso(new Date(fin.getFullYear() - 6, 7, 2)), mots: []}]}];
+    // à qui va la prochaine dépense ciblée : tour à tour l'épouse, les enfants, soi-même ('') — sans tirage au sort,
+    // pour garder la suite des tirages (et donc toute la démo) inchangée
+    let nCible = 0; const cible = () => ['halima', 'adam', 'zara', ''][nCible++ % 4];
     P.programmees = [{id: 'frais-banque', libelle: 'Frais de tenue de compte', nature: 'depense', mode: 'fixe', montant: 3500, compte: 'banque',
                       categorie: 'autre', periode: 1, jour: 30, debut: D0, fin: '', actif: true, ignorees: []}];
 
@@ -90,11 +98,13 @@
       if (rnd() < .6) dep(date, arr(entre(1000, 3500), 250), pick(['dej', 'café', 'jus', 'repas']), 'repas');
       if (rnd() < .3) dep(date, arr(entre(500, 2000), 250), pick(['taxi', 'transport', 'clando']), 'transport');
       if (dow === 1 && solde.mobile > 3000) op({date, montant: pick([2000, 3000, 5000]), libelle: 'crédit téléphone mobile', nature: 'depense', compte: 'mobile', categorie: 'tel'});
-      if (rnd() < .035) dep(date, arr(entre(3000, 25000), 500), pick(['pharmacie', 'consultation clinique', 'analyse labo']), 'sante');
+      if (rnd() < .035) { const m = arr(entre(3000, 25000), 500), l = pick(['pharmacie', 'consultation clinique', 'analyse labo']), q = cible();
+        dep(date, m, q ? l + ' ' + q : l, 'sante', 'especes', q ? {pour: [q]} : {}); }
       if (rnd() < .06) dep(date, arr(entre(2000, 10000), 500), pick(['aide famille', 'aumône', 'don']), 'aides');
-      if (rnd() < .03) dep(date, arr(entre(5000, 30000), 500), pick(['chaussures', 'vêtement', 'coiffure', 'parfum']), 'perso');
-      if ((mois === 8 || mois === 0 || mois === 3) && jour === 10) dep(date, 75000, 'scolarité enfants', 'enfants', 'banque');
-      if (mois === 8 && jour === 12) dep(date, 35000, 'fournitures scolaires', 'enfants');
+      if (rnd() < .03) { const m = arr(entre(5000, 30000), 500), l = pick(['chaussures', 'vêtement', 'coiffure', 'parfum']), q = cible();
+        dep(date, m, q ? l + ' ' + q : l, /chauss|vêt/.test(l) ? 'habillement' : 'coiffure', 'especes', q ? {pour: [q]} : {}); }
+      if ((mois === 8 || mois === 0 || mois === 3) && jour === 10) dep(date, 75000, 'scolarité enfants', 'enfants', 'banque', {pour: ['adam', 'zara']});
+      if (mois === 8 && jour === 12) dep(date, 35000, 'fournitures scolaires', 'enfants', 'especes', {pour: ['adam', 'zara']});
       // engins
       if (dow === 2) plein(date, 'corolla', arr(entre(15000, 25000), 500), entre(680, 720), entre(250, 420), 'carburant corolla');
       if (dow === 0) plein(date, 'yamaha', arr(entre(3000, 5000), 250), entre(680, 720), entre(90, 150), 'essence moto');

@@ -117,7 +117,7 @@ sur l'ordinateur, elle est figée juste sous la ligne du haut :
     réglage avec une courte description, en quatre groupes :
       Saisir : Une opération · Coller une liste · Relevé bancaire ;
       Personnaliser : Postes et libellés · Comptes et biens · Événements et
-        projets · Types de revenus · Programmées · Saisie · Parités ;
+        projets · Types de revenus · Foyers · Programmées · Saisie · Parités ;
       Sécurité : Sauvegarde et retour ;
       Fichiers : Exporter vers Excel.
     Postes, comptes, biens, événements, projets et types de revenus se
@@ -313,6 +313,24 @@ Données et réglages › Saisie › « Montants abrégés dans les cartes ».
 
 Filtrer : touchez un poste, un compte, une personne, un bien, un mois ou une
 année pour filtrer le journal ; Daftar y amène directement.
+
+Vue Foyer : pour qui sont les dépenses. Chaque foyer (Foyer 1, Foyer 2…)
+montre son commun et chacun de ses membres (épouse, enfants…), par mois ou
+par année, avec la moyenne par mois et le coût d'un enfant par mois ; un
+tableau croise les membres et les postes (santé, transport, habillement,
+coiffure…). « Moi » regroupe vos dépenses pour vous-même. Toucher une ligne
+ouvre son journal. Les foyers et leurs membres se déclarent dans Données et
+réglages › Foyers (prénom, rôle, date de naissance facultative, autres mots
+qui désignent le membre).
+
+Pour qui ? Le prénom d'un membre dans une note désigne ce membre :
+  15000 pharmacie adam   → Santé, pour Adam
+  8000 coiffure halima   → Coiffure, parfumerie, pour Halima
+  75000 rentrée adam zara → partagée : 37 500 pour Adam, 37 500 pour Zara
+  25000 vivres           → Foyer, commun du foyer 1 (règle par défaut)
+Sans prénom, une dépense du poste Foyer est commune au premier foyer ; les
+autres sont pour vous. Dans Une opération, le champ « Pour » (Moi, Foyer 1
+(commun), Halima, Adam…) corrige le choix ; plusieurs membres = parts égales.
 
 
 8. MAISON ET PROJETS

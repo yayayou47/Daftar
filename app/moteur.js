@@ -18,7 +18,10 @@
     {id: 'transport', label: 'Transport', couleur: '#8a9a2e', mots: ['transport', 'taxi', 'moto', 'clando', 'bus']},
     {id: 'repas', label: 'Repas, boissons', couleur: '#9363b0',
      mots: ['dej', 'déj', 'diner', 'dîner', 'café', 'jus', 'boisson', 'repas']},
-    {id: 'perso', label: 'Perso', couleur: '#cc5f86', mots: ['vêtement', 'chaussure', 'parfum', 'coiff', 'cadeau']},
+    // 2026-11-27 : habillement et coiffure séparés de « Perso » (dépenses ciblées sur un membre du foyer)
+    {id: 'habillement', label: 'Habillement', couleur: '#4f6dbf', mots: ['vêtement', 'habit', 'chaussure', 'tissu', 'pagne', 'couture', 'tailleur']},
+    {id: 'coiffure', label: 'Coiffure, parfumerie', couleur: '#a0663c', mots: ['coiff', 'tresse', 'mèche', 'parfum', 'crème', 'cosmétique']},
+    {id: 'perso', label: 'Perso', couleur: '#cc5f86', mots: ['cadeau']},
     {id: 'autre', label: 'Autre', couleur: '#9a968c', mots: []},
   ];
   const COMPTES_DEFAUT = [{id: 'especes', nom: 'Espèces', type: 'especes', mots: ['espèces', 'especes', 'cash', 'liquide'], releves: []}];
@@ -57,6 +60,8 @@
   const horodatage = () => new Date().toISOString();
   const texte = (v, n) => String(v == null ? '' : v).split(/\s+/).filter(Boolean).join(' ').slice(0, n);
   const ids = (d, cle) => new Set(((d.parametres || {})[cle] || []).map(x => x.id));
+  // « Pour » d'une dépense (2026-11-27) : {id: 'foyer' | 'membre'} des foyers et de leurs membres (même règle que serveur.py)
+  const idsPour = d => { const out = {}; for (const f of (d.parametres || {}).foyers || []) { out[f.id] = 'foyer'; for (const m of f.membres || []) out[m.id] = 'membre'; } return out; };
   const idsPostes = d => { const s = ids(d, 'postes'); return s.size ? s : new Set(POSTES_DEFAUT.map(x => x.id)); };
   const biens = d => (d.parametres || {}).biens || [];
   const idsRevenus = d => { const s = ids(d, 'revenus'); return s.size ? s : new Set(REVENUS_DEFAUT.map(x => x.id)); };
@@ -147,6 +152,13 @@
     if (nature === 'depense' && doc.tiers) {   // votre dépense versée au compte d'un tiers
       if (!idsTiers(d).has(doc.tiers) || doc.tiers === compte) erreur('Compte du tiers inconnu : ' + doc.tiers);
       out.tiers = doc.tiers;
+    }
+    if (nature === 'depense' && doc.pour && (!Array.isArray(doc.pour) || doc.pour.length)) {
+      // pour qui : un foyer (dépense commune) OU un ou plusieurs membres (part égale de chacun)
+      const pour = Array.isArray(doc.pour) ? doc.pour : [doc.pour], connus = idsPour(d), vus = [];
+      for (const p of pour) { if (!(p in connus)) erreur('Membre du foyer inconnu : ' + p); if (!vus.includes(p)) vus.push(p); }
+      if (vus.length > 1 && vus.some(p => connus[p] === 'foyer')) erreur('Une dépense commune au foyer ne vise pas en plus un membre.');
+      out.pour = vus;
     }
     if ((nature === 'depense' || nature === 'revenu') && doc.evenement) {
       if (!ids(d, 'evenements').has(doc.evenement)) erreur('Événement inconnu : ' + doc.evenement);
@@ -341,8 +353,32 @@
   }
 
   // réglages et retour en arrière : mêmes règles que regler() dans serveur.py (historique des 20 derniers changements)
-  const SECTIONS_REGLAGES = ['postes', 'budgets', 'revenus', 'evenements', 'programmees', 'comptes', 'biens', 'devises'];
-  const NOMS_SECTIONS = {postes: 'postes', budgets: 'budgets', revenus: 'types de revenus', evenements: 'événements',
+  const ROLES_MEMBRE = ['epouse', 'enfant', 'autre'];
+  function nettoyerFoyers(liste, d) {
+    const out = [], vus = new Set(), noms = new Set();
+    for (const f of liste || []) {
+      const fid = String(f.id || '').trim(), nom = texte(f.nom, 60);
+      if (!RE_ID.test(fid) || vus.has(fid)) erreur('Identifiant de foyer invalide : ' + fid);
+      if (!nom || noms.has(nom.toLowerCase())) erreur('Chaque foyer doit avoir un nom unique.');
+      vus.add(fid); noms.add(nom.toLowerCase());
+      const membres = [];
+      for (const m of f.membres || []) {
+        const mid = String(m.id || '').trim(), mnom = texte(m.nom, 60);
+        if (!RE_ID.test(mid) || vus.has(mid)) erreur('Identifiant de membre invalide : ' + mid);
+        if (!mnom) erreur('Chaque membre du foyer doit avoir un prénom.');
+        vus.add(mid);
+        const nais = String(m.naissance || '');
+        if (nais && !RE_DATE.test(nais)) erreur('Date de naissance invalide pour ' + mnom + '.');
+        membres.push({id: mid, nom: mnom, role: ROLES_MEMBRE.includes(m.role) ? m.role : 'autre', naissance: nais, mots: nettoyerMots(m.mots)});
+      }
+      out.push({id: fid, nom, membres});
+    }
+    const manquants = [...new Set(d.operations.flatMap(o => o.pour || []))].filter(p => !vus.has(p));
+    if (manquants.length) erreur('Impossible de supprimer un foyer ou un membre qui a des dépenses : ' + manquants.sort().join(', '));
+    return out;
+  }
+  const SECTIONS_REGLAGES = ['postes', 'budgets', 'revenus', 'evenements', 'programmees', 'comptes', 'biens', 'devises', 'foyers'];
+  const NOMS_SECTIONS = {foyers: 'foyers', postes: 'postes', budgets: 'budgets', revenus: 'types de revenus', evenements: 'événements',
                          programmees: 'opérations programmées', comptes: 'comptes', biens: 'biens', devises: 'parités'};
   const GARDER_HISTORIQUE = 20;
   function regler(d, corps, resume) {
@@ -352,7 +388,8 @@
       const e = (d.historique || [])[parseInt(corps.restaurer, 10)];
       if (!e) erreur('Point de restauration introuvable.');
       const snap = e.parametres || {}, defauts = {postes: POSTES_DEFAUT, budgets: {}, revenus: REVENUS_DEFAUT, evenements: [], programmees: [],
-                                                  comptes: COMPTES_DEFAUT, biens: [], devises: null};
+                                                  comptes: COMPTES_DEFAUT, biens: [], devises: null,
+                                                  foyers: (d.parametres || {}).foyers || []};   // point d'avant les foyers : on les garde
       const c2 = {}; for (const k of SECTIONS_REGLAGES) c2[k] = copie(k in snap ? snap[k] : defauts[k]);
       c2.retablir = e.ops || {};
       return regler(d, c2, 'retour en arrière');
@@ -403,6 +440,7 @@
     }
     if ('evenements' in corps) prm.evenements = nettoyerEvenements(corps.evenements, d);
     if ('programmees' in corps) prm.programmees = nettoyerProgrammees(corps.programmees, d);
+    if ('foyers' in corps) prm.foyers = nettoyerFoyers(corps.foyers, d);
     if ('comptes' in corps) prm.comptes = nettoyerComptes(corps.comptes, d);
     if ('biens' in corps) prm.biens = nettoyerBiens(corps.biens, d);
     if ('devises' in corps) { if (corps.devises === null) delete prm.devises; else prm.devises = nettoyerDevises(corps.devises); }

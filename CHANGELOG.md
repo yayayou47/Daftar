@@ -4,6 +4,17 @@ Les versions sont numérotées `X.Y.Z` (le nom de série, « Ousnou », figure �
 est écrit à un seul endroit : `app/version.js`. Chaque version publiée a son tag `vX.Y.Z` et sa page dans
 [Releases](https://github.com/yayayou47/Daftar/releases) (APK Android et zip Ubuntu).
 
+## 1.4.19 — 2026-11-27
+
+- **Foyers** : un ou plusieurs foyers (Foyer 1, Foyer 2…), chacun avec ses membres (épouse, enfants…), dans Données et
+  réglages › Foyers. Chaque dépense dit **pour qui** elle est faite : le commun d'un foyer, un ou plusieurs membres
+  (parts égales), ou vous (« Moi »). Le prénom d'un membre dans la note le désigne (« pharmacie adam ») ; sans prénom,
+  le poste Foyer est commun au premier foyer. Champ « Pour » dans Une opération, colonne « Pour » dans l'export Excel,
+  filtre du journal.
+- Mes finances › **Foyer** : dépenses du commun et de chaque membre, par mois ou par année, moyenne par mois, coût
+  d'un enfant par mois, tableau membres × postes.
+- Postes **Habillement** et **Coiffure, parfumerie** (nouveaux carnets ; ajoutés au vôtre).
+
 ## 1.4.18 — 2026-11-27
 
 - Téléphone : barre du bas (Mes finances, Saisir, Mes biens) 20 % moins haute (71 → 56 px).

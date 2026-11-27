@@ -21,12 +21,14 @@ function filtreOk(e,f){
   if(t==='r')return e.nature==='revenu'&&!e.evenement&&(catRev(e)===v||(partPonct(e)>0&&e.cat_ponctuel===v));
   if(t==='x')return estExc(e)||partPonct(e)>0;
   if(t==='c')return e.compte===v||e.vers===v||e.tiers===v;
+  if(t==='m')return pourDe(e).includes(v)||(!!FOYER[v]&&pourDe(e).some(x=>(MEMBRE[x]||{}).foyer===v));   // foyer : commun + ses membres
+  if(t==='o')return e.nature==='depense'&&perso(e)&&!pourDe(e).length;   // Moi
   if(t==='p')return normTxt(e.personne)===v;
   if(t==='b'){const b=BIEN[v];return e.bien===v||(!!b&&!!b.poste&&e.nature==='depense'&&e.categorie===b.poste&&(!b.date_achat||e.date>=b.date_achat))}
   return true;
 }
 function filtreNom(f){const t=f[0],v=f.slice(2);
-  if(t==='k')return (CAT[v]||CAT.autre).label;if(t==='n')return NAT[v].l;if(t==='e')return '★ '+((EVT[v]||{}).nom||v);if(t==='r')return (REV[v]||{label:v}).label;if(t==='x')return 'Exceptionnel';if(t==='c')return nomCpt(v);
+  if(t==='k')return (CAT[v]||CAT.autre).label;if(t==='n')return NAT[v].l;if(t==='e')return '★ '+((EVT[v]||{}).nom||v);if(t==='r')return (REV[v]||{label:v}).label;if(t==='x')return 'Exceptionnel';if(t==='c')return nomCpt(v);if(t==='m')return FOYER[v]?FOYER[v].nom:(MEMBRE[v]||{}).nom||v;if(t==='o')return 'Moi';
   if(t==='p'){const c=creances().find(x=>x.key===v);return c?c.nom:v}if(t==='b')return (BIEN[v]||{}).nom||v;return f}
 /* Filtrer un journal l'amène tout de suite à l'écran (titre, filtre actif et premières lignes), sous la barre figée
    (scroll-padding-top) : poste, compte, personne, bien, mois ou année d'un carnet (demande du 2026-11-19).
@@ -45,20 +47,20 @@ function renderVue(){
   $('accueil').hidden=MODE_DEMO||!ready||all.length>0||memo('appya-accueil-vu')==='1'||view!=='mois';
   // trois rubriques : Mes finances (Mois, Année, Patrimoine, Statistiques), My Car, Données et réglages ;
   // chaque vue n'affiche que son contenu
-  const isM=view==='mois',isA=view==='annee',isP=view==='patrimoine',isS=view==='stats',isV=view==='vehicule',isH=view==='maison',isD=view==='donnees',isB=view==='biens',isF=!isV&&!isH&&!isD&&!isB,sm=isS?statsMode:'';
+  const isM=view==='mois',isA=view==='annee',isP=view==='patrimoine',isS=view==='stats',isFo=view==='foyer',isV=view==='vehicule',isH=view==='maison',isD=view==='donnees',isB=view==='biens',isF=!isV&&!isH&&!isD&&!isB,sm=isS?statsMode:'';
   if(isF)vueFin=view;
   $('aFin').setAttribute('aria-pressed',isF);$('aVeh').setAttribute('aria-pressed',isV);majRubSaisie();$('aMai').setAttribute('aria-pressed',isH);
   $('aBiens').setAttribute('aria-pressed',isB||isV||isH);$('bHub').setAttribute('aria-pressed',isB);$('segBiens').hidden=!(isB||isV||isH);$('biensHub').hidden=!isB;
   $('maiAn').setAttribute('aria-pressed',!maiAll);$('maiTout').setAttribute('aria-pressed',maiAll);$('segMai').hidden=!isH;
-  $('vMois').setAttribute('aria-pressed',isM);$('vAn').setAttribute('aria-pressed',isA);$('vPat').setAttribute('aria-pressed',isP);$('vStats').setAttribute('aria-pressed',isS);
+  $('vMois').setAttribute('aria-pressed',isM);$('vAn').setAttribute('aria-pressed',isA);$('vPat').setAttribute('aria-pressed',isP);$('vStats').setAttribute('aria-pressed',isS);$('vFoy').setAttribute('aria-pressed',isFo);$('foyPanel').hidden=!isFo;
   $('vehAn').setAttribute('aria-pressed',!vehAll);$('vehTout').setAttribute('aria-pressed',vehAll);
   $('segFin').hidden=!isF;$('segVeh').hidden=!isV;$('subCtl').hidden=isD;
   {const lv=VEHS(),cv=VEH(),lm=MAISONS(),cm=MAISON();
     $('segEngins').hidden=!isV||lv.length<2;$('addEngin').hidden=!isV;$('segMaisons').hidden=!isH||lm.length<2;
     if(isV&&lv.length>1)$('segEngins').innerHTML=lv.map(b=>`<button type="button" data-v="${b.id}" aria-pressed="${cv&&b.id===cv.id}">${esc(b.nom)}</button>`).join('');
     if(isH&&lm.length>1)$('segMaisons').innerHTML=lm.map(b=>`<button type="button" data-h="${b.id}" aria-pressed="${cm&&b.id===cm.id}">${esc(b.nom)}</button>`).join('');}
-  $('prev').hidden=$('next').hidden=!(isM||isA||sm==='mois'||sm==='annee'||(isV&&!vehAll)||(isH&&!maiAll));$('navBox').hidden=isD||isB||(isV&&vehAll)||(isH&&maiAll);
-  $('perLabel').textContent=isD?'':(isV||isH)?String(cur.y):isP?`au ${now.toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'})}`:(isM||sm==='mois')?new Date(cur.y,cur.m,1).toLocaleDateString('fr-FR',{month:'long',year:'numeric'}):(isA||sm==='annee')?String(cur.y):sm==='periode'?`du ${dmy(statsDu)} au ${dmy(statsAu)}`:"Tout l'historique";
+  $('prev').hidden=$('next').hidden=!(isM||isA||isFo||sm==='mois'||sm==='annee'||(isV&&!vehAll)||(isH&&!maiAll));$('navBox').hidden=isD||isB||(isV&&vehAll)||(isH&&maiAll);
+  $('perLabel').textContent=isD?'':(isV||isH)?String(cur.y):isP?`au ${now.toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'})}`:(isM||sm==='mois'||(isFo&&foyMode==='mois'))?new Date(cur.y,cur.m,1).toLocaleDateString('fr-FR',{month:'long',year:'numeric'}):(isA||sm==='annee'||isFo)?String(cur.y):sm==='periode'?`du ${dmy(statsDu)} au ${dmy(statsAu)}`:"Tout l'historique";
   $('perLabel').style.textTransform=(sm==='periode'||sm==='tout')?'none':'';   // « du … au … » et « Tout l'historique » gardent leur casse
   const tableau=isM||isA||isP;
   $('resumePanel').hidden=$('journal').hidden=!tableau;
@@ -73,6 +75,7 @@ function renderVue(){
   if(isH){renderMaison();return}
   if(isD)return;
   if(isV&&($('vidPanel').hidden||$('vidPanel').dataset.v!==(VEH()||{}).id))openVidange();
+  if(isFo){renderFoyer();return}
   if(!tableau){if(isS)renderStats();return}
   const items=sorted(isP?all.filter(e=>perso(e)||(filtre&&filtre==='c:'+e.compte)):isM?monthItems(cur.y,cur.m):yearItems(cur.y));   // Patrimoine : opérations des tiers seulement sur leur compte
   /* indicateurs (résumé, postes) : seulement les opérations à partir du début du suivi quotidien (DEBUT_SUIVI, 02/10/2026) ;
@@ -330,7 +333,7 @@ function opTag(e){
   const progTag=e.prog?' · <span class="nat" title="opération programmée">programmée</span>':'';
   const evTag=progTag+(e.evenement?` · <span class="nat exc">★ ${esc((EVT[e.evenement]||{}).nom||e.evenement)}</span>`:'');
   switch(e.nature){
-    case 'depense':{const p=CAT[e.categorie]||CAT.autre;return `<span class="dot" aria-hidden="true" style="background:${color(p.id)}"></span>${esc(p.label)}${e.compte!=='especes'?` · ${cn}`:''}${evTag}`}
+    case 'depense':{const p=CAT[e.categorie]||CAT.autre,po=pourDe(e);return `<span class="dot" aria-hidden="true" style="background:${color(p.id)}"></span>${esc(p.label)}${po.length&&(e.pour||[]).length?` · <span class="nat">pour ${esc(po.map(x=>MEMBRE[x]?MEMBRE[x].nom:(FOYER[x]||{}).nom||x).join(', '))}</span>`:''}${e.compte!=='especes'?` · ${cn}`:''}${evTag}`}
     case 'revenu':{const r=REV[catRev(e)]||{label:'',courant:true};return `<span class="nat in">Revenu</span> · ${esc(r.label)}${!r.courant&&!e.evenement?' <span class="nat exc">ponctuel</span>':''}${partPonct(e)?` · <span class="nat exc">dont ${fmt(partPonct(e))} ${U()} ${esc(((REV[e.cat_ponctuel]||{label:'autre revenu'}).label).toLowerCase())} (ponctuel)</span>`:''} · ${cn}${evTag}`}
     case 'virement':return `<span class="nat">Virement</span> · ${cn} → ${dotCpt(e.vers)}${esc(nomCpt(e.vers))}`;
     case 'pret':return `<span class="nat out">Prêt</span> · ${esc(e.personne)} · ${cn}${e.echeance?` · échéance ${dmy(e.echeance)}`:''}`;
@@ -419,12 +422,13 @@ $('biensList').addEventListener('click',async ev=>{
 });
 
 /* ---------- navigation ---------- */
-const parMois=()=>view==='mois'||(view==='stats'&&statsMode==='mois');   // sinon (Année, Statistiques par année, Véhicule) : l'année
+const parMois=()=>view==='mois'||(view==='stats'&&statsMode==='mois')||(view==='foyer'&&foyMode==='mois');   // sinon (Année, Statistiques par année, Véhicule) : l'année
 $('prev').onclick=()=>{if(parMois()){cur.m--;if(cur.m<0){cur.m=11;cur.y--}}else cur.y--;shown=80;render()};
 $('next').onclick=()=>{if(parMois()){cur.m++;if(cur.m>11){cur.m=0;cur.y++}}else cur.y++;shown=80;render()};
 $('vMois').onclick=()=>{view='mois';shown=80;render()};
 $('vAn').onclick=()=>{view='annee';shown=80;render()};
 $('vPat').onclick=()=>{view='patrimoine';shown=80;render()};
+$('vFoy').onclick=()=>{view='foyer';render()};
 $('vStats').onclick=()=>{view='stats';render();window.scrollTo({top:0,behavior:doux()})};
 $('aSaisir').onclick=()=>{nouveauJour();navEtape(()=>{retourVue=null;saisieSeule=true;view='donnees';showTab('tOne');render()});window.scrollTo({top:0,behavior:'instant'});$('fAmt').focus({preventScroll:true})};
 // une rubrique s'ouvre toujours en haut de la page (la barre figée la laisse toucher depuis n'importe où)
@@ -780,3 +784,40 @@ $('pjSave').onclick=async()=>{const par={};
     if(!x.projet)delete x.projet;return x});
   try{await api.params({biens});evtDirty=false;await charger();openEvt();$('pjMsg').textContent='Projets enregistrés.'}catch(e){$('pjMsg').textContent=e.message}};
 
+
+/* ================= vue Foyer (Mes finances › Foyer, 2026-11-27) =================
+   Dépenses (courantes et exceptionnelles, vos comptes, depuis le début du suivi) réparties selon « pour » : le commun de
+   chaque foyer, chaque membre (part égale quand une dépense vise plusieurs membres), et vous (« Moi »). */
+let foyMode='mois';
+function partsPour(items){const r={};
+  const add=(k,e,v)=>{const x=r[k]=r[k]||{tot:0,cats:{},n:0};x.tot+=v;x.cats[e.categorie]=(x.cats[e.categorie]||0)+v;x.n++};
+  for(const e of items){if(e.nature!=='depense'||!perso(e))continue;const p=pourDe(e);if(!p.length)add('',e,e.montant);else p.forEach(id=>add(id,e,e.montant/p.length))}
+  return r}
+// mois de l'année y comptés pour la moyenne mensuelle : depuis le début du suivi, jusqu'au mois en cours
+function moisDeLAnnee(y){let a=0,b=11;if(y===now.getFullYear())b=now.getMonth();if(DEBUT_SUIVI&&+DEBUT_SUIVI.slice(0,4)===y)a=+DEBUT_SUIVI.slice(5,7)-1;return Math.max(1,b-a+1)}
+function renderFoyer(){
+  $('foyMois').setAttribute('aria-pressed',foyMode==='mois');$('foyAn').setAttribute('aria-pressed',foyMode!=='mois');
+  if(!FOYERS.length){$('foyBody').innerHTML=`<div class="empty">Aucun foyer pour l'instant. <button type="button" class="btn ghost small" id="foyOuvrir">Déclarer le foyer et ses membres</button></div>`;
+    $('foyOuvrir').onclick=()=>{navEtape(()=>{view='donnees';showTab('tFoy');render()});openFoyers()};return}
+  const its=(foyMode==='mois'?monthItems(cur.y,cur.m):yearItems(cur.y)).filter(e=>!DEBUT_SUIVI||e.date>=DEBUT_SUIVI),P=partsPour(its);
+  const nm=foyMode==='mois'?1:moisDeLAnnee(cur.y),r0=v=>Math.round(v);
+  const lignes=[];
+  for(const f of FOYERS)lignes.push({k:f.id,lab:'Commun',f},...f.membres.map(m=>({k:m.id,lab:m.nom,sous:ROLES[m.role]+(m.naissance&&ageDe(m.naissance)!==null?` · ${ageDe(m.naissance)} ans`:''),f})));
+  const tousTot=lignes.reduce((a,l)=>a+((P[l.k]||{}).tot||0),0)+((P['']||{}).tot||0)||1;
+  const barre=l=>{const x=P[l.k]||{tot:0,n:0};return `<button type="button" class="foyl" data-f="${l.k?'m:'+l.k:'o:'}"><span class="foyn"><b>${esc(l.lab)}</b>${l.sous?`<span class="hint">${esc(l.sous)}</span>`:''}</span>
+    <span class="foyb"><i style="width:${Math.max(x.tot?1.5:0,x.tot/tousTot*100)}%"></i></span><span class="foym num">${fmtM(r0(x.tot))}${foyMode!=='mois'&&x.tot?`<span class="hint">${fmtM(r0(x.tot/nm))}/mois</span>`:''}</span></button>`};
+  const table=ls=>{const cats=CATS.filter(c=>ls.some(l=>(P[l.k]||{cats:{}}).cats[c.id]));if(!cats.length)return '';return `<div class="tbl"><table><thead><tr><th>Pour</th>${cats.map(c=>`<th>${esc(c.label)}</th>`).join('')}<th>Total</th></tr></thead><tbody>${ls.map(l=>{const x=P[l.k]||{tot:0,cats:{}};
+    return `<tr class="click" data-f="${l.k?'m:'+l.k:'o:'}"><td>${esc(l.lab)}</td>${cats.map(c=>`<td>${x.cats[c.id]?fmtM(r0(x.cats[c.id])):'–'}</td>`).join('')}<td><b>${fmtM(r0(x.tot))}</b></td></tr>`}).join('')}</tbody></table></div>`};
+  let h='';
+  for(const f of FOYERS){const ls=lignes.filter(l=>l.f===f),tot=ls.reduce((a,l)=>a+((P[l.k]||{}).tot||0),0);
+    const enf=f.membres.filter(m=>m.role==='enfant'),te=enf.reduce((a,m)=>a+((P[m.id]||{}).tot||0),0);
+    h+=`<div class="foycard"><div class="phead"><h3 class="sub">${esc(f.nom)}</h3><span class="hint">${fmtM(r0(tot))} ${U()}${foyMode!=='mois'?` · ${fmtM(r0(tot/nm))} ${U()}/mois`:''}${enf.length&&te?` · enfants ${fmtM(r0(te/enf.length/nm))} ${U()} par enfant et par mois`:''}</span></div>
+      <div class="foybars">${ls.map(barre).join('')}</div>${table(ls)}</div>`}
+  const moi={k:'',lab:'Moi',sous:'dépenses pour vous-même'};
+  h+=`<div class="foycard"><div class="foybars">${barre(moi)}</div></div>`;
+  $('foyBody').innerHTML=h;
+}
+$('foyMois').onclick=()=>{foyMode='mois';render()};
+$('foyAn').onclick=()=>{foyMode='annee';render()};
+// une ligne (commun, membre, Moi) : son journal, sur la même période
+$('foyBody').addEventListener('click',ev=>{const t=ev.target.closest('[data-f]');if(!t)return;filtre=t.dataset.f;view=foyMode==='mois'?'mois':'annee';shown=80;render();allerJournal('journal')});

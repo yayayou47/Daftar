@@ -80,7 +80,12 @@ POSTES_DEFAUT = [   # mêmes valeurs que POSTES_DEFAUT dans app/moteur.js (versi
     {"id": "transport", "label": "Transport", "couleur": "#8a9a2e", "mots": ["transport", "taxi", "moto", "clando", "bus"]},
     {"id": "repas", "label": "Repas, boissons", "couleur": "#9363b0",
      "mots": ["dej", "déj", "diner", "dîner", "café", "jus", "boisson", "repas"]},
-    {"id": "perso", "label": "Perso", "couleur": "#cc5f86", "mots": ["vêtement", "chaussure", "parfum", "coiff", "cadeau"]},
+    # 2026-11-27 : habillement et coiffure séparés de « Perso » (dépenses ciblées sur un membre du foyer)
+    {"id": "habillement", "label": "Habillement", "couleur": "#4f6dbf",
+     "mots": ["vêtement", "habit", "chaussure", "tissu", "pagne", "couture", "tailleur"]},
+    {"id": "coiffure", "label": "Coiffure, parfumerie", "couleur": "#a0663c",
+     "mots": ["coiff", "tresse", "mèche", "parfum", "crème", "cosmétique"]},
+    {"id": "perso", "label": "Perso", "couleur": "#cc5f86", "mots": ["cadeau"]},
     {"id": "autre", "label": "Autre", "couleur": "#9a968c", "mots": []},
 ]
 RE_ID = re.compile(r"^[a-z0-9_-]{1,40}$")
@@ -140,6 +145,16 @@ def ids_revenus(d):
 
 def ids_de(d, cle):
     return {x["id"] for x in d.get("parametres", {}).get(cle, [])}
+
+
+def ids_pour(d):
+    """« Pour » d'une dépense (2026-11-27) : {id: "foyer" | "membre"} des foyers et de leurs membres."""
+    out = {}
+    for f in d.get("parametres", {}).get("foyers", []):
+        out[f["id"]] = "foyer"
+        for m in f.get("membres", []):
+            out[m["id"]] = "membre"
+    return out
 
 
 # ---------------------------------------------------------------- v3 : carnet du véhicule intégré
@@ -697,6 +712,18 @@ def nettoyer(doc, d):
         if doc["tiers"] not in ids_tiers(d) or doc["tiers"] == compte:
             raise ValueError("Compte du tiers inconnu : %s" % doc["tiers"])
         out["tiers"] = doc["tiers"]
+    if nature == "depense" and doc.get("pour"):
+        # pour qui : un foyer (dépense commune) OU un ou plusieurs membres (part égale de chacun)
+        pour, connus = doc["pour"] if isinstance(doc["pour"], list) else [doc["pour"]], ids_pour(d)
+        vus = []
+        for p in pour:
+            if p not in connus:
+                raise ValueError("Membre du foyer inconnu : %s" % p)
+            if p not in vus:
+                vus.append(p)
+        if len(vus) > 1 and any(connus[p] == "foyer" for p in vus):
+            raise ValueError("Une dépense commune au foyer ne vise pas en plus un membre.")
+        out["pour"] = vus
     if nature in ("depense", "revenu") and doc.get("evenement"):
         if doc["evenement"] not in ids_de(d, "evenements"):
             raise ValueError("Événement inconnu : %s" % doc["evenement"])
@@ -952,8 +979,42 @@ def nettoyer_biens(liste, d):
 # reclassées. {"restaurer": i} revient à l'état d'avant le changement i ; {"origine": true} remet les réglages
 # d'origine (postes, types de revenus, budgets, parités) sans toucher aux opérations, comptes, biens, événements
 # et opérations programmées. Restaurer est lui-même un changement : on peut donc l'annuler.
-SECTIONS_REGLAGES = ("postes", "budgets", "revenus", "evenements", "programmees", "comptes", "biens", "devises")
-NOMS_SECTIONS = {"postes": "postes", "budgets": "budgets", "revenus": "types de revenus", "evenements": "événements",
+ROLES_MEMBRE = ("epouse", "enfant", "autre")
+
+
+def nettoyer_foyers(liste, d):
+    """Foyers et leurs membres (épouse, enfants…) : identifiants uniques sur l'ensemble (champ « pour » des dépenses)."""
+    out, vus, noms = [], set(), set()
+    for f in liste or []:
+        fid, nom = str(f.get("id", "")).strip(), texte(f.get("nom"), 60)
+        if not RE_ID.match(fid) or fid in vus:
+            raise ValueError("Identifiant de foyer invalide : %s" % fid)
+        if not nom or nom.lower() in noms:
+            raise ValueError("Chaque foyer doit avoir un nom unique.")
+        vus.add(fid)
+        noms.add(nom.lower())
+        membres = []
+        for m in f.get("membres") or []:
+            mid, mnom = str(m.get("id", "")).strip(), texte(m.get("nom"), 60)
+            if not RE_ID.match(mid) or mid in vus:
+                raise ValueError("Identifiant de membre invalide : %s" % mid)
+            if not mnom:
+                raise ValueError("Chaque membre du foyer doit avoir un prénom.")
+            vus.add(mid)
+            nais = str(m.get("naissance") or "")
+            if nais and not RE_DATE.match(nais):
+                raise ValueError("Date de naissance invalide pour %s." % mnom)
+            membres.append({"id": mid, "nom": mnom, "role": m.get("role") if m.get("role") in ROLES_MEMBRE else "autre",
+                            "naissance": nais, "mots": nettoyer_mots(m.get("mots"))})
+        out.append({"id": fid, "nom": nom, "membres": membres})
+    manquants = {p for o in d.get("operations", []) for p in (o.get("pour") or [])} - vus
+    if manquants:
+        raise ValueError("Impossible de supprimer un foyer ou un membre qui a des dépenses : %s" % ", ".join(sorted(manquants)))
+    return out
+
+
+SECTIONS_REGLAGES = ("postes", "budgets", "revenus", "evenements", "programmees", "comptes", "biens", "devises", "foyers")
+NOMS_SECTIONS = {"foyers": "foyers", "postes": "postes", "budgets": "budgets", "revenus": "types de revenus", "evenements": "événements",
                  "programmees": "opérations programmées", "comptes": "comptes", "biens": "biens", "devises": "parités"}
 GARDER_HISTORIQUE = 20
 
@@ -970,7 +1031,8 @@ def regler(d, corps, resume=None):
             raise ValueError("Point de restauration introuvable.")
         snap = e.get("parametres") or {}
         defauts = {"postes": POSTES_DEFAUT, "budgets": {}, "revenus": REVENUS_DEFAUT, "evenements": [], "programmees": [],
-                   "comptes": COMPTES_DEFAUT, "biens": [], "devises": None}
+                   "comptes": COMPTES_DEFAUT, "biens": [], "devises": None,
+                   "foyers": d.get("parametres", {}).get("foyers", [])}   # point d'avant les foyers : on les garde
         c2 = {k: json.loads(json.dumps(snap[k] if k in snap else defauts[k])) for k in SECTIONS_REGLAGES}
         c2["retablir"] = e.get("ops") or {}
         return regler(d, c2, "retour en arrière")
@@ -1048,6 +1110,8 @@ def regler(d, corps, resume=None):
         prm["evenements"] = nettoyer_evenements(corps.get("evenements"), d)
     if "programmees" in corps:
         prm["programmees"] = nettoyer_programmees(corps.get("programmees"), d)
+    if "foyers" in corps:
+        prm["foyers"] = nettoyer_foyers(corps.get("foyers"), d)
     if "comptes" in corps:
         prm["comptes"] = nettoyer_comptes(corps.get("comptes"), d)
     if "biens" in corps:

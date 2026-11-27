@@ -16,6 +16,7 @@
   <defs>
     <symbol id="i-finances" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h12v4"/><path d="M3 7v11a2 2 0 0 0 2 2h15V9H5a2 2 0 0 1-2-2z"/><circle cx="16" cy="14.5" r="1.2"/></symbol>
     <symbol id="i-car" viewBox="0 0 24 24"><path d="M4 16.5v-4l2.2-5.3A1.5 1.5 0 0 1 7.6 6.3h8.8a1.5 1.5 0 0 1 1.4.9l2.2 5.3v4"/><path d="M3 16.5h18M4 12.5h16"/><circle cx="7.5" cy="16.5" r="2"/><circle cx="16.5" cy="16.5" r="2"/></symbol>
+    <symbol id="i-foyer" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="17" cy="9.5" r="2.3"/><path d="M15.6 14.4c2.5-.3 4.4 1.3 4.9 4.6"/></symbol>
     <symbol id="i-house" viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v10h13V10"/><path d="M10 20v-5.5h4V20"/></symbol>
     <symbol id="i-lune" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
 <symbol id="i-soleil" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></g></symbol>
@@ -101,7 +102,7 @@
     <button type="button" id="aBiens" aria-pressed="false"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-cle"/></svg><span>Mes biens</span></button>
   </nav>
   <div class="ctl subctl" id="subCtl">
-    <div class="seg segic" role="group" aria-label="Vue de Mes finances" id="segFin"><button id="vMois" aria-pressed="true"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-mois"/></svg><span>Mois</span></button><button id="vAn" aria-pressed="false"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-annee"/></svg><span>Année</span></button><button id="vPat" aria-pressed="false"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-patrimoine"/></svg><span>Patrimoine</span></button><button id="vStats" aria-pressed="false"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-stats"/></svg><span>Statistiques</span></button></div>
+    <div class="seg segic" role="group" aria-label="Vue de Mes finances" id="segFin"><button id="vMois" aria-pressed="true"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-mois"/></svg><span>Mois</span></button><button id="vAn" aria-pressed="false"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-annee"/></svg><span>Année</span></button><button id="vPat" aria-pressed="false"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-patrimoine"/></svg><span>Patrimoine</span></button><button id="vStats" aria-pressed="false"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-stats"/></svg><span>Statistiques</span></button><button id="vFoy" aria-pressed="false"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-foyer"/></svg><span>Foyer</span></button></div>
     <div class="seg segic" role="group" aria-label="Vue de Mes biens" id="segBiens" hidden><button type="button" id="bHub" aria-pressed="false"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-cle"/></svg><span>Tous</span></button><button type="button" id="aVeh" aria-pressed="false"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-car"/></svg><span>Engins</span></button><button type="button" id="aMai" aria-pressed="false"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-house"/></svg><span>Maison</span></button></div>
     <div class="seg" role="group" aria-label="Engin affiché" id="segEngins" hidden></div>
     <button type="button" class="btn ghost" id="addEngin" aria-label="Ajouter un engin" hidden>+ <span class="lgEng">Ajouter un </span>engin</button>
@@ -154,6 +155,11 @@
     <div class="tbl" id="yearTblWrap" hidden><table id="yearTbl"></table></div>
   </section>
 
+  <section class="panel" aria-labelledby="foyTitre" id="foyPanel" hidden>
+    <div class="phead"><h2 id="foyTitre">Dépenses du foyer</h2><div class="seg" role="group" aria-label="Période"><button type="button" id="foyMois" aria-pressed="true">Mois</button><button type="button" id="foyAn" aria-pressed="false">Année</button></div></div>
+    <div id="foyBody"></div>
+    <span class="hint">Pour qui est faite chaque dépense : le commun du foyer, un membre, ou vous (« Moi »). Une dépense pour plusieurs membres est partagée à parts égales. Toucher une ligne ouvre son journal.</span>
+  </section>
   <section class="panel" aria-label="Comptes" id="comptesPanel" hidden>
     <div class="phead"><h2>Comptes</h2><span class="hint">Solde = dernier relevé noté + opérations postérieures</span></div>
     <div id="comptesList"></div>
@@ -261,6 +267,7 @@
         <button role="tab" id="tCB" aria-selected="false"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-banque"/></svg><span>Comptes et biens</span><span class="tdesc">Comptes, comptes de tiers, biens et engins</span><span class="chev" aria-hidden="true">›</span></button>
         <button role="tab" id="tEvt" aria-selected="false"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-etoile"/></svg><span>Événements et projets</span><span class="tdesc">Mariages, voyages ; projets d'une maison ou d'un autre bien</span><span class="chev" aria-hidden="true">›</span></button>
         <button role="tab" id="tRev" aria-selected="false"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-cochon"/></svg><span>Types de revenus</span><span class="tdesc">Salaire, primes, missions : courants ou ponctuels</span><span class="chev" aria-hidden="true">›</span></button>
+        <button role="tab" id="tFoy" aria-selected="false"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-foyer"/></svg><span>Foyers</span><span class="tdesc">Épouse, enfants : pour qui sont les dépenses</span><span class="chev" aria-hidden="true">›</span></button>
         <button role="tab" id="tProg" aria-selected="false"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-cycle"/></svg><span>Programmées</span><span class="tdesc">Frais et intérêts à confirmer à chaque échéance</span><span class="chev" aria-hidden="true">›</span></button>
         <button role="tab" id="tSai" aria-selected="false"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-clavier"/></svg><span>Saisie</span><span class="tdesc">Montants en milliers, clavier, montants abrégés</span><span class="chev" aria-hidden="true">›</span></button>
         <button role="tab" id="tPar" aria-selected="false"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-change"/></svg><span>Parités</span><span class="tdesc">Devises d'affichage et taux de change</span><span class="chev" aria-hidden="true">›</span></button>
@@ -291,6 +298,7 @@
       <div class="field"><label class="label" for="fCpt" id="fCptLab">Payé avec</label><select id="fCpt"></select></div>
       <div class="field" id="wCat"><label class="label" for="fCat">Poste</label><select id="fCat"></select></div>
       <div class="field" id="wTiers" hidden><label class="label" for="fTiers">Versé au compte de</label><select id="fTiers" aria-describedby="fTiersHint"></select><span class="hint" id="fTiersHint">Votre part : la dépense alimente aussi ce compte.</span></div>
+      <div class="field" id="wPour" hidden><span class="label" id="fPourLab">Pour</span><div class="chips" id="fPour" role="group" aria-labelledby="fPourLab"></div><span class="hint" id="fPourHint">Plusieurs membres : la dépense est partagée à parts égales.</span></div>
       <div class="field" id="wRev" hidden><label class="label" for="fCatR">Type de revenu</label><select id="fCatR"></select></div>
       <div class="field" id="wPonct" hidden><label class="label" for="fPonct">Dont ponctuel <span class="uS"></span></label><div class="ponct"><input type="text" inputmode="decimal" id="fPonct" autocomplete="off" aria-describedby="fPonctHint"><select id="fCatP" aria-label="Type de la part ponctuelle"></select></div><span class="hint" id="fPonctHint">Facultatif : part exceptionnelle reçue dans le même virement (rappel, bonus) : comptée à part des revenus courants. Le solde garde le montant entier.</span></div>
       <div class="field" id="wEvt" hidden><label class="label" for="fEvt">Événement (facultatif)</label><select id="fEvt" aria-describedby="fEvtHint"></select><span class="hint" id="fEvtHint">Rattachée à un événement, l'opération compte comme exceptionnelle.</span></div>
@@ -387,6 +395,12 @@
     <details class="aide"><summary>Comment ça marche ?</summary><div class="hint">Un projet se rattache à un <b>bien</b> : une maison, ou tout autre bien (terrain, engin…). Ses dépenses sont les <b>investissements</b> dans ce bien. Le budget (<span class="uS-court"></span>), l'échéance et la note servent aux perspectives : pour une maison, dans Mes biens › Maison. « Maison » donne au bien le carnet des travaux.</div></details>
     <div id="pjList" class="evlist"></div>
     <div class="row"><button class="btn ghost" type="button" id="pjAdd">+ Ajouter un projet</button><button class="btn" type="button" id="pjSave">Enregistrer les projets</button><span id="pjMsg" class="muted" role="status"></span></div>
+    </div>
+    <div id="foyBox" hidden style="display:flex;flex-direction:column;gap:12px">
+    <div class="phead"><h3 class="sub">Foyers et membres</h3><span class="hint">Une dépense peut être commune au foyer ou destinée à un membre</span></div>
+    <details class="aide"><summary>Comment ça marche ?</summary><div class="hint">Le <b>prénom</b> d'un membre dans une note désigne ce membre : « 15000 pharmacie adam » = Santé, pour Adam. Plusieurs prénoms : la dépense est partagée à parts égales. Sans prénom, une dépense du poste Foyer est <b>commune</b> au premier foyer ; les autres sont pour vous (« Moi »). Le choix se corrige dans Une opération (champ « Pour »). Mots-clés : autres façons d'écrire le membre (« maman », un surnom).</div></details>
+    <div id="foyList"></div>
+    <div class="row"><button class="btn ghost" type="button" id="foyAdd">+ Ajouter un foyer</button><button class="btn" type="button" id="foySave">Enregistrer les foyers</button><span id="foyMsg" class="muted" role="status"></span></div>
     </div>
     <div id="revBox" hidden style="display:flex;flex-direction:column;gap:12px">
     <div class="phead"><h3 class="sub">Types de revenus</h3><span class="hint">Courant : revient chaque mois · ponctuel : exceptionnel</span></div>

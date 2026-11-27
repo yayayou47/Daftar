@@ -281,3 +281,46 @@ function majRappelSauvegarde(){
 $('savMaintenant').onclick=()=>$('savExport').click();
 $('savPlusTard').onclick=()=>{lsSet('daftar-sauvegarde-plus-tard',new Date(Date.now()+3*864e5).toISOString());$('savBandeau').hidden=true};
 
+
+/* ================= foyers et membres (Données et réglages › Foyers, 2026-11-27) ================= */
+let foyDirty=false;
+const utilisePour=id=>all.some(e=>(e.pour||[]).includes(id));
+function ageDe(n){if(!n)return null;const a=new Date(n+'T12:00'),t=new Date(today+'T12:00');let x=t.getFullYear()-a.getFullYear();if(t<new Date(t.getFullYear(),a.getMonth(),a.getDate(),12))x--;return x>=0?x:null}
+function mbRow(m){const used=m.id&&utilisePour(m.id);
+  return `<div class="evrow mbrow" data-id="${m.id||''}"><input class="mNom" value="${esc(m.nom||'')}" placeholder="prénom" aria-label="Prénom du membre" maxlength="60">
+    <select class="mRole" aria-label="Rôle">${Object.entries(ROLES).map(([k,v])=>`<option value="${k}"${k===(m.role||'enfant')?' selected':''}>${v}</option>`).join('')}</select>
+    <input type="date" class="mNais" value="${m.naissance||''}" aria-label="Date de naissance (facultatif)">
+    <input class="mMots" value="${esc((m.mots||[]).join(', '))}" placeholder="autres mots : maman, surnom…" aria-label="Mots-clés du membre">
+    <button type="button" class="mini danger" data-x ${used?'disabled title="Membre avec des dépenses : impossible à supprimer"':''} aria-label="Retirer le membre">✕</button></div>`}
+function foyBlk(f){const used=!!f.id&&(utilisePour(f.id)||f.membres.some(m=>utilisePour(m.id)));
+  return `<div class="foyblk" data-id="${f.id||''}"><div class="evlist foyhead"><div class="evrow foyrow" data-id="${f.id||''}"><input class="fNomF" value="${esc(f.nom||'')}" placeholder="Foyer 1" aria-label="Nom du foyer" maxlength="60"><button type="button" class="mini danger" data-xf ${used?'disabled title="Foyer avec des dépenses : impossible à supprimer"':''} aria-label="Retirer le foyer">✕</button></div></div>
+    <div class="evlist mbList">${f.membres.map(mbRow).join('')}</div>
+    <div class="row"><button type="button" class="btn ghost small" data-addm>+ Ajouter un membre</button></div></div>`}
+function resumeFoyer(r){const n=r.closest('.foyblk').querySelectorAll('.mbrow').length;
+  return `<b>${esc(valIn(r,'.fNomF')||'Nouveau foyer')}</b> <span class="hint">${n?`${n} membre${n>1?'s':''}`:'aucun membre pour l\'instant'} · dépenses du poste Foyer communes par défaut</span>`}
+function resumeMembre(r){const a=ageDe(valIn(r,'.mNais')),m=valIn(r,'.mMots');
+  return `<b>${esc(valIn(r,'.mNom')||'Nouveau membre')}</b> <span class="hint">${esc(selTxt(r.querySelector('.mRole')))}${a!==null?` · ${a} an${a>1?'s':''}`:''}${m?` · ${esc(m)}`:''}</span>`}
+function ficherFoyer(b){fiches(b.querySelector('.foyhead'),resumeFoyer,'foySave',openFoyers);fiches(b.querySelector('.mbList'),resumeMembre,'foySave',openFoyers)}
+function openFoyers(){
+  // aucun foyer enregistré : « Foyer 1 » proposé (le foyer qui existe déjà), à compléter avec ses membres
+  const l=FOYERS.length?FOYERS:[{id:'',nom:'Foyer 1',membres:[]}];
+  $('foyList').innerHTML=l.map(foyBlk).join('');$('foyList').querySelectorAll('.foyblk').forEach(ficherFoyer);
+  if(!FOYERS.length)$('foyList').querySelectorAll('.foyrow').forEach(r=>r.classList.remove('edit'));
+  foyDirty=false}
+$('foyList').addEventListener('input',()=>{foyDirty=true});
+$('foyList').addEventListener('click',ev=>{const t=ev.target.closest('[data-x],[data-xf],[data-addm]');if(!t||t.disabled)return;
+  if(t.dataset.addm!==undefined){const l=t.closest('.foyblk').querySelector('.mbList');l.insertAdjacentHTML('beforeend',mbRow({role:'enfant'}));
+    ficher(l.lastElementChild,resumeMembre,true);l.lastElementChild.querySelector('.mNom').focus();foyDirty=true;return}
+  if(t.dataset.xf!==undefined){retirerLigne(t.closest('.foyblk'),'Foyer',()=>{foyDirty=true});return}
+  retirerLigne(t.closest('.mbrow'),'Membre',()=>{foyDirty=true})});
+$('foyAdd').onclick=()=>{const n=$('foyList').querySelectorAll('.foyblk').length;$('foyList').insertAdjacentHTML('beforeend',foyBlk({id:'',nom:`Foyer ${n+1}`,membres:[]}));
+  const b=$('foyList').lastElementChild;ficherFoyer(b);b.querySelector('.fNomF').focus();foyDirty=true};
+$('foySave').onclick=async()=>{
+  const pris=new Set([...FOYERS.map(f=>f.id),...MEMBRES().map(m=>m.id)]),out=[];
+  for(const b of $('foyList').querySelectorAll('.foyblk')){const nom=valIn(b,'.fNomF');if(!nom){$('foyMsg').textContent='Chaque foyer doit avoir un nom.';return}
+    const f={id:b.dataset.id||nouvelId(nom,pris),nom,membres:[]};
+    for(const r of b.querySelectorAll('.mbrow')){const mn=valIn(r,'.mNom');if(!mn)continue;
+      f.membres.push({id:r.dataset.id||nouvelId(mn,pris),nom:mn,role:r.querySelector('.mRole').value,naissance:valIn(r,'.mNais'),mots:mots(valIn(r,'.mMots'))})}
+    out.push(f)}
+  try{await api.params({foyers:out});foyDirty=false;await charger();openFoyers();$('foyMsg').textContent='Foyers enregistrés.'}catch(e){$('foyMsg').textContent=e.message}
+};

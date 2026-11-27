@@ -363,10 +363,10 @@ function periodeFinanciere(){const v=vueFin;
 }
 function feuillesFinancier(X){
   const P=periodeFinanciere(),items=sorted(P.items),F=[];
-  F.push(['Journal',feuille(X,[["Date","Nature","Montant (CFA)","Libellé","Poste / type de revenu","Courant ou exceptionnel","Dont ponctuel (CFA)","Événement","Compte","Vers","Personne","Bien","Remarque"]].concat(items.map(e=>[serial(e.date),NAT[e.nature].l,e.montant,e.libelle,
-    e.nature==='depense'?(CAT[e.categorie]||CAT.autre).label:e.nature==='revenu'?(REV[catRev(e)]||{label:''}).label:null,(e.nature==='depense'||e.nature==='revenu')?(estExc(e)?'exceptionnel':partPonct(e)?`courant, dont ponctuel (${(REV[e.cat_ponctuel]||{label:'Autre revenu'}).label})`:'courant'):null,partPonct(e)||null,
+  F.push(['Journal',feuille(X,[["Date","Nature","Montant (CFA)","Libellé","Poste / type de revenu","Courant ou exceptionnel","Dont ponctuel (CFA)","Pour","Événement","Compte","Vers","Personne","Bien","Remarque"]].concat(items.map(e=>[serial(e.date),NAT[e.nature].l,e.montant,e.libelle,
+    e.nature==='depense'?(CAT[e.categorie]||CAT.autre).label:e.nature==='revenu'?(REV[catRev(e)]||{label:''}).label:null,(e.nature==='depense'||e.nature==='revenu')?(estExc(e)?'exceptionnel':partPonct(e)?`courant, dont ponctuel (${(REV[e.cat_ponctuel]||{label:'Autre revenu'}).label})`:'courant'):null,partPonct(e)||null,e.nature==='depense'&&FOYERS.length?textePour(e):null,
     e.evenement?(EVT[e.evenement]||{}).nom||e.evenement:null,nomCpt(e.compte),e.vers?nomCpt(e.vers):null,e.personne||null,e.bien?(BIEN[e.bien]||{}).nom:null,e.remarque||null])),
-    [11,18,14,34,22,24,14,18,14,14,18,18,24],{A:'dd/mm/yyyy',C:'#,##0',G:'#,##0'},true)]);
+    [11,18,14,34,22,24,14,20,18,14,14,18,18,24],{A:'dd/mm/yyyy',C:'#,##0',G:'#,##0'},true)]);
   const bp=byCat(items),tp=sum(deps(items));
   F.push(['Par poste',feuille(X,[["Poste","Montant (CFA)","Part","Budget mensuel (CFA)"]].concat(CATS.filter(c=>bp[c.id]).sort((a,b)=>bp[b.id]-bp[a.id]).map(c=>[c.label,bp[c.id],tp?bp[c.id]/tp:0,budgets[c.id]||null]),[["Total",tp,1,null]]),
     [18,15,9,20],{B:'#,##0',C:'0.0%',D:'#,##0'})]);
