@@ -102,12 +102,17 @@ La barre des rubriques est en bas de l'écran sur le téléphone, où elle
 s'efface pendant qu'on fait défiler la page et revient dès qu'on s'arrête ;
 sur l'ordinateur, elle est figée juste sous la ligne du haut :
 
-  - Saisir (en bleu) : la carte de saisie d'une opération, le curseur dans
-    le champ Montant.
-  - Mes finances : vues Mois, Année, Patrimoine et Statistiques, avec le
-    journal de toutes les opérations.
-  - Engins : vidanges, carburant, consommation, coûts de chaque engin.
-  - House : un terrain, une construction, ses travaux et son projet.
+  - Mes finances (à gauche) : vues Mois, Année, Patrimoine et
+    Statistiques, avec le journal de toutes les opérations.
+  - Saisir (au milieu, en bleu) : la carte de saisie d'une opération, le
+    curseur dans le champ Montant.
+  - Mes biens (à droite) : la liste des biens (engins, maisons, autres
+    biens). Toucher un bien l'ouvre : Engins (vidanges, carburant,
+    consommation, coûts de chaque engin), Maison (terrain, construction,
+    travaux, projet), ou Patrimoine pour un autre bien. « Modifier » mène à
+    sa ligne dans Comptes et biens ; « + Ajouter un engin » et « + Ajouter
+    un bien » en créent. La barre Tous | Engins | Maison passe de l'un à
+    l'autre.
   - Données et réglages (menu ≡ en haut à droite) : une liste, chaque
     réglage avec une courte description, en quatre groupes :
       Saisir : Une opération · Coller une liste · Relevé bancaire ;
@@ -194,7 +199,8 @@ ligne permet d'en écarter une), puis importez.
 ---------
 Dans Comptes et biens, chaque bien a un « Rôle » : bien simple, Engin
 (voiture, moto, bus, camion, groupe électrogène, autre) ou Maison. Le bouton
-« + engin » de la rubrique Engins en ajoute un. Un groupe électrogène se suit
+« + engin » de Mes biens › Engins (ou « + Ajouter un engin » de Mes biens)
+en ajoute un. Un groupe électrogène se suit
 en HEURES de marche (vidange tous les 250 h par défaut, consommation en
 L/h) ; les autres engins en kilomètres. Avec plusieurs engins, une barre
 passe de l'un à l'autre.
@@ -330,7 +336,7 @@ remet postes, budgets, types de revenus et parités comme à l'installation,
 sans toucher aux opérations ni aux comptes ; ce retour s'annule aussi.
 
 Exporter (menu ≡ › Fichiers › Exporter vers Excel) : Tout, Mes finances,
-Engins ou House.
+Engins ou Maison.
 Montants en francs CFA ; le fichier Daftar_<rubrique>_<date>.xlsx s'ouvre
 avec LibreOffice Calc.
 
@@ -394,6 +400,15 @@ rattachent les saisies (« hôtel dakar » → Mission à Dakar). Les types de
 revenus sont courants (salaire, primes, intérêts) ou ponctuels (mission,
 atelier, consultance, jury…). Les vues séparent le courant de
 l'exceptionnel ; les soldes des comptes comptent tout.
+
+Revenu courant avec une part ponctuelle : un seul virement qui contient le
+salaire ET un rappel ou un bonus (par exemple 800 000 reçus, dont 400 000 de
+salaire). Notez une seule opération du montant du virement, type Salaire,
+et remplissez « Dont ponctuel » : le montant exceptionnel et son type. Le
+solde du compte et le relevé bancaire gardent le virement entier ; le taux
+d'épargne et les revenus courants ne comptent que la part habituelle ; la
+part ponctuelle va dans l'exceptionnel. Le journal l'affiche (« dont … »)
+et l'export Excel la donne dans la colonne « Dont ponctuel ».
 
 Opérations programmées (onglet « Programmées ») : frais de tenue de compte,
 abonnements (montant fixe, chaque mois, trimestre…), intérêts d'un compte

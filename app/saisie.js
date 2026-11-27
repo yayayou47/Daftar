@@ -13,6 +13,7 @@ function fillSelects(){
   $('dlPers').innerHTML=creances().map(c=>`<option value="${esc(c.nom)}">`).join('');
   const cm=$('fCatM').value;$('fCatM').innerHTML=CATS_M.map(c=>`<option value="${c.id}"${c.id===cm?' selected':''}>${esc(c.l)}</option>`).join('');
   const cr=$('fCatR').value;$('fCatR').innerHTML=REVENUS.map(r=>`<option value="${r.id}"${r.id===cr?' selected':''}>${esc(r.label)} (${r.courant?'courant':'ponctuel'})</option>`).join('');
+  const cp=$('fCatP').value,RP=REVENUS.filter(r=>!r.courant);$('fCatP').innerHTML=RP.map(r=>`<option value="${r.id}"${r.id===cp?' selected':''}>${esc(r.label)}</option>`).join('');
   const pc=$('pasteCpt').value;$('pasteCpt').innerHTML='<option value="">— non : compte reconnu dans chaque ligne —</option>'+COMPTES.map(c=>`<option value="${c.id}"${c.id===pc?' selected':''}>${esc(c.nom)}${c.type==='tiers'?' (tiers)':''}</option>`).join('');
   const ct=$('fTiers').value;$('fTiers').innerHTML='<option value="">— non —</option>'+TIERS().map(c=>`<option value="${c.id}"${c.id===ct?' selected':''}>${esc(c.nom)}</option>`).join('');
   const ce=$('fEvt').value;$('fEvt').innerHTML='<option value="">— aucun : opération courante —</option>'+[...EVTS].sort((a,b)=>(b.debut||'').localeCompare(a.debut||'')).map(x=>`<option value="${x.id}"${x.id===ce?' selected':''}>★ ${esc(x.nom)}</option>`).join('');
@@ -25,6 +26,8 @@ function majChamps(){
   $('wCat').hidden=n!=='depense';$('wTiers').hidden=!(n==='depense'&&TIERS().length&&!estTiers($('fCpt').value));$('wVers').hidden=n!=='virement';$('wPers').hidden=!(n==='pret'||n==='remboursement');
   $('wEch').hidden=n!=='pret';$('wBien').hidden=n!=='investissement';
   $('wRev').hidden=n!=='revenu';$('wEvt').hidden=!((n==='depense'||n==='revenu')&&EVTS.length);
+  // « dont ponctuel » : seulement pour un revenu courant hors événement (un revenu ponctuel l'est déjà en entier)
+  $('wPonct').hidden=!(n==='revenu'&&(REV[$('fCatR').value]||{}).courant&&!($('fEvt').value&&!$('wEvt').hidden));
   // champs du véhicule : dépense du poste du véhicule, ou investissement dans un bien véhicule
   const bInv=n==='investissement'&&BIEN[$('fBien').value]&&BIEN[$('fBien').value].vehicule?BIEN[$('fBien').value]:null;
   const ctx=VEHS().length>0&&(bInv||(n==='depense'&&VEHS().some(b=>b.poste===$('fCat').value)));
@@ -164,7 +167,7 @@ majClavier();
 function majAbrege(){$('abregeK').checked=ABREGE;$('abregeKInfo').textContent=ABREGE?'Activé : les grands montants des cartes sont abrégés (K = milliers, M = millions) ; le montant exact apparaît en survolant le chiffre. Le journal et les tableaux restent en entier.':'Désactivé : les cartes affichent les montants en entier.'}
 $('abregeK').addEventListener('change',()=>{ABREGE=$('abregeK').checked;lsSet('daftar-abrege',ABREGE?'1':'0');majAbrege();render();status(ABREGE?'Montants abrégés dans les cartes.':'Montants en entier dans les cartes.')});
 majAbrege();
-function resetForm(){['fAmt','fLib','fRem','fPers','fEch','fKm','fQty'].forEach(i=>$(i).value='');$('fTiers').value='';$('fLibHint').textContent='';$('fUnit').value='L';$('fVid').checked=true;touched={};$('fVidNext').value='';$('fNat').value='depense';$('fCpt').value='especes';$('fCat').value='autre';$('fEvt').value='';editId=null;$('editBar').hidden=true;$('addBtn').textContent='Ajouter';majChamps();amtHint();render()}
+function resetForm(){['fAmt','fLib','fRem','fPers','fEch','fKm','fQty'].forEach(i=>$(i).value='');$('fTiers').value='';$('fPonct').value='';$('fLibHint').textContent='';$('fUnit').value='L';$('fVid').checked=true;touched={};$('fVidNext').value='';$('fNat').value='depense';$('fCpt').value='especes';$('fCat').value='autre';$('fEvt').value='';editId=null;$('editBar').hidden=true;$('addBtn').textContent='Ajouter';majChamps();amtHint();render()}
 /* fenêtre de confirmation : résumé lisible de l'opération avant l'enregistrement (Échap ou « Modifier » = annuler) */
 /* ================= annuler : message en bas de l'écran, 10 secondes ================= */
 let toastT=null,HIST=null;
@@ -200,6 +203,7 @@ function confirmerOp(doc,opt={}){
   else lignes.push([{revenu:'Reçu sur',remboursement:'Reçu sur'}[doc.nature]||'Payé avec',nomCpt(doc.compte)]);
   if(doc.nature==='depense')lignes.push(['Poste',(CAT[doc.categorie]||{}).label||doc.categorie]);
   if(doc.cat_revenu){const r=REV[doc.cat_revenu]||{label:doc.cat_revenu};lignes.push(['Type de revenu',`${r.label} (${r.courant?'courant':'ponctuel'})`])}
+  if(doc.ponctuel){const p=REV[doc.cat_ponctuel]||{label:'Autre revenu'};lignes.push(['Dont ponctuel',`${fmtC(doc.ponctuel)} FCFA ${p.label.toLowerCase()} · courant : ${fmtC(doc.montant-doc.ponctuel)} FCFA`])}
   if(doc.tiers)lignes.push(['Versé au compte',`${nomCpt(doc.tiers)} : votre dépense alimente aussi ce compte`]);
   if(estTiers(doc.compte))lignes.push(['Compte d\'un tiers','gardé à part : ne compte pas dans vos dépenses ni vos revenus']);
   if(doc.evenement)lignes.push(['Événement',`★ ${(EVT[doc.evenement]||{}).nom||doc.evenement} : opération exceptionnelle`]);
@@ -233,6 +237,7 @@ function startEdit(id){
   $('fCat').value=e.categorie||'autre';$('fVers').value=e.vers;$('fPers').value=e.personne;$('fEch').value=e.echeance;$('fBien').value=e.bien;$('fRem').value=e.remarque;
   $('fCatM').value=e.cat_maison||guessCatM(e.libelle);$('fCatV').value=e.cat_vehicule||guessCatV(e.libelle);$('fKm').value=e.km||'';$('fQty').value=e.quantite?String(e.quantite).replace('.',','):'';$('fUnit').value=e.unite==='u'?'u':'L';$('fVid').checked=false;
   $('fCatR').value=e.nature==='revenu'?catRev(e):'autre';$('fEvt').value=e.evenement||'';$('fTiers').value=e.tiers||'';
+  $('fPonct').value=e.nature==='revenu'&&e.ponctuel?versSaisie(e.ponctuel):'';if(e.cat_ponctuel&&REV[e.cat_ponctuel])$('fCatP').value=e.cat_ponctuel;
   $('fVeh').value=e.vehicule&&BIEN[e.vehicule]?e.vehicule:'';
   touched={nat:1,cpt:1,cat:1,vers:1,pers:1,bien:1,catv:1,catm:1,rev:1,evt:1,veh:1,tiers:1};majChamps();
   $('editBar').hidden=false;$('editWhat').textContent=`${e.libelle}, ${fmtC(e.montant)} FCFA`;
@@ -249,7 +254,7 @@ function docOp(o){
   if(o.vehicule&&(o.nature==='depense'||o.nature==='investissement')){d.vehicule=o.vehicule;d.cat_vehicule=o.cat_vehicule||'autre';
     if(o.km>0)d.km=o.km;if(o.quantite>0){d.quantite=o.quantite;d.unite=o.unite||'L'}}
   if(o.nature==='investissement'&&o.cat_maison)d.cat_maison=o.cat_maison;
-  if(o.nature==='revenu')d.cat_revenu=o.cat_revenu||guessCatR(o.libelle);
+  if(o.nature==='revenu'){d.cat_revenu=o.cat_revenu||guessCatR(o.libelle);if(o.ponctuel>0){d.ponctuel=o.ponctuel;d.cat_ponctuel=o.cat_ponctuel||'autre'}}
   if((o.nature==='depense'||o.nature==='revenu')&&o.evenement)d.evenement=o.evenement;
   if(o.prog&&o.prog_date){d.prog=o.prog;d.prog_date=o.prog_date}
   if(o.remarque)d.remarque=o.remarque;
@@ -269,13 +274,15 @@ $('oneForm').addEventListener('submit',async ev=>{
   const avecVeh=!!vehChoisi,km=avecVeh?Math.round(num($('fKm').value))||0:0,qte=avecVeh?num($('fQty').value)||0:0;
   if(km>0){const avant=vehOps().filter(x=>x.km&&x.id!==editId&&x.date<=$('fDate').value).map(x=>x.km),prev=Math.max(0,...avant);
     if(km<prev){$('addMsg').textContent=`Kilométrage inférieur à un relevé antérieur (${nb(prev)} km). Vérifiez le compteur ou la date.`;return}}
+  const ponct=$('wPonct').hidden||!$('fPonct').value.trim()?0:cfa($('fPonct').value);
+  if(!(ponct>=0)||ponct>=montant){$('addMsg').textContent=ponct>=montant?'La part ponctuelle doit être inférieure au montant.':'Part ponctuelle invalide.';return}
   $('addBtn').disabled=true;
   try{
     const old=editId?all.find(x=>x.id===editId):null;
     const doc=docOp({date:$('fDate').value,montant,libelle,nature,compte:$('fCpt').value,categorie:$('fCat').value,vers:$('fVers').value,
       personne:nature==='pret'||nature==='remboursement'?personneConnue($('fPers').value.trim()):'',echeance:$('fEch').value,bien:$('fBien').value,
       vehicule:vehChoisi,cat_maison:$('wMai').hidden?'':$('fCatM').value,cat_vehicule:$('fCatV').value,km,quantite:qte,unite:$('fUnit').value,
-      cat_revenu:$('fCatR').value,evenement:$('wEvt').hidden?'':$('fEvt').value,tiers:$('wTiers').hidden?'':$('fTiers').value,
+      cat_revenu:$('fCatR').value,ponctuel:ponct,cat_ponctuel:$('fCatP').value,evenement:$('wEvt').hidden?'':$('fEvt').value,tiers:$('wTiers').hidden?'':$('fTiers').value,
       remarque:$('fRem').value.trim(),cree:old?old.cree:new Date().toISOString()});
     const nouvVid=avecVeh&&!$('vidBox').hidden&&$('fVid').checked&&km>0,vehOp=BIEN[doc.vehicule];
     const prochVid=nouvVid?Math.round(num($('fVidNext').value))||km+vidangeDe(vehOp).intervalle:0;
@@ -574,7 +581,7 @@ function bienRow(b){const used=all.some(e=>e.nature==='investissement'&&e.bien==
     <input class="bPrix" inputmode="decimal" value="${b.prix_achat?versSaisie(b.prix_achat):''}" placeholder="prix ${U_SAISIE()}" aria-label="Prix d'achat ${U_SAISIE()}">
     <select class="bPoste" aria-label="Poste des frais d'usage"><option value="">— pas de frais d'usage —</option>${CATS.filter(c=>c.id!=='autre').map(c=>`<option value="${c.id}"${c.id===b.poste?' selected':''}>${esc(c.label)}</option>`).join('')}</select>
     <input class="bMots" value="${esc((b.mots||[]).join(', '))}" placeholder="mots-clés d'investissement" aria-label="Mots-clés d'investissement">
-    <select class="bRole" aria-label="Rôle du bien"><option value="">Rôle : bien simple</option>${Object.entries(ENGINS).map(([k,l])=>`<option value="v:${k}"${b.vehicule&&(b.engin||'voiture')===k?' selected':''}>Engin : ${l.toLowerCase()} (Engins)</option>`).join('')}<option value="maison"${b.maison?' selected':''}>Maison, construction (House)</option></select>
+    <select class="bRole" aria-label="Rôle du bien"><option value="">Rôle : bien simple</option>${Object.entries(ENGINS).map(([k,l])=>`<option value="v:${k}"${b.vehicule&&(b.engin||'voiture')===k?' selected':''}>Engin : ${l.toLowerCase()} (Mes biens › Engins)</option>`).join('')}<option value="maison"${b.maison?' selected':''}>Maison, construction (Mes biens › Maison)</option></select>
     <button type="button" class="mini danger" data-x ${used?'disabled title="Bien avec investissements : impossible à supprimer"':''} aria-label="Supprimer le bien">✕</button></div>`}
 function openCB(){$('cptEdit').innerHTML=COMPTES.filter(c=>c.type!=='tiers').map(cptRow).join('');$('cptEditT').innerHTML=COMPTES.filter(c=>c.type==='tiers').map(cptRow).join('');renderCorb();$('bienEdit').innerHTML=BIENS.map(bienRow).join('');cbDirty=false}
 $('cbBox').addEventListener('input',()=>{cbDirty=true});

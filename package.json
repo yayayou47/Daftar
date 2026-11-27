@@ -1,6 +1,6 @@
 {
   "name": "appya",
-  "version": "1.4.14",
+  "version": "1.4.15",
   "private": true,
   "description": "Daftar : suivi financier, véhicule et maison (version Android construite avec Capacitor)",
   "scripts": {

@@ -4,6 +4,18 @@ Les versions sont numérotées `X.Y.Z` (le nom de série, « Ousnou », figure �
 est écrit à un seul endroit : `app/version.js`. Chaque version publiée a son tag `vX.Y.Z` et sa page dans
 [Releases](https://github.com/yayayou47/Daftar/releases) (APK Android et zip Ubuntu).
 
+## 1.4.15 — 2026-11-27
+
+- Barre des rubriques : Mes finances à gauche, Saisir au milieu, **Mes biens** à droite. Mes biens présente tous les
+  biens (engins, maisons, autres biens) : toucher un bien ouvre son carnet (Engins, Maison) ou le Patrimoine ;
+  « Modifier » mène à sa ligne dans Comptes et biens ; « + Ajouter un engin », « + Ajouter un bien ». Barre
+  Tous | Engins | Maison dans la rubrique. « House » devient « Maison ».
+
+- Revenu en deux parts : « Dont ponctuel » dans Une opération (revenu d'un type courant, hors événement). Un seul
+  virement (salaire + rappel, prime + bonus) reste une seule opération du montant reçu, pour le solde et le
+  rapprochement avec le relevé ; la part ponctuelle est comptée dans l'exceptionnel, le reste dans les revenus courants
+  (taux d'épargne, revenus attendus). Journal (« dont … »), confirmation et export Excel (colonne « Dont ponctuel »).
+
 ## 1.4.14 — 2026-11-25
 
 - La ligne du haut (logo, synchronisation, devise, jour / nuit, ≡) reste figée en haut de l'écran pendant le

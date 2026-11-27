@@ -134,7 +134,16 @@
       if (!ids(d, 'biens').has(doc.bien)) erreur("Choisissez le bien concerné par l'investissement.");
       out.bien = doc.bien;
     }
-    if (nature === 'revenu') out.cat_revenu = idsRevenus(d).has(doc.cat_revenu) ? doc.cat_revenu : 'autre';
+    if (nature === 'revenu') {
+      out.cat_revenu = idsRevenus(d).has(doc.cat_revenu) ? doc.cat_revenu : 'autre';
+      if (![undefined, null, '', 0].includes(doc.ponctuel)) {
+        // « dont ponctuel » : part exceptionnelle d'un revenu courant reçu en un seul virement (même règle que serveur.py)
+        const part = montantPositif(doc.ponctuel, 'Part ponctuelle');
+        if (part >= montant) erreur('La part ponctuelle doit être inférieure au montant.');
+        out.ponctuel = part;
+        out.cat_ponctuel = idsRevenus(d).has(doc.cat_ponctuel) ? doc.cat_ponctuel : 'autre';
+      }
+    }
     if (nature === 'depense' && doc.tiers) {   // votre dépense versée au compte d'un tiers
       if (!idsTiers(d).has(doc.tiers) || doc.tiers === compte) erreur('Compte du tiers inconnu : ' + doc.tiers);
       out.tiers = doc.tiers;
@@ -388,6 +397,8 @@
       const rids = idsRevenus(d);
       for (const x of d.operations)
         if (x.nature === 'revenu' && x.cat_revenu && !rids.has(x.cat_revenu)) { noter(x, 'cat_revenu'); x.cat_revenu = 'autre'; marquer(d, x); n++; }
+      for (const x of d.operations)
+        if (x.nature === 'revenu' && x.cat_ponctuel && !rids.has(x.cat_ponctuel)) { noter(x, 'cat_ponctuel'); x.cat_ponctuel = 'autre'; marquer(d, x); n++; }
     }
     if ('evenements' in corps) prm.evenements = nettoyerEvenements(corps.evenements, d);
     if ('programmees' in corps) prm.programmees = nettoyerProgrammees(corps.programmees, d);

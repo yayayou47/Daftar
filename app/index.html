@@ -96,13 +96,13 @@
       <button class="btn ghost" type="button" id="ongletFermer">Plus tard</button></div></div>
   </div>
   <nav class="apptabs" aria-label="Rubriques">
-    <button type="button" id="aSaisir" class="asaisir" aria-pressed="false"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-plus"/></svg><span>Saisir</span></button>
     <button type="button" id="aFin" aria-pressed="true"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-finances"/></svg><span>Mes finances</span></button>
-    <button type="button" id="aVeh" aria-pressed="false"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-car"/></svg><span>Engins</span></button>
-    <button type="button" id="aMai" aria-pressed="false"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-house"/></svg><span>House</span></button>
+    <button type="button" id="aSaisir" class="asaisir" aria-pressed="false"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-plus"/></svg><span>Saisir</span></button>
+    <button type="button" id="aBiens" aria-pressed="false"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-cle"/></svg><span>Mes biens</span></button>
   </nav>
   <div class="ctl subctl" id="subCtl">
     <div class="seg segic" role="group" aria-label="Vue de Mes finances" id="segFin"><button id="vMois" aria-pressed="true"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-mois"/></svg><span>Mois</span></button><button id="vAn" aria-pressed="false"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-annee"/></svg><span>Année</span></button><button id="vPat" aria-pressed="false"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-patrimoine"/></svg><span>Patrimoine</span></button><button id="vStats" aria-pressed="false"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-stats"/></svg><span>Statistiques</span></button></div>
+    <div class="seg segic" role="group" aria-label="Vue de Mes biens" id="segBiens" hidden><button type="button" id="bHub" aria-pressed="false"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-cle"/></svg><span>Tous</span></button><button type="button" id="aVeh" aria-pressed="false"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-car"/></svg><span>Engins</span></button><button type="button" id="aMai" aria-pressed="false"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-house"/></svg><span>Maison</span></button></div>
     <div class="seg" role="group" aria-label="Engin affiché" id="segEngins" hidden></div>
     <button type="button" class="btn ghost" id="addEngin" aria-label="Ajouter un engin" hidden>+ <span class="lgEng">Ajouter un </span>engin</button>
     <div class="seg" role="group" aria-label="Maison affichée" id="segMaisons" hidden></div>
@@ -169,6 +169,11 @@
     <div id="pretsList"></div>
   </section>
 
+  <section class="panel" aria-labelledby="hubTitre" id="biensHub" hidden>
+    <div class="phead"><h2 class="sub" id="hubTitre">Mes biens</h2><span class="hint">engins, maisons, terrains… : touchez un bien pour l'ouvrir</span></div>
+    <div id="hubList"></div>
+    <div class="row hubact"><button type="button" class="btn ghost" id="hubEngin">+ Ajouter un engin</button><button type="button" class="btn ghost" id="hubBien">+ Ajouter un bien (maison, terrain…)</button><button type="button" class="btn ghost" id="hubGerer">Modifier les biens</button></div>
+  </section>
   <section class="dash" aria-label="Vidange" id="vehDash" hidden>
     <div class="odo">
       <div class="label"><span id="vehDashNom"></span></div><span class="pill" id="vPill" hidden></span>
@@ -256,12 +261,12 @@
     </div>
     <div class="regplus"><div class="tgrp"><span class="tgl">Fichiers</span>
         <div class="expmenu">
-          <button class="regitem" id="exportBtn" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="exportMenu"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-excel"/></svg><span>Exporter vers Excel</span><span class="tdesc">Tout, Mes finances, Engins ou House, en fichier .xlsx</span><span class="chev" aria-hidden="true">›</span></button>
+          <button class="regitem" id="exportBtn" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="exportMenu"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-excel"/></svg><span>Exporter vers Excel</span><span class="tdesc">Tout, Mes finances, Engins ou Maison, en fichier .xlsx</span><span class="chev" aria-hidden="true">›</span></button>
           <div class="menu" id="exportMenu" role="menu" aria-label="Que voulez-vous exporter ?" hidden>
             <button type="button" role="menuitem" data-x="tout">Tout <span class="hint">toutes les rubriques</span><span class="cour hint"></span></button>
             <button type="button" role="menuitem" data-x="fin">Mes finances <span class="hint">journal de la période, postes, comptes, prêts, biens</span><span class="cour hint"></span></button>
             <button type="button" role="menuitem" data-x="veh">Engins <span class="hint">journal, récapitulatif mensuel, vidanges</span><span class="cour hint"></span></button>
-            <button type="button" role="menuitem" data-x="mai">House <span class="hint">travaux, récapitulatif par année, projet</span><span class="cour hint"></span></button>
+            <button type="button" role="menuitem" data-x="mai">Maison <span class="hint">travaux, récapitulatif par année, projet</span><span class="cour hint"></span></button>
           </div>
         </div>
     </div></div>
@@ -277,6 +282,7 @@
       <div class="field" id="wCat"><label class="label" for="fCat">Poste</label><select id="fCat"></select></div>
       <div class="field" id="wTiers" hidden><label class="label" for="fTiers">Versé au compte de</label><select id="fTiers" aria-describedby="fTiersHint"></select><span class="hint" id="fTiersHint">Votre part : la dépense alimente aussi ce compte.</span></div>
       <div class="field" id="wRev" hidden><label class="label" for="fCatR">Type de revenu</label><select id="fCatR"></select></div>
+      <div class="field" id="wPonct" hidden><label class="label" for="fPonct">Dont ponctuel <span class="uS"></span></label><div class="ponct"><input type="text" inputmode="decimal" id="fPonct" autocomplete="off" aria-describedby="fPonctHint"><select id="fCatP" aria-label="Type de la part ponctuelle"></select></div><span class="hint" id="fPonctHint">Facultatif : part exceptionnelle reçue dans le même virement (rappel, bonus) : comptée à part des revenus courants. Le solde garde le montant entier.</span></div>
       <div class="field" id="wEvt" hidden><label class="label" for="fEvt">Événement (facultatif)</label><select id="fEvt" aria-describedby="fEvtHint"></select><span class="hint" id="fEvtHint">Rattachée à un événement, l'opération compte comme exceptionnelle.</span></div>
       <div class="field" id="wVers" hidden><label class="label" for="fVers">Vers le compte</label><select id="fVers"></select></div>
       <div class="field" id="wPers" hidden><label class="label" for="fPers">Personne</label><input type="text" id="fPers" list="dlPers" autocomplete="off"><datalist id="dlPers"></datalist></div>

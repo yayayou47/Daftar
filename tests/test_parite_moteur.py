@@ -116,6 +116,10 @@ class Parite(unittest.TestCase):
             {"categorie": "voiture", "vehicule": "corolla", "cat_vehicule": "carburant", "km": 120000, "quantite": 30.5},
             {"categorie": "voiture", "vehicule": "corolla", "km": -3}, {"vehicule": "inconnu"},
             {"evenement": "mariage-awa"}, {"evenement": "inconnu"}, {"remarque": "note"}, {"tiers": "banque"},
+            {"nature": "revenu", "cat_revenu": "salaire", "ponctuel": 500, "cat_ponctuel": "mission"},
+            {"nature": "revenu", "cat_revenu": "salaire", "ponctuel": "500,5"}, {"nature": "revenu", "ponctuel": 1500},
+            {"nature": "revenu", "ponctuel": -3}, {"nature": "revenu", "ponctuel": "abc"}, {"nature": "revenu", "ponctuel": 0},
+            {"nature": "revenu", "ponctuel": 200, "cat_ponctuel": "inconnu"}, {"ponctuel": 200, "cat_ponctuel": "mission"},
             {"prog": "frais-banque", "prog_date": "2026-11-30"}, {"cree": "2026-11-20T08:00:00Z"}, {"cree": "n'importe quoi"},
         ]
         docs = [{**base, **v} for v in variantes]

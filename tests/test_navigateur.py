@@ -1,5 +1,5 @@
 """La vraie page dans Chrome sans interface : chargement des scripts dans l'ordre, puis passage par toutes les vues
-(Mois, Année, Patrimoine, Statistiques, Engins, House) et tous les onglets de Données et réglages, en relevant toute
+(Mois, Année, Patrimoine, Statistiques, Mes biens, Engins, Maison) et tous les onglets de Données et réglages, en relevant toute
 erreur JavaScript. Deux modes : ordinateur (serveur.py sur une copie, données de démo) et démo autonome (?demo).
 Sauté si Chrome ou Node est absent."""
 import json
@@ -24,9 +24,14 @@ window.__err=[];addEventListener('error',e=>__err.push((e.filename||'').split('/
 addEventListener('unhandledrejection',e=>__err.push('promesse : '+(e.reason&&e.reason.message||e.reason)));
 addEventListener('load',()=>setTimeout(async()=>{const vu=[];const pause=()=>new Promise(r=>setTimeout(r,150));
   try{
-    for(const [rub,vues] of [['aFin',['vMois','vAn','vPat','vStats']],['aVeh',[]],['aMai',[]]]){
+    for(const [rub,vues] of [['aFin',['vMois','vAn','vPat','vStats']],['aBiens',['aVeh','aMai','bHub']]]){
       document.getElementById(rub).click();await pause();vu.push(rub);
       for(const v of vues){document.getElementById(v).click();await pause();vu.push(v)}}
+    // Mes biens : un engin s'ouvre dans Engins ; « Modifier » mène à sa ligne dans Comptes et biens
+    const go=document.querySelector('#hubList [data-hv]');if(go){const id=go.dataset.hv;go.click();await pause();if(view==='vehicule'&&VEH().id===id)vu.push('hub')}
+    document.getElementById('aBiens').click();await pause();
+    const mod=document.querySelector('#hubList [data-hh]+.hubmod');if(mod){mod.click();await pause();await pause();
+      const r=document.activeElement&&document.activeElement.closest('.cbrow');if(view==='donnees'&&r&&r.dataset.id===mod.dataset.hmod)vu.push('hubmod')}
     document.getElementById('aDon').click();await pause();
     // menu ≡ : aucun panneau visible ; export Excel ouvert depuis le menu
     const S=document.getElementById('saisie');
@@ -107,7 +112,7 @@ class Navigateur(unittest.TestCase):
         self.assertIn("vStats", b["vu"])
         self.assertIn("aSaisir", b["vu"])
         self.assertIn("logoAccueil", b["vu"], "le logo ne ramène pas à l'accueil")
-        for etape in ("menu", "export", "theme", "tOne", "tSav"):
+        for etape in ("menu", "export", "theme", "tOne", "tSav", "bHub", "hub", "hubmod"):
             self.assertIn(etape, b["vu"], "étape manquante : " + etape)
 
     def test_ordinateur(self):

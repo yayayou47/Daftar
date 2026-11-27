@@ -179,7 +179,7 @@ function dessinerPatrimoine(){
 
 /* ---------- 7. bilan de la période : cumuls et indicateurs de long terme (1.4.8) ---------- */
 function bilanStats(P){
-  const ops=P.ops,F=flux(ops),dep=F.dep+F.exc,rev=sum(ops.filter(e=>e.nature==='revenu')),revC=sum(ops.filter(e=>e.nature==='revenu'&&!estExc(e)));
+  const ops=P.ops,F=flux(ops),dep=F.dep+F.exc,rev=sum(ops.filter(e=>e.nature==='revenu')),revC=sumF(ops,revCour);
   const epargne=rev-dep,ep=all.filter(e=>perso(e)&&e.nature==='virement'&&e.date>=P.d0&&e.date<=P.fin&&(CPT[e.vers]||{}).type==='epargne').reduce((a,e)=>a+e.montant,0);
   const rem=ofNat(ops,'remboursement'),mois=Math.max(1,P.n/30.44);
   const acquis=BIENS.filter(b=>b.date_achat&&b.date_achat>=P.d0&&b.date_achat<=P.fin),investiTout=BIENS.reduce((a,b)=>a+etatBien(b).cout,0);
@@ -282,7 +282,7 @@ function analyser(P,M,H,S,L){
   if(statsMode==='mois'){const days=new Date(cur.y,cur.m+1,0).getDate(),isC=cur.y===now.getFullYear()&&cur.m===now.getMonth(),el=isC?now.getDate():days,
       j1=P.d0.slice(0,7)===`${cur.y}-${pad(cur.m+1)}`?+P.d0.slice(8,10):1;E=epargneMois(cur.y,cur.m,P.ops,depP,isC,el,days,Math.max(1,el-j1+1))}
   else if(statsMode==='annee')E=epargneAn(cur.y,P.ops,depP);
-  else{const rv=sum(P.ops.filter(e=>e.nature==='revenu'&&!estExc(e)));E={rev:rv,te:rv>0?(rv-depP)/rv:null,tp:null}}
+  else{const rv=sumF(P.ops,revCour);E={rev:rv,te:rv>0?(rv-depP)/rv:null,tp:null}}
   if(E.te!==null)co.push(`Taux d'épargne de ${P.nom} : ${pcE(E.te)} (revenus courants ${fmt(E.rev)} ${U()}, dépenses courantes ${fmt(depP)} ${U()}).`);
   else if(E.attente)co.push(`Taux d'épargne réel de ${P.nom} : en attente des revenus habituels du mois (${fmt(E.rev)} ${U()} de revenus courants reçus pour l'instant, ${fmt(depP)} ${U()} de dépenses courantes).`);
   else if(P.n)co.push(`Aucun revenu courant noté sur ${P.nom} : le taux d'épargne réel ne peut pas encore être calculé.`);
@@ -363,10 +363,10 @@ function periodeFinanciere(){const v=vueFin;
 }
 function feuillesFinancier(X){
   const P=periodeFinanciere(),items=sorted(P.items),F=[];
-  F.push(['Journal',feuille(X,[["Date","Nature","Montant (CFA)","Libellé","Poste / type de revenu","Courant ou exceptionnel","Événement","Compte","Vers","Personne","Bien","Remarque"]].concat(items.map(e=>[serial(e.date),NAT[e.nature].l,e.montant,e.libelle,
-    e.nature==='depense'?(CAT[e.categorie]||CAT.autre).label:e.nature==='revenu'?(REV[catRev(e)]||{label:''}).label:null,(e.nature==='depense'||e.nature==='revenu')?(estExc(e)?'exceptionnel':'courant'):null,
+  F.push(['Journal',feuille(X,[["Date","Nature","Montant (CFA)","Libellé","Poste / type de revenu","Courant ou exceptionnel","Dont ponctuel (CFA)","Événement","Compte","Vers","Personne","Bien","Remarque"]].concat(items.map(e=>[serial(e.date),NAT[e.nature].l,e.montant,e.libelle,
+    e.nature==='depense'?(CAT[e.categorie]||CAT.autre).label:e.nature==='revenu'?(REV[catRev(e)]||{label:''}).label:null,(e.nature==='depense'||e.nature==='revenu')?(estExc(e)?'exceptionnel':partPonct(e)?`courant, dont ponctuel (${(REV[e.cat_ponctuel]||{label:'Autre revenu'}).label})`:'courant'):null,partPonct(e)||null,
     e.evenement?(EVT[e.evenement]||{}).nom||e.evenement:null,nomCpt(e.compte),e.vers?nomCpt(e.vers):null,e.personne||null,e.bien?(BIEN[e.bien]||{}).nom:null,e.remarque||null])),
-    [11,18,14,34,22,14,18,14,14,18,18,24],{A:'dd/mm/yyyy',C:'#,##0'},true)]);
+    [11,18,14,34,22,24,14,18,14,14,18,18,24],{A:'dd/mm/yyyy',C:'#,##0',G:'#,##0'},true)]);
   const bp=byCat(items),tp=sum(deps(items));
   F.push(['Par poste',feuille(X,[["Poste","Montant (CFA)","Part","Budget mensuel (CFA)"]].concat(CATS.filter(c=>bp[c.id]).sort((a,b)=>bp[b.id]-bp[a.id]).map(c=>[c.label,bp[c.id],tp?bp[c.id]/tp:0,budgets[c.id]||null]),[["Total",tp,1,null]]),
     [18,15,9,20],{B:'#,##0',C:'0.0%',D:'#,##0'})]);
@@ -409,7 +409,7 @@ function feuillesMaison(X){
     const ws=F[F.length-1][1];if(ws.B10&&typeof ws.B10.v==='number')ws.B10.z='0.0%'}
   return {feuilles:F,nom:'maison'};
 }
-const EXPORTS={tout:{l:'Tout (toutes les rubriques)'},fin:{l:'Mes finances',f:feuillesFinancier},veh:{l:'Engins',f:feuillesVehicule},mai:{l:'House',f:feuillesMaison}};
+const EXPORTS={tout:{l:'Tout (toutes les rubriques)'},fin:{l:'Mes finances',f:feuillesFinancier},veh:{l:'Engins',f:feuillesVehicule},mai:{l:'Maison',f:feuillesMaison}};
 async function exporter(choix){
   const btn=$('exportBtn'),lab=btn.innerHTML;btn.disabled=true;btn.setAttribute('aria-busy','true');
   try{

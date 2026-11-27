@@ -270,6 +270,26 @@ class Calculs(unittest.TestCase):
                          sum(o["montant"] for o in ops if o["nature"] in ("revenu", "remboursement")))
         self.assertEqual(js_flux["net"], js_flux["ent"] + js_flux["entX"] - js_flux["dep"] - js_flux["exc"] - js_flux["inv"] - js_flux["pre"])
 
+    def test_part_ponctuelle_d_un_revenu(self):
+        # « dont ponctuel » : le premier salaire de septembre 2026 reçoit une part ponctuelle (rappel) de 100 000
+        sal = "all.find(e=>e.nature==='revenu'&&catRev(e)==='salaire'&&e.date.startsWith('2026-09'))"
+        avant, tag0 = page("flux(monthItems(2026,8))", "opTag(%s)" % sal)
+        mod = "(()=>{const e=%s;e.ponctuel=100000;e.cat_ponctuel='mission';return 1})()" % sal
+        _, apres, ep, filtres, tag, cour = page(mod, "flux(monthItems(2026,8))", "epargneMois(2026,8,monthItems(2026,8),0,false).rev",
+                                                "[filtreOk(%s,'x:'),filtreOk(%s,'r:mission'),filtreOk(%s,'r:salaire')]" % (sal, sal, sal),
+                                                "opTag(%s)" % sal, "revCourMois(2026,8).salaire")
+        self.assertEqual(apres["ent"], avant["ent"] - 100000)
+        self.assertEqual(apres["entX"], avant["entX"] + 100000)
+        self.assertEqual(apres["net"], avant["net"])   # le solde compte le virement entier
+        self.assertEqual(ep, sum(page("monthItems(2026,8).filter(e=>e.nature==='revenu'&&!estExc(e)).reduce((s,e)=>s+e.montant,0)")) - 100000)
+        self.assertEqual(filtres, [True, True, True])
+        self.assertNotIn("dont", tag0)
+        self.assertIn("dont 100 000", tag.replace("\u202f", " ").replace("\xa0", " "))
+        self.assertGreater(cour, 0)
+        # sans effet sur un revenu déjà exceptionnel (rattaché à un événement)
+        exc = page(mod, "(()=>{const e=%s;e.evenement='x';return [partPonct(e),revExc(e)===e.montant]})()" % sal)[1]
+        self.assertEqual(exc, [0, True])
+
     def test_patrimoine(self):
         p, liq, biens = page("patrimoine()", "MES().reduce((s,c)=>s+etatCompte(c).solde,0)", "BIENS.map(b=>etatBien(b).valeur)")
         self.assertEqual(p["liq"], liq)

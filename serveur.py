@@ -685,6 +685,13 @@ def nettoyer(doc, d):
         out["bien"] = doc["bien"]
     if nature == "revenu":
         out["cat_revenu"] = doc.get("cat_revenu") if doc.get("cat_revenu") in ids_revenus(d) else "autre"
+        if doc.get("ponctuel") not in (None, "", 0):
+            # « dont ponctuel » : part exceptionnelle d'un revenu courant reçu en un seul virement (rappel, bonus)
+            part = montant_positif(doc.get("ponctuel"), "Part ponctuelle")
+            if part >= montant:
+                raise ValueError("La part ponctuelle doit être inférieure au montant.")
+            out["ponctuel"] = part
+            out["cat_ponctuel"] = doc.get("cat_ponctuel") if doc.get("cat_ponctuel") in ids_revenus(d) else "autre"
     if nature == "depense" and doc.get("tiers"):
         # votre dépense versée au compte d'un tiers (votre part à la maison familiale) : elle l'alimente aussi
         if doc["tiers"] not in ids_tiers(d) or doc["tiers"] == compte:
@@ -1028,6 +1035,11 @@ def regler(d, corps, resume=None):
             if x.get("nature") == "revenu" and x.get("cat_revenu") and x["cat_revenu"] not in rids:
                 noter(x, "cat_revenu")
                 x["cat_revenu"] = "autre"
+                marquer(d, x)
+                n += 1
+            if x.get("nature") == "revenu" and x.get("cat_ponctuel") and x["cat_ponctuel"] not in rids:
+                noter(x, "cat_ponctuel")
+                x["cat_ponctuel"] = "autre"
                 marquer(d, x)
                 n += 1
     if "evenements" in corps:

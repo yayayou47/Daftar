@@ -18,8 +18,8 @@ function filtreOk(e,f){
   if(t==='k')return e.nature==='depense'&&e.categorie===v;
   if(t==='n')return e.nature===v;
   if(t==='e')return e.evenement===v;
-  if(t==='r')return e.nature==='revenu'&&!e.evenement&&catRev(e)===v;
-  if(t==='x')return estExc(e);
+  if(t==='r')return e.nature==='revenu'&&!e.evenement&&(catRev(e)===v||(partPonct(e)>0&&e.cat_ponctuel===v));
+  if(t==='x')return estExc(e)||partPonct(e)>0;
   if(t==='c')return e.compte===v||e.vers===v||e.tiers===v;
   if(t==='p')return normTxt(e.personne)===v;
   if(t==='b'){const b=BIEN[v];return e.bien===v||(!!b&&!!b.poste&&e.nature==='depense'&&e.categorie===b.poste&&(!b.date_achat||e.date>=b.date_achat))}
@@ -45,9 +45,10 @@ function renderVue(){
   $('accueil').hidden=MODE_DEMO||!ready||all.length>0||memo('appya-accueil-vu')==='1'||view!=='mois';
   // trois rubriques : Mes finances (Mois, Année, Patrimoine, Statistiques), My Car, Données et réglages ;
   // chaque vue n'affiche que son contenu
-  const isM=view==='mois',isA=view==='annee',isP=view==='patrimoine',isS=view==='stats',isV=view==='vehicule',isH=view==='maison',isD=view==='donnees',isF=!isV&&!isH&&!isD,sm=isS?statsMode:'';
+  const isM=view==='mois',isA=view==='annee',isP=view==='patrimoine',isS=view==='stats',isV=view==='vehicule',isH=view==='maison',isD=view==='donnees',isB=view==='biens',isF=!isV&&!isH&&!isD&&!isB,sm=isS?statsMode:'';
   if(isF)vueFin=view;
   $('aFin').setAttribute('aria-pressed',isF);$('aVeh').setAttribute('aria-pressed',isV);majRubSaisie();$('aMai').setAttribute('aria-pressed',isH);
+  $('aBiens').setAttribute('aria-pressed',isB||isV||isH);$('bHub').setAttribute('aria-pressed',isB);$('segBiens').hidden=!(isB||isV||isH);$('biensHub').hidden=!isB;
   $('maiAn').setAttribute('aria-pressed',!maiAll);$('maiTout').setAttribute('aria-pressed',maiAll);$('segMai').hidden=!isH;
   $('vMois').setAttribute('aria-pressed',isM);$('vAn').setAttribute('aria-pressed',isA);$('vPat').setAttribute('aria-pressed',isP);$('vStats').setAttribute('aria-pressed',isS);
   $('vehAn').setAttribute('aria-pressed',!vehAll);$('vehTout').setAttribute('aria-pressed',vehAll);
@@ -56,7 +57,7 @@ function renderVue(){
     $('segEngins').hidden=!isV||lv.length<2;$('addEngin').hidden=!isV;$('segMaisons').hidden=!isH||lm.length<2;
     if(isV&&lv.length>1)$('segEngins').innerHTML=lv.map(b=>`<button type="button" data-v="${b.id}" aria-pressed="${cv&&b.id===cv.id}">${esc(b.nom)}</button>`).join('');
     if(isH&&lm.length>1)$('segMaisons').innerHTML=lm.map(b=>`<button type="button" data-h="${b.id}" aria-pressed="${cm&&b.id===cm.id}">${esc(b.nom)}</button>`).join('');}
-  $('prev').hidden=$('next').hidden=!(isM||isA||sm==='mois'||sm==='annee'||(isV&&!vehAll)||(isH&&!maiAll));$('navBox').hidden=isD||(isV&&vehAll)||(isH&&maiAll);
+  $('prev').hidden=$('next').hidden=!(isM||isA||sm==='mois'||sm==='annee'||(isV&&!vehAll)||(isH&&!maiAll));$('navBox').hidden=isD||isB||(isV&&vehAll)||(isH&&maiAll);
   $('perLabel').textContent=isD?'':(isV||isH)?String(cur.y):isP?`au ${now.toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'})}`:(isM||sm==='mois')?new Date(cur.y,cur.m,1).toLocaleDateString('fr-FR',{month:'long',year:'numeric'}):(isA||sm==='annee')?String(cur.y):sm==='periode'?`du ${dmy(statsDu)} au ${dmy(statsAu)}`:"Tout l'historique";
   $('perLabel').style.textTransform=(sm==='periode'||sm==='tout')?'none':'';   // « du … au … » et « Tout l'historique » gardent leur casse
   const tableau=isM||isA||isP;
@@ -66,7 +67,8 @@ function renderVue(){
   $('statsBox').hidden=!isS;$('saisie').hidden=!isD;if(!isS)cacherTip();
   ['vehDash','vehStats','vehRecap','vehVid','vehJournal'].forEach(i=>$(i).hidden=!isV);
   ['maiDash','maiStats','maiRecap','maiPersp','maiJournal'].forEach(i=>$(i).hidden=!isH);
-  document.title=(isD?'Données et réglages':isH?'House':isV?'Engins · '+(vehAll?'toutes les années':cur.y):isP?'Patrimoine':(isS?'Statistiques · ':'')+$('perLabel').textContent.replace(/^./,c=>c.toUpperCase()))+' · Daftar';
+  document.title=(isD?'Données et réglages':isB?'Mes biens':isH?'Maison':isV?'Engins · '+(vehAll?'toutes les années':cur.y):isP?'Patrimoine':(isS?'Statistiques · ':'')+$('perLabel').textContent.replace(/^./,c=>c.toUpperCase()))+' · Daftar';
+  if(isB){renderHub();return}
   if(isV){renderVehicule();return}
   if(isH){renderMaison();return}
   if(isD){openVidange();openProjet();return}
@@ -196,7 +198,7 @@ function renderVue(){
 /* Taux d'épargne du mois (1.4.6) = (revenus courants − dépenses courantes) / revenus courants ; remboursements de prêts et
    revenus ponctuels exclus (ce ne sont pas des revenus réguliers). PRÉVISIONNEL (mois en cours) : même calcul sur les dépenses
    à ce jour, comme si les revenus courants attendus étaient déjà tombés (revenuAttendu). */
-function revCourMois(y,m){const r={};monthItems(y,m).forEach(e=>{if(e.nature==='revenu'&&!estExc(e)){const c=catRev(e);r[c]=(r[c]||0)+e.montant}});return r}
+function revCourMois(y,m){const r={};monthItems(y,m).forEach(e=>{if(e.nature==='revenu'&&!estExc(e)){const c=catRev(e);r[c]=(r[c]||0)+revCour(e)}});return r}
 // les n mois complets qui précèdent (y, m), en s'arrêtant avant le début du suivi (ou la première opération)
 function moisPrecedents(y,m,n){const deb=DEBUT_SUIVI||all.reduce((a,e)=>!a||e.date<a?e.date:a,''),L=[];
   for(let i=1;i<=n;i++){const d=new Date(y,m-i,1);if(!deb||iso(new Date(d.getFullYear(),d.getMonth()+1,0))<deb)break;L.push({y:d.getFullYear(),m:d.getMonth()})}return L}
@@ -215,7 +217,7 @@ function revenuAttendu(y,m){
    jour + moyenne par jour × jours restants (même projection que la vue Statistiques). */
 /* calculs (partagés par les vues Mois, Année et Statistiques) : rev = revenus courants, te = taux réel, tp = prévisionnel */
 function epargneMois(y,m,items,dep,isCur,el,days,nj=el){
-  const rev=sum(items.filter(e=>e.nature==='revenu'&&!estExc(e))),o={rev,te:rev>0?(rev-dep)/rev:null,tp:null,det:''};
+  const rev=sumF(items,revCour),o={rev,te:rev>0?(rev-dep)/rev:null,tp:null,det:''};
   if(isCur&&el<days){const A=revenuAttendu(y,m),R=A?A.total:rev,reste=days-el,depP=dep+dep/nj*reste;
     /* mois en cours, revenus attendus pas encore tous tombés : le taux réel n'a pas de sens (25 559 d'intérêts face à
        355 000 de dépenses donnaient −1 289,6 %, 19/11/2026) ; « — » jusqu'à leur arrivée, le prévisionnel reste */
@@ -226,7 +228,7 @@ function epargneMois(y,m,items,dep,isCur,el,days,nj=el){
   return o;
 }
 function epargneAn(y,itemsI,dep){
-  const rev=sum(itemsI.filter(e=>e.nature==='revenu'&&!estExc(e))),o={rev,te:rev>0?(rev-dep)/rev:null,tp:null,det:''};
+  const rev=sumF(itemsI,revCour),o={rev,te:rev>0?(rev-dep)/rev:null,tp:null,det:''};
   if(y===now.getFullYear()){
     const d0=DEBUT_SUIVI&&DEBUT_SUIVI>`${y}-01-01`?DEBUT_SUIVI:`${y}-01-01`,js=d0<=today?nbJ(d0,today):0,jr=nbJ(today,`${y}-12-31`)-1;
     const A=revenuAttendu(y,now.getMonth());
@@ -328,7 +330,7 @@ function opTag(e){
   const evTag=progTag+(e.evenement?` · <span class="nat exc">★ ${esc((EVT[e.evenement]||{}).nom||e.evenement)}</span>`:'');
   switch(e.nature){
     case 'depense':{const p=CAT[e.categorie]||CAT.autre;return `<span class="dot" aria-hidden="true" style="background:${color(p.id)}"></span>${esc(p.label)}${e.compte!=='especes'?` · ${cn}`:''}${evTag}`}
-    case 'revenu':{const r=REV[catRev(e)]||{label:'',courant:true};return `<span class="nat in">Revenu</span> · ${esc(r.label)}${!r.courant&&!e.evenement?' <span class="nat exc">ponctuel</span>':''} · ${cn}${evTag}`}
+    case 'revenu':{const r=REV[catRev(e)]||{label:'',courant:true};return `<span class="nat in">Revenu</span> · ${esc(r.label)}${!r.courant&&!e.evenement?' <span class="nat exc">ponctuel</span>':''}${partPonct(e)?` · <span class="nat exc">dont ${fmt(partPonct(e))} ${U()} ${esc(((REV[e.cat_ponctuel]||{label:'autre revenu'}).label).toLowerCase())} (ponctuel)</span>`:''} · ${cn}${evTag}`}
     case 'virement':return `<span class="nat">Virement</span> · ${cn} → ${dotCpt(e.vers)}${esc(nomCpt(e.vers))}`;
     case 'pret':return `<span class="nat out">Prêt</span> · ${esc(e.personne)} · ${cn}${e.echeance?` · échéance ${dmy(e.echeance)}`:''}`;
     case 'remboursement':return `<span class="nat in">Remboursement</span> · ${esc(e.personne)} · ${cn}`;
@@ -431,6 +433,29 @@ $('aFin').onclick=()=>{view=vueFin;render();enHaut()};
 $('logoAccueil').onclick=()=>{nouveauJour();if(editId)resetForm();navEtape(()=>{retourVue=null;saisieSeule=false;vueFin='mois';view='mois';
   cur={y:now.getFullYear(),m:now.getMonth()};filtre='';shown=80;render()});enHaut()};
 $('aVeh').onclick=()=>{view='vehicule';render();enHaut()};
+/* Mes biens : page d'ensemble (engins, maisons, autres biens) ; un bien s'ouvre dans sa rubrique, « Modifier » mène à
+   Comptes et biens sur sa ligne */
+$('aBiens').onclick=$('bHub').onclick=()=>{view='biens';render();enHaut()};
+function renderHub(){
+  const V=VEHS(),M=MAISONS(),A=BIENS.filter(b=>!b.vehicule&&!b.maison);
+  const carte=(b,sous,attr)=>`<div class="hubcard"><button type="button" class="hubgo" ${attr}><b>${esc(b.nom)}</b><span class="hint">${sous}</span><span class="chev" aria-hidden="true">›</span></button><button type="button" class="linkbtn hubmod" data-hmod="${b.id}" aria-label="Modifier ${esc(b.nom)}">Modifier</button></div>`;
+  const groupe=(titre,ic,l,f)=>l.length?`<h3 class="cbsec hubsec"><svg class="ic" aria-hidden="true" focusable="false"><use href="#${ic}"/></svg>${titre}</h3><div class="hubgrid">${l.map(f).join('')}</div>`:'';
+  $('hubList').innerHTML=(BIENS.length?'':'<div class="empty">Aucun bien pour l\'instant : ajoutez un engin, une maison ou un terrain.</div>')+
+    groupe('Engins','i-car',V,b=>{const k=kmNow(b);return carte(b,`${ENGINS[b.engin]||'Engin'}${k?` · ${nb(k)} ${UK(b)}`:''}`,`data-hv="${b.id}"`)})+
+    groupe('Maisons','i-house',M,b=>{const s=etatBien(b);return carte(b,`travaux ${fmtA(s.I)} ${U()}`,`data-hh="${b.id}"`)})+
+    groupe('Autres biens','i-patrimoine',A,b=>{const s=etatBien(b);return carte(b,`${s.V!==null?'valeur':'coût'} ${fmtA(s.V!==null?s.V:s.cout)} ${U()}`,`data-hp="${b.id}"`)});
+}
+function modifierBien(id,nouveau){navEtape(()=>{retourVue=view;view='donnees';showTab('tCB');render()});
+  setTimeout(()=>{if(nouveau)$('addBien').click();
+    const r=nouveau?$('bienEdit').lastElementChild:id?document.querySelector(`#bienEdit .cbrow[data-id="${CSS.escape(id)}"]`):$('bienEdit').previousElementSibling;
+    if(!r)return;r.scrollIntoView({block:'center',behavior:doux()});const n=r.querySelector('.bNom');if(n)n.focus({preventScroll:true})},0)}
+$('hubList').addEventListener('click',ev=>{const t=ev.target.closest('button');if(!t)return;const d=t.dataset;
+  if(d.hmod){modifierBien(d.hmod);return}
+  if(d.hv){choisirEngin(d.hv);view='vehicule'}else if(d.hh){choisirMaison(d.hh);view='maison'}else if(d.hp){vueFin='patrimoine';view='patrimoine'}else return;
+  render();enHaut();if(d.hp)setTimeout(()=>allerJournal('biensPanel'),0)});
+$('hubEngin').onclick=()=>$('addEngin').click();
+$('hubBien').onclick=()=>modifierBien('',true);
+$('hubGerer').onclick=()=>modifierBien('');
 $('aMai').onclick=()=>{view='maison';render();enHaut()};
 $('aDon').onclick=()=>{navEtape(()=>{retourVue=null;saisieSeule=false;menuReglages=true;view='donnees';render()});enHaut()};
 function openMonth(ev){const t=ev.target.closest('[data-m]');if(!t)return;cur.m=+t.dataset.m;view='mois';render();window.scrollTo({top:0,behavior:doux()})}

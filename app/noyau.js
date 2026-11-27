@@ -314,7 +314,7 @@ const norm=x=>{const n=NAT[x.nature]?x.nature:'depense';return {id:x.id,date:Str
   compte:x.compte||'especes',vers:x.vers||'',personne:String(x.personne||''),echeance:x.echeance||'',bien:x.bien||'',
   categorie:n==='depense'?(CAT[x.categorie]?x.categorie:'autre'):'',remarque:String(x.remarque||''),cree:String(x.cree||''),
   tiers:x.tiers||'',vehicule:x.vehicule||'',cat_vehicule:x.cat_vehicule||'',cat_maison:x.cat_maison||'',km:+x.km||0,quantite:+x.quantite||0,unite:x.unite||'',
-  cat_revenu:n==='revenu'?String(x.cat_revenu||''):'',evenement:(n==='depense'||n==='revenu')?String(x.evenement||''):'',prog:x.prog||'',prog_date:x.prog_date||''}};
+  cat_revenu:n==='revenu'?String(x.cat_revenu||''):'',ponctuel:n==='revenu'?+x.ponctuel||0:0,cat_ponctuel:n==='revenu'&&x.ponctuel?String(x.cat_ponctuel||'autre'):'',evenement:(n==='depense'||n==='revenu')?String(x.evenement||''):'',prog:x.prog||'',prog_date:x.prog_date||''}};
 const api={
   async add(doc){const x=await req('POST','/api/operations',doc);all.push(norm(x));return x},
   async addMany(docs){const xs=await req('POST','/api/operations',docs);xs.forEach(x=>all.push(norm(x)));return xs},
@@ -364,6 +364,13 @@ const sum=a=>a.reduce((s,e)=>s+e.montant,0);
 function guessCatR(lib){return guessCat(lib,REVENUS)}
 const catRev=e=>REV[e.cat_revenu]?e.cat_revenu:guessCatR(e.libelle);
 const estExc=e=>(e.nature==='depense'||e.nature==='revenu')&&(!!e.evenement||(e.nature==='revenu'&&!(REV[catRev(e)]||{}).courant));
+/* « dont ponctuel » : part exceptionnelle d'un revenu courant reçu en un seul virement (rappel, bonus versé avec le
+   salaire). L'opération garde le montant du virement (solde, relevé) ; seuls les calculs courant / exceptionnel la
+   partagent. Sans effet sur un revenu déjà exceptionnel (type ponctuel ou événement). */
+const partPonct=e=>e.nature==='revenu'&&e.ponctuel>0&&!estExc(e)?Math.min(e.ponctuel,e.montant):0;
+const revCour=e=>e.nature==='revenu'&&!estExc(e)?e.montant-partPonct(e):0;   // part courante d'un revenu
+const revExc=e=>e.nature!=='revenu'?0:estExc(e)?e.montant:partPonct(e);     // part exceptionnelle d'un revenu
+const sumF=(a,f)=>a.reduce((s,e)=>s+f(e),0);
 function guessEvt(lib){const L=normTxt(lib);const ev=EVTS.find(x=>x.mots.some(m=>{const k=normTxt(m);return k&&hasWord(L,k)}));return ev?ev.id:''}
 const deps=a=>a.filter(e=>e.nature==='depense'&&!e.evenement&&perso(e));      // dépenses COURANTES (statistiques, postes, couleurs des jours)
 const depsExc=a=>a.filter(e=>e.nature==='depense'&&e.evenement&&perso(e));    // dépenses exceptionnelles (rattachées à un événement)
@@ -372,7 +379,7 @@ function byCat(items){const r={};deps(items).forEach(e=>r[e.categorie]=(r[e.cate
 /* Flux d'une période : entrées (revenus + remboursements) − sorties (dépenses + investissements + prêts) ; les virements sont neutres */
 /* ent = entrées courantes (revenus courants + remboursements), entX = revenus exceptionnels ; dep = dépenses courantes,
    exc = dépenses exceptionnelles ; net compte TOUT (aucune opération n'échappe au solde) */
-function flux(items){items=items.filter(perso);const ent=sum(items.filter(e=>(e.nature==='revenu'&&!estExc(e))||e.nature==='remboursement')),entX=sum(items.filter(e=>e.nature==='revenu'&&estExc(e))),
+function flux(items){items=items.filter(perso);const ent=sumF(items,revCour)+ofNat(items,'remboursement'),entX=sumF(items,revExc),
   dep=sum(deps(items)),exc=sum(depsExc(items)),inv=ofNat(items,'investissement'),pre=ofNat(items,'pret');return {ent,entX,dep,exc,inv,pre,net:ent+entX-dep-exc-inv-pre}}
 /* Effet d'une opération sur le solde d'un compte */
 function effet(e,cid){if(e.nature==='depense'&&e.tiers===cid&&e.compte!==cid)return e.montant;   // votre part versée au compte d'un tiers
