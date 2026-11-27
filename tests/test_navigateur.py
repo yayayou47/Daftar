@@ -24,6 +24,8 @@ window.__err=[];addEventListener('error',e=>__err.push((e.filename||'').split('/
 addEventListener('unhandledrejection',e=>__err.push('promesse : '+(e.reason&&e.reason.message||e.reason)));
 addEventListener('load',()=>setTimeout(async()=>{const vu=[];const pause=()=>new Promise(r=>setTimeout(r,150));
   try{
+    // machine lente : la démo (3 ans simulés) peut mettre plusieurs secondes à se générer ; on attend les données
+    for(let i=0;i<200&&!(typeof ready!=='undefined'&&ready&&all.length);i++)await pause();
     for(const [rub,vues] of [['aFin',['vMois','vAn','vPat','vStats']],['aBiens',['aVeh','aMai','bHub']]]){
       document.getElementById(rub).click();await pause();vu.push(rub);
       for(const v of vues){document.getElementById(v).click();await pause();vu.push(v)}}
