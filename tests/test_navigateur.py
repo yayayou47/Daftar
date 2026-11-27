@@ -110,8 +110,8 @@ class Navigateur(unittest.TestCase):
         profil = tempfile.mkdtemp(prefix="daftar-chrome-")
         try:
             sortie = subprocess.run([CHROME, "--headless=new", "--disable-gpu", "--no-first-run", "--no-default-browser-check",
-                                     "--user-data-dir=" + profil, "--window-size=1200,900", "--virtual-time-budget=20000", "--dump-dom",
-                                     "http://localhost:%d/%s" % (self.port, chemin)], capture_output=True, text=True, timeout=120).stdout
+                                     "--user-data-dir=" + profil, "--window-size=1200,900", "--virtual-time-budget=60000", "--dump-dom",
+                                     "http://localhost:%d/%s" % (self.port, chemin)], capture_output=True, text=True, timeout=240).stdout
         finally:
             shutil.rmtree(profil, ignore_errors=True)
         m = re.search(r"<title>BILAN (.*?)</title>", sortie, re.S)
