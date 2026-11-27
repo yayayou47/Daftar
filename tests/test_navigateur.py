@@ -30,7 +30,9 @@ addEventListener('load',()=>setTimeout(async()=>{const vu=[];const pause=()=>new
     // Mes biens : un engin s'ouvre dans Engins ; « Modifier les biens » mène à Comptes et biens (pas de « Modifier » par carte)
     // (machine lente : attendre que les données, donc les biens, soient chargées)
     for(let i=0;i<60&&!(ready&&BIENS.length);i++)await pause();document.getElementById('bHub').click();await pause();
-    const go=document.querySelector('#hubList [data-hv]');if(go){const id=go.dataset.hv;go.click();await pause();if(view==='vehicule'&&VEH().id===id)vu.push('hub')}
+    // machine lente : un rendu tardif peut remplacer la page ; on réessaie quelques fois
+    for(let k=0;k<20;k++){document.getElementById('bHub').click();await pause();const go=document.querySelector('#hubList [data-hv]');
+      if(!go)continue;const id=go.dataset.hv;go.click();await pause();await pause();if(view==='vehicule'&&VEH().id===id){vu.push('hub');break}}
     document.getElementById('aBiens').click();await pause();
     if(!document.querySelector('#hubList .hubmod')){document.getElementById('hubGerer').click();await pause();
       if(view==='donnees'&&!document.getElementById('cbBox').hidden)vu.push('hubmod')}
