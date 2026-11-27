@@ -43,6 +43,9 @@ addEventListener('load',()=>setTimeout(async()=>{const vu=[];const pause=()=>new
     document.getElementById('foyBtn').click();await pause();if(view==='foyer'&&foyMode==='mois')vu.push('foyMois');
     document.getElementById('foyBtn').click();await pause();document.getElementById('vAn').click();await pause();
     document.getElementById('foyBtn').click();await pause();if(view==='foyer'&&foyMode==='annee')vu.push('foyAn');
+    // Foyer actif : Mois / Année gardent le Foyer, seule la période change
+    document.getElementById('vMois').click();await pause();const fm=view==='foyer'&&foyMode==='mois';
+    document.getElementById('vAn').click();await pause();if(fm&&view==='foyer'&&foyMode==='annee')vu.push('foyReste');
     document.getElementById('foyBtn').click();await pause();
     // balayage (téléphone) : vers la gauche = période suivante, vers la droite = précédente
     {document.getElementById('vMois').click();await pause();const m0=cur.y*12+cur.m,el=document.getElementById('resumePanel');
@@ -149,7 +152,7 @@ class Navigateur(unittest.TestCase):
         self.assertIn("vStats", b["vu"])
         self.assertIn("aSaisir", b["vu"])
         self.assertIn("logoAccueil", b["vu"], "le logo ne ramène pas à l'accueil")
-        for etape in ("menu", "export", "theme", "tOne", "tSav", "bHub", "hub", "hubmod", "vidange", "fiches", "tRev", "foyMois", "foyAn", "balayage", "tFoy", "pour", "pourReplie"):
+        for etape in ("menu", "export", "theme", "tOne", "tSav", "bHub", "hub", "hubmod", "vidange", "fiches", "tRev", "foyMois", "foyAn", "balayage", "tFoy", "pour", "pourReplie", "foyReste"):
             self.assertIn(etape, b["vu"], "étape manquante : " + etape)
 
     def test_ordinateur(self):

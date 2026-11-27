@@ -31,7 +31,7 @@ let pourOuvert=false,pourMontre=false;   // pourMontre : « Préciser pour qui �
 const foyerDe=p=>p.length?(FOYER[p[0]]?p[0]:(MEMBRE[p[0]]||{}).foyer||''):'';
 function renderPour(){if($('wPour').hidden)return;const p=pourEffectif(),fo=foyerDe(p),F=FOYER[fo];
   // poste sans destinataire (voiture, aides, bureau…) : le champ reste replié, « Préciser pour qui » l'ouvre
-  if(!p.length&&!pourMontre){$('fPour').innerHTML=`<button type="button" class="linkbtn" data-plus>Préciser pour qui (Moi, un foyer…)</button>`;$('fPourHint').hidden=true;return}
+  if(!p.length&&!pourMontre&&(CAT[$('fCat').value]||{}).pour==='general'){$('fPour').innerHTML=`<button type="button" class="linkbtn" data-plus>Dépense générale · préciser pour qui (Moi, un foyer…)</button>`;$('fPourHint').hidden=true;return}
   const chip=(id,lab)=>`<button type="button" data-p="${id}" aria-pressed="${id==='moi'?p.includes('moi'):id===fo}">${esc(lab)}</button>`;
   let h=`<div class="chips">${chip('moi','Moi')}${FOYERS.map(f=>chip(f.id,f.nom)).join('')}</div>`;
   if(F){const mb=p.filter(x=>MEMBRE[x]),tous=!mb.length;
@@ -519,7 +519,7 @@ function renderDraft(){
       <div class="pmain">
         <input class="pname" value="${esc(d.label)}" aria-label="Nom du poste" maxlength="60" ${d.del?'disabled':''}>
         ${isA?'<span class="hint">Lignes dont aucun mot-clé n\'est reconnu. Toujours en dernier.</span>':`<textarea class="pmots" rows="2" placeholder="mots-clés séparés par des virgules : riz, vivres, marché…" aria-label="Mots-clés de ${esc(d.label)}" ${d.del?'disabled':''}>${esc(d.mots)}</textarea>`}
-        <select class="ppour" aria-label="Pour qui, par défaut" ${d.del?'disabled':''}><option value=""${!d.pour?' selected':''}>Pour : personne en particulier (dépense du poste)</option><option value="moi"${d.pour==='moi'?' selected':''}>Pour : moi</option><option value="foyer"${d.pour==='foyer'?' selected':''}>Pour : le foyer (commun)</option></select>
+        <select class="ppour" aria-label="Pour qui, par défaut" ${d.del?'disabled':''}><option value="general"${d.pour==='general'?' selected':''}>Dépense générale (hors foyer)</option><option value=""${!d.pour?' selected':''}>Pour : à préciser à chaque dépense</option><option value="moi"${d.pour==='moi'?' selected':''}>Pour : moi</option><option value="foyer"${d.pour==='foyer'?' selected':''}>Pour : le foyer (commun)</option></select>
         <span class="pcount">${d.id?`${st.n} ligne${st.n>1?'s':''} · ${fmtM(st.t)} ${U()}`:'nouveau poste'}</span>
       </div>
       <input class="pbud" inputmode="decimal" value="${esc(d.budget)}" placeholder="budget / mois" aria-label="Budget mensuel ${U_SAISIE()}" ${d.del?'disabled':''}>
@@ -531,7 +531,7 @@ function renderDraft(){
   fiches($('posteList'),resumePoste,'savePostes',openPostes);
 }
 function resumePoste(r){const d=draft[+r.dataset.i],st=d.id?statsPoste(d.id):{n:0,t:0},m=String(d.mots||'').trim();
-  return `<i class="pdot" style="background:${d.couleur}" aria-hidden="true"></i><b>${esc(d.label)}</b> <span class="hint">${m?esc(m.length>70?m.slice(0,70)+'…':m)+' · ':''}${d.pour?`pour ${d.pour==='moi'?'moi':'le foyer'} · `:''}${d.budget?`budget ${mtS(d.budget)}/mois · `:''}${st.n} ligne${st.n>1?'s':''}</span>`}
+  return `<i class="pdot" style="background:${d.couleur}" aria-hidden="true"></i><b>${esc(d.label)}</b> <span class="hint">${m?esc(m.length>70?m.slice(0,70)+'…':m)+' · ':''}${d.pour?`${{moi:'pour moi',foyer:'pour le foyer',general:'dépense générale'}[d.pour]} · `:''}${d.budget?`budget ${mtS(d.budget)}/mois · `:''}${st.n} ligne${st.n>1?'s':''}</span>`}
 $('posteList').addEventListener('click',ev=>{const b=ev.target.closest('.fmod');if(b){const r=b.closest('.prow');if(r)draft[+r.dataset.i].edit=true}},true);
 function touch(){const first=!dirty;dirty=true;$('posteMsg').textContent='Modifications non enregistrées.';if(first)renderLibs()}
 $('posteList').addEventListener('input',ev=>{

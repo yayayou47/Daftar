@@ -441,8 +441,9 @@ document.addEventListener('touchend',ev=>{if(!glisse)return;const t=ev.changedTo
   // petit glissement des cartes affichées, dans le sens du geste
   const c=dx<0?'glisseG':'glisseD';document.querySelectorAll('main.wrap>section:not([hidden])').forEach(s=>{s.classList.remove('glisseG','glisseD');void s.offsetWidth;s.classList.add(c)});
   setTimeout(()=>document.querySelectorAll('.glisseG,.glisseD').forEach(s=>s.classList.remove('glisseG','glisseD')),400)},{passive:true});
-$('vMois').onclick=()=>{view='mois';shown=80;render()};
-$('vAn').onclick=()=>{view='annee';shown=80;render()};
+// Foyer affiché : Mois / Année changent seulement sa période, on reste dans le Foyer (demande du 27/11)
+$('vMois').onclick=()=>{if(view==='foyer')foyMode='mois';else view='mois';shown=80;render()};
+$('vAn').onclick=()=>{if(view==='foyer')foyMode='annee';else view='annee';shown=80;render()};
 $('vPat').onclick=()=>{view='patrimoine';shown=80;render()};
 $('foyBtn').onclick=()=>{if(view==='foyer')view=foyMode==='mois'?'mois':'annee';else{foyMode=view==='mois'?'mois':'annee';view='foyer'}shown=80;render()};
 $('vStats').onclick=()=>{view='stats';render();window.scrollTo({top:0,behavior:doux()})};
@@ -807,7 +808,7 @@ $('pjSave').onclick=async()=>{const par={};
 let foyMode='mois';
 function partsPour(items){const r={};
   const add=(k,e,v)=>{const x=r[k]=r[k]||{tot:0,cats:{},n:0};x.tot+=v;x.cats[e.categorie]=(x.cats[e.categorie]||0)+v;x.n++};
-  for(const e of items){if(e.nature!=='depense'||!perso(e))continue;const p=pourDe(e);if(!p.length)add('_hors',e,e.montant);else p.forEach(id=>add(id,e,e.montant/p.length))}
+  for(const e of items){if(e.nature!=='depense'||!perso(e))continue;const p=pourDe(e);if(!p.length){if((CAT[e.categorie]||{}).pour!=='general')add('_hors',e,e.montant)}else p.forEach(id=>add(id,e,e.montant/p.length))}
   return r}
 // mois de l'année y comptés pour la moyenne mensuelle : depuis le début du suivi, jusqu'au mois en cours
 function moisDeLAnnee(y){let a=0,b=11;if(y===now.getFullYear())b=now.getMonth();if(DEBUT_SUIVI&&+DEBUT_SUIVI.slice(0,4)===y)a=+DEBUT_SUIVI.slice(5,7)-1;return Math.max(1,b-a+1)}
@@ -831,9 +832,10 @@ function renderFoyer(){
       <div class="foybars">${ls.map(barre).join('')}</div>${table(ls)}</div>`}
   const moi={k:'moi',lab:'Moi',sous:'dépenses pour vous-même'};
   h+=`<div class="foycard"><div class="foybars">${barre(moi)}</div></div>`;
-  // dépenses de poste, pour personne en particulier (voiture, aides, bureau…) : par poste, pour mémoire
-  const H=P._hors;if(H&&H.tot){const cs=CATS.filter(c=>H.cats[c.id]).sort((a,b)=>H.cats[b.id]-H.cats[a.id]),mx=H.cats[cs[0].id];
-    h+=`<div class="foycard"><div class="phead"><h3 class="sub">Dépenses de poste</h3><span class="hint">${fmtM(r0(H.tot))} ${U()} · pour personne en particulier (voiture, aides, bureau…)</span></div><div class="foybars">${cs.map(c=>`<button type="button" class="foyl" data-f="k:${c.id}"><span class="foyn"><b>${esc(c.label)}</b></span><span class="foyb"><i style="width:${Math.max(1.5,H.cats[c.id]/mx*100)}%;background:${color(c.id)}"></i></span><span class="foym num">${fmtM(r0(H.cats[c.id]))}</span></button>`).join('')}</div></div>`}
+  // dépenses générales (voiture, loyer, aides, bureau…) : absentes d'ici, comptées dans Mes finances. Postes « à préciser »
+  // (santé, transport…) sans personne choisie : signalées, à préciser dans le journal
+  const H=P._hors;if(H&&H.tot){const cs=CATS.filter(c=>H.cats[c.id]);
+    h+=`<p class="hint">Sans personne précisée (non comptées ici) : ${cs.map(c=>`<button type="button" class="linkbtn" data-f="k:${c.id}">${esc(c.label)} ${fmtM(r0(H.cats[c.id]))}</button>`).join(' · ')} ${U()}. Les dépenses générales (voiture, loyer, aides…) restent dans Mes finances.</p>`}
   $('foyBody').innerHTML=h;
 }
 // une ligne (commun, membre, Moi) : son journal, sur la même période

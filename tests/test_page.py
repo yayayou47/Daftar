@@ -308,11 +308,14 @@ class Calculs(unittest.TestCase):
         attendu = {}
         for o in ops:
             regle = {x["id"]: x.get("pour", "") for x in d["parametres"]["postes"]}.get(o["categorie"], "")
-            p = o.get("pour") or {"foyer": ["foyer1"], "moi": ["moi"]}.get(regle, ["_hors"])
+            p = o.get("pour") or {"foyer": ["foyer1"], "moi": ["moi"], "general": []}.get(regle, ["_hors"])
             for k in p:
                 attendu[k] = attendu.get(k, 0) + o["montant"] / len(p)
         self.assertEqual(parts, {k: round(v) for k, v in attendu.items()})
-        self.assertEqual(sum(parts.values()), sum(o["montant"] for o in ops))
+        # dépenses générales (voiture, loyer, aides) : absentes de la répartition par personne
+        generales = {x["id"] for x in d["parametres"]["postes"] if x.get("pour") == "general"}
+        self.assertEqual(sum(parts.values()), sum(o["montant"] for o in ops if o.get("pour") or o["categorie"] not in generales))
+        self.assertTrue(generales >= {"voiture", "loyer", "aides"})
 
     def test_patrimoine(self):
         p, liq, biens = page("patrimoine()", "MES().reduce((s,c)=>s+etatCompte(c).solde,0)", "BIENS.map(b=>etatBien(b).valeur)")

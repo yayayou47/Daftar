@@ -13,7 +13,7 @@ const lsSet=(k,v)=>{try{localStorage.setItem(k,v);return true}catch(e){note('ré
 /* ================= référentiels : postes, comptes, biens (chargés depuis parametres) ================= */
 let CATS=[{id:'autre',label:'Autre',couleur:'#9a968c',mots:[]}], CAT={autre:CATS[0]};
 function setPostes(p){
-  if(Array.isArray(p)&&p.length)CATS=p.map(x=>({id:x.id,label:x.label,couleur:x.couleur||'#9a968c',mots:Array.isArray(x.mots)?x.mots:[],pour:x.pour==='moi'||x.pour==='foyer'?x.pour:''}));
+  if(Array.isArray(p)&&p.length)CATS=p.map(x=>({id:x.id,label:x.label,couleur:x.couleur||'#9a968c',mots:Array.isArray(x.mots)?x.mots:[],pour:['moi','foyer','general'].includes(x.pour)?x.pour:''}));
   if(!CATS.some(c=>c.id==='autre'))CATS.push({id:'autre',label:'Autre',couleur:'#9a968c',mots:[]});
   CAT=Object.fromEntries(CATS.map(c=>[c.id,c]));
 }
@@ -55,9 +55,10 @@ function setEvenements(l){
 }
 /* Foyers (2026-11-27, demande de l'utilisateur) : un ou plusieurs foyers, chacun avec ses membres (épouse, enfants…).
    Une dépense porte « pour » = ['moi'], [foyer] (commune) ou [membres] (part égale de chacun). Sans « pour », c'est le
-   réglage de son poste qui décide (« pour » du poste : moi, ou foyer = commun du premier foyer) ; un poste sans réglage
-   (voiture, aides, bureau…) donne [] : une dépense du poste, pour personne en particulier. Le poste dit QUOI, « pour »
-   dit POUR QUI. */
+   réglage de son poste qui décide (« pour » du poste : moi, ou foyer = commun du premier foyer). Sinon [] : dépense
+   GÉNÉRALE (poste « general » : voiture, loyer, aides, bureau… — jamais dans la vue Foyer, comptée dans Mes finances)
+   ou À PRÉCISER (poste sans réglage : santé, transport… — comptée dans le Foyer seulement si une personne est choisie).
+   Le poste dit QUOI, « pour » dit POUR QUI. */
 let FOYERS=[],FOYER={},MEMBRE={};
 const ROLES={epouse:'Épouse',enfant:'Enfant',autre:'Autre membre'};
 function setFoyers(l){FOYERS=(Array.isArray(l)?l:[]).map(f=>({id:f.id,nom:f.nom,membres:(Array.isArray(f.membres)?f.membres:[]).map(m=>({id:m.id,nom:m.nom,role:m.role||'autre',naissance:m.naissance||'',mots:Array.isArray(m.mots)?m.mots:[],foyer:f.id}))}));

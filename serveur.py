@@ -67,13 +67,13 @@ POSTES_DEFAUT = [   # mêmes valeurs que POSTES_DEFAUT dans app/moteur.js (versi
     {"id": "foyer", "label": "Foyer, vivres", "pour": "foyer", "couleur": "#2f6fa8",
      "mots": ["riz", "huile", "savon", "sucre", "farine", "alimentaire", "vivres", "lait", "pain", "viande", "poisson",
               "légumes", "marché", "famille"]},
-    {"id": "loyer", "label": "Loyer, logement", "couleur": "#c58b2a", "mots": ["loyer", "contribution", "logement"]},
-    {"id": "aides", "label": "Aides et dons", "couleur": "#c0533a",
+    {"id": "loyer", "label": "Loyer, logement", "pour": "general", "couleur": "#c58b2a", "mots": ["loyer", "contribution", "logement"]},
+    {"id": "aides", "label": "Aides et dons", "pour": "general", "couleur": "#c0533a",
      "mots": ["aide", "aumône", "aumone", "prestation", "baptême", "mariage", "funéraire", "don"]},
     {"id": "enfants", "label": "Enfants, école", "pour": "foyer", "couleur": "#2e8a57", "mots": ["scolarité", "école", "fourniture", "enfant"]},
     {"id": "sante", "label": "Santé", "couleur": "#d9772f",
      "mots": ["médic", "soin", "examen", "pharmacie", "hôpital", "analyse", "clinique"]},
-    {"id": "voiture", "label": "Voiture", "couleur": "#6b7b90",
+    {"id": "voiture", "label": "Voiture", "pour": "general", "couleur": "#6b7b90",
      "mots": ["carburant", "essence", "gasoil", "assurance", "fiche technique", "amende", "vidange",
               "lavage", "garage", "pneu", "mécan", "voiture"]},
     {"id": "tel", "label": "Téléphone, internet", "pour": "moi", "couleur": "#2f97ad", "mots": ["crédit", "forfait", "internet", "téléphone"]},
@@ -1057,7 +1057,8 @@ def regler(d, corps, resume=None):
             postes.append({"id": pid, "label": label,
                            "couleur": coul if RE_COULEUR.match(coul) else "#9a968c",
                            "mots": nettoyer_mots(x.get("mots")) if pid != "autre" else []})
-            if x.get("pour") in ("moi", "foyer"):   # pour qui, par défaut, une dépense de ce poste (2026-11-27)
+            # pour qui, par défaut (2026-11-27) : moi, foyer (commun), general (dépense générale, hors foyer) ; absent = à préciser
+            if x.get("pour") in ("moi", "foyer", "general"):
                 postes[-1]["pour"] = x["pour"]
         if "autre" not in vus:
             postes.append(dict(POSTES_DEFAUT[-1]))

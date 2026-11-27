@@ -320,7 +320,8 @@ droite (période précédente), sans remonter en haut de la page.
 
 Foyer : le bouton « Foyer », à côté du mois ou de l'année, montre pour qui
 sont les dépenses de cette période (le mois en vue Mois, l'année en vue
-Année) ; un second appui revient à la vue. Chaque foyer (Foyer 1, Foyer 2…)
+Année) ; un second appui revient à la vue. Foyer affiché, Mois et Année
+changent seulement sa période. Chaque foyer (Foyer 1, Foyer 2…)
 montre son commun et chacun de ses membres (épouse, enfants…), avec la moyenne par mois et le coût d'un enfant par mois ; un
 tableau croise les membres et les postes (santé, transport, habillement,
 coiffure…). « Moi » regroupe vos dépenses pour vous-même. Toucher une ligne
@@ -334,11 +335,17 @@ Pour qui ? Le prénom d'un membre dans une note désigne ce membre :
   75000 rentrée adam zara → partagée : 37 500 pour Adam, 37 500 pour Zara
   25000 vivres           → Foyer, commun du foyer 1 (règle par défaut)
 Sans prénom, c'est le poste qui décide (Postes et libellés, réglage « Pour »
-de chaque poste) : « moi » (repas, perso, téléphone…), « le foyer » (commun
-du premier foyer : vivres, enfants…) ou « personne en particulier »
-(voiture, aides et dons, bureau… : dépenses du poste, montrées à part dans
-la vue Foyer). Pour ces derniers, le champ « Pour » reste replié ; « Préciser
-pour qui » l'ouvre. Dans Une opération, le champ « Pour » propose Moi,
+de chaque poste) :
+  - « moi » (repas, perso, téléphone…) ;
+  - « le foyer » (commun du premier foyer : vivres, enfants…) ;
+  - « à préciser » (santé, transport, habillement…) : le champ « Pour » est
+    ouvert pour dire sur qui la dépense est faite (vous, l'épouse, un
+    enfant) ; sans choix, elle n'entre pas dans le Foyer ;
+  - « dépense générale » (voiture, loyer, aides et dons, bureau, service
+    d'un tiers…) : jamais dans le Foyer, seulement dans Mes finances ; le
+    champ « Pour » reste replié (« préciser pour qui » l'ouvre au besoin).
+Une dépense de santé pour un enfant compte dans le Foyer sous cet enfant, et
+dans Mes finances dans le poste Santé. Dans Une opération, le champ « Pour » propose Moi,
 Foyer 1, Foyer 2… ; un foyer choisi ouvre son menu : « Tous (commun) », ou
 cochez un ou plusieurs de ses membres (l'épouse, 2 enfants…) ; plusieurs
 membres = parts égales. Chaque foyer a ses propres membres, épouse comprise.

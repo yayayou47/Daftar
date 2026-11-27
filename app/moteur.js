@@ -7,12 +7,12 @@
   const POSTES_DEFAUT = [
     {id: 'foyer', label: 'Foyer, vivres', pour: 'foyer', couleur: '#2f6fa8',
      mots: ['riz', 'huile', 'savon', 'sucre', 'farine', 'alimentaire', 'vivres', 'lait', 'pain', 'viande', 'poisson', 'légumes', 'marché', 'famille']},
-    {id: 'loyer', label: 'Loyer, logement', couleur: '#c58b2a', mots: ['loyer', 'contribution', 'logement']},
-    {id: 'aides', label: 'Aides et dons', couleur: '#c0533a',
+    {id: 'loyer', label: 'Loyer, logement', pour: 'general', couleur: '#c58b2a', mots: ['loyer', 'contribution', 'logement']},
+    {id: 'aides', label: 'Aides et dons', pour: 'general', couleur: '#c0533a',
      mots: ['aide', 'aumône', 'aumone', 'prestation', 'baptême', 'mariage', 'funéraire', 'don']},
     {id: 'enfants', label: 'Enfants, école', pour: 'foyer', couleur: '#2e8a57', mots: ['scolarité', 'école', 'fourniture', 'enfant']},
     {id: 'sante', label: 'Santé', couleur: '#d9772f', mots: ['médic', 'soin', 'examen', 'pharmacie', 'hôpital', 'analyse', 'clinique']},
-    {id: 'voiture', label: 'Voiture', couleur: '#6b7b90',
+    {id: 'voiture', label: 'Voiture', pour: 'general', couleur: '#6b7b90',
      mots: ['carburant', 'essence', 'gasoil', 'assurance', 'fiche technique', 'amende', 'vidange', 'lavage', 'garage', 'pneu', 'mécan', 'voiture']},
     {id: 'tel', label: 'Téléphone, internet', pour: 'moi', couleur: '#2f97ad', mots: ['crédit', 'forfait', 'internet', 'téléphone']},
     {id: 'transport', label: 'Transport', couleur: '#8a9a2e', mots: ['transport', 'taxi', 'moto', 'clando', 'bus']},
@@ -407,7 +407,7 @@
         vus.add(pid); noms.add(label.toLowerCase());
         const coul = String(x.couleur || '#9a968c');
         postes.push({id: pid, label, couleur: RE_COULEUR.test(coul) ? coul : '#9a968c', mots: pid !== 'autre' ? nettoyerMots(x.mots) : []});
-        if (x.pour === 'moi' || x.pour === 'foyer') postes[postes.length - 1].pour = x.pour;   // pour qui, par défaut (même règle que serveur.py)
+        if (['moi', 'foyer', 'general'].includes(x.pour)) postes[postes.length - 1].pour = x.pour;   // pour qui, par défaut (même règle que serveur.py)
       }
       if (!vus.has('autre')) postes.push(copie(POSTES_DEFAUT[POSTES_DEFAUT.length - 1]));
       else postes = postes.filter(x => x.id !== 'autre').concat(postes.filter(x => x.id === 'autre'));
