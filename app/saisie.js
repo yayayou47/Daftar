@@ -97,7 +97,7 @@ $('fAmt').addEventListener('input',()=>{amtHint();if(amtNeg()&&!touched.nat&&['r
 [['fNat','nat'],['fCpt','cpt'],['fCat','cat'],['fVers','vers'],['fBien','bien'],['fPers','pers'],['fCatV','catv'],['fCatM','catm'],['fCatR','rev'],['fEvt','evt'],['fVeh','veh'],['fTiers','tiers']].forEach(([i,k])=>$(i).addEventListener(i==='fPers'?'input':'change',()=>{touched[k]=true;majChamps()}));
 $('fKm').addEventListener('input',majChamps);
 $('fVidNext').addEventListener('input',()=>{touched.vidnext=true});
-const tabs=[['tOne','oneForm'],['tPaste','pasteBox'],['tRel','relBox'],['tPostes','posteBox'],['tCB','cbBox'],['tEvt','evtBox'],['tProg','progBox'],['tVid','vidPanel'],['tMai','maiPanel'],['tSai','saisieBox'],['tPar','paritesBox'],['tSav','savBox']];
+const tabs=[['tOne','oneForm'],['tPaste','pasteBox'],['tRel','relBox'],['tPostes','posteBox'],['tCB','cbBox'],['tEvt','evtBox'],['tRev','revBox'],['tProg','progBox'],['tSai','saisieBox'],['tPar','paritesBox'],['tSav','savBox']];
 /* garderMenu : rétablissement par le bouton retour (le menu ou la page est décidé par l'étape rétablie) ; sinon, choisir un
    onglet ouvre sa PAGE (le menu ≡ se ferme) */
 function showTab(t,focus,garderMenu){if(t!=='tOne')saisieSeule=false;if(!garderMenu)menuReglages=false;tabs.forEach(([tt,p])=>{const on=tt===t;$(tt).setAttribute('aria-selected',on);$(tt).tabIndex=on?0:-1;$(p).hidden=!on});majRubSaisie();navNoter();if(focus)$(t).focus()}
@@ -112,10 +112,10 @@ document.querySelector('.tabs').addEventListener('keydown',ev=>{
   const i=tabs.findIndex(([t])=>t===ev.target.id);if(i<0)return;
   const j={ArrowRight:i+1,ArrowLeft:i-1,Home:0,End:tabs.length-1}[ev.key];if(j===undefined)return;
   ev.preventDefault();showTab(tabs[(j+tabs.length)%tabs.length][0],true)});
-tabs.forEach(([t])=>$(t).onclick=()=>{if(t==='tSav')renderHistorique();if(t==='tEvt'&&!evtDirty)openEvt();if(t==='tProg'&&!progDirty)openProg();if(t==='tRel')initReleve();showTab(t);enHaut()});
+tabs.forEach(([t])=>$(t).onclick=()=>{if(t==='tSav')renderHistorique();if((t==='tEvt'||t==='tRev')&&!evtDirty)openEvt();if(t==='tProg'&&!progDirty)openProg();if(t==='tRel')initReleve();showTab(t);enHaut()});
 $('retourReglages').onclick=()=>{navEtape(()=>{menuReglages=true;render()});enHaut();$(ongletActif()).focus({preventScroll:true})};showTab('tOne');
 /* modifications non enregistrées : point orange sur l'onglet et bouton « Enregistrer » mis en évidence ; avertissement si on ferme la page */
-const BROUILLONS=[['tPostes',()=>dirty,['savePostes']],['tCB',()=>cbDirty,['saveCpt','saveBien']],['tEvt',()=>evtDirty,['evtSave','revSave']],['tProg',()=>progDirty,['progSave']],['tPar',()=>devDirty,['saveDev']]];
+const BROUILLONS=[['tPostes',()=>dirty,['savePostes']],['tCB',()=>cbDirty,['saveCpt','saveBien']],['tEvt',()=>evtDirty,['evtSave','pjSave']],['tRev',()=>evtDirty,['revSave']],['tProg',()=>progDirty,['progSave']],['tPar',()=>devDirty,['saveDev']]];
 function majBrouillons(){BROUILLONS.forEach(([t,d,bs])=>{const on=!!d();$(t).classList.toggle('brouillon',on);$(t).title=on?'Modifications non enregistrées':'';bs.forEach(b=>$(b).classList.toggle('brouillon',on))})}
 ['input','change','click'].forEach(e=>$('saisie').addEventListener(e,()=>setTimeout(majBrouillons,0)));
 setInterval(majBrouillons,1500);
@@ -180,6 +180,27 @@ $('toastX').onclick=()=>{$('toast').hidden=true};
 /* une ligne d'une liste de réglages retirée (pas encore enregistrée) peut revenir à sa place */
 function retirerLigne(row,quoi,salir,fem){const parent=row.parentNode,next=row.nextSibling;row.remove();salir();
   annulable(`${quoi} retiré${fem?'e':''} (pas encore enregistré${fem?'e':''})`,()=>{parent.insertBefore(row,next);salir()})}
+/* Réglages en listes (2026-11-27, demande de l'utilisateur) : chaque élément se lit en une ligne (resume) ; « Modifier »
+   ouvre SES champs ; « Enregistrer » lance l'enregistrement de la section (son bouton), « Annuler » la rouvre telle
+   qu'enregistrée (rouvrir). Un élément nouveau s'ouvre directement. Le bouton de la section n'apparaît que s'il reste un
+   changement sans élément ouvert (élément retiré, ordre changé) : majSale. */
+const selTxt=s=>s&&s.selectedIndex>=0&&s.options[s.selectedIndex]?s.options[s.selectedIndex].text:'';
+const mtS=v=>{const m=montantSaisi(v);return isFinite(m)?fmtC(m)+' FCFA':esc(v)};   // montant tapé (milliers ou non) → « 7 200 000 FCFA »
+const valIn=(r,c)=>{const e=r.querySelector(c);return e?e.value.trim():''};
+function ficher(r,resume,ouverte){if(r.querySelector(':scope>.fres'))return;r.classList.add('fiche');r.classList.toggle('edit',!!ouverte);
+  r.insertAdjacentHTML('afterbegin',`<div class="fres"><span class="fsum">${resume(r)}</span><button type="button" class="btn ghost small fmod">Modifier</button></div>`);
+  r.insertAdjacentHTML('beforeend',`<div class="fact"><button type="button" class="btn small fok">Enregistrer</button><button type="button" class="btn ghost small fno">Annuler</button></div>`)}
+function fiches(liste,resume,saveId,rouvrir){
+  liste.querySelectorAll(':scope>.cbrow,:scope>.evrow,:scope>.prow').forEach(r=>ficher(r,resume,!r.dataset.id&&!r.classList.contains('prow')));
+  if(liste.dataset.fiches)return;liste.dataset.fiches='1';
+  liste.addEventListener('click',ev=>{const b=ev.target.closest('.fmod,.fok,.fno');if(!b)return;const r=b.closest('.fiche');
+    if(b.classList.contains('fmod')){r.classList.add('edit');const f=r.querySelector(':scope>input:not([type=color]),:scope>select,:scope>span>input:not([type=color]),:scope>.pmain>input');if(f)f.focus()}
+    else if(b.classList.contains('fok'))$(saveId).click();
+    else rouvrir();majSale()})}
+const SALES=[['savePostes',()=>dirty,['posteList']],['saveCpt',()=>cbDirty,['cptEdit','cptEditT']],['saveBien',()=>cbDirty,['bienEdit']],
+  ['evtSave',()=>evtDirty,['evtList']],['pjSave',()=>evtDirty,['pjList']],['revSave',()=>evtDirty,['revList']]];
+function majSale(){for(const [b,d,ls] of SALES){const el=$(b);if(el)el.classList.toggle('voir',!!d()&&!ls.some(l=>$(l)&&$(l).querySelector('.fiche.edit')))}}
+['input','change','click'].forEach(t=>document.addEventListener(t,()=>setTimeout(majSale,0)));
 /* annuler le dernier changement de réglages = revenir au point de restauration le plus récent */
 async function annulerDernierReglage(){if(!HIST||!HIST.length)throw new Error('Aucun changement à annuler.');await req('PUT','/api/parametres',{restaurer:HIST.length-1});await charger()}
 /* fenêtre de confirmation générique (titre, lignes [libellé, valeur], note) */
@@ -455,18 +476,24 @@ function renderDraft(){
   const live=draft.filter(d=>!d.del&&d.id);
   $('posteList').innerHTML=draft.map((d,i)=>{
     const st=d.id?statsPoste(d.id):{n:0,t:0};const isA=d.id==='autre';const last=draft.length-2;
-    return `<div class="prow${d.del?' del':''}" data-i="${i}">
+    return `<div class="prow${d.del?' del':''}" data-i="${i}"${d.id?` data-id="${d.id}"`:''}>
       <input type="color" class="pcol" value="${d.couleur}" aria-label="Couleur du poste ${esc(d.label)}" ${d.del?'disabled':''}>
       <div class="pmain">
         <input class="pname" value="${esc(d.label)}" aria-label="Nom du poste" maxlength="60" ${d.del?'disabled':''}>
         ${isA?'<span class="hint">Lignes dont aucun mot-clé n\'est reconnu. Toujours en dernier.</span>':`<textarea class="pmots" rows="2" placeholder="mots-clés séparés par des virgules : riz, vivres, marché…" aria-label="Mots-clés de ${esc(d.label)}" ${d.del?'disabled':''}>${esc(d.mots)}</textarea>`}
         <span class="pcount">${d.id?`${st.n} ligne${st.n>1?'s':''} · ${fmtM(st.t)} ${U()}`:'nouveau poste'}</span>
       </div>
-      <input class="pbud" inputmode="decimal" value="${esc(d.budget)}" placeholder="—" aria-label="Budget mensuel ${U_SAISIE()}" ${d.del?'disabled':''}>
+      <input class="pbud" inputmode="decimal" value="${esc(d.budget)}" placeholder="budget / mois" aria-label="Budget mensuel ${U_SAISIE()}" ${d.del?'disabled':''}>
       <div class="pact">${isA?'':`<button type="button" class="mini" data-a="up" aria-label="Monter" ${i===0||d.del?'disabled':''}>↑</button><button type="button" class="mini" data-a="down" aria-label="Descendre" ${i>=last||d.del?'disabled':''}>↓</button><button type="button" class="mini danger" data-a="del" aria-label="Supprimer le poste" ${d.del?'disabled':''}>✕</button>`}</div>
       ${d.del?`<div class="pdel">${st.n?`Ses ${st.n} lignes iront dans <select class="pcible" aria-label="Poste de destination">${live.map(x=>`<option value="${x.id}"${x.id===d.cible?' selected':''}>${esc(x.label)}</option>`).join('')}</select>`:'Poste supprimé à l\'enregistrement.'}<button type="button" class="btn ghost" data-a="undo">Annuler la suppression</button></div>`:''}
     </div>`}).join('');
+  // en liste : couleur, nom, mots-clés, budget ; « Modifier » ouvre le poste (gardé ouvert si l'ordre change)
+  $('posteList').querySelectorAll('.prow').forEach(r=>{const d=draft[+r.dataset.i];ficher(r,resumePoste,d.edit||!d.id||d.del)});
+  fiches($('posteList'),resumePoste,'savePostes',openPostes);
 }
+function resumePoste(r){const d=draft[+r.dataset.i],st=d.id?statsPoste(d.id):{n:0,t:0},m=String(d.mots||'').trim();
+  return `<i class="pdot" style="background:${d.couleur}" aria-hidden="true"></i><b>${esc(d.label)}</b> <span class="hint">${m?esc(m.length>70?m.slice(0,70)+'…':m)+' · ':''}${d.budget?`budget ${mtS(d.budget)}/mois · `:''}${st.n} ligne${st.n>1?'s':''}</span>`}
+$('posteList').addEventListener('click',ev=>{const b=ev.target.closest('.fmod');if(b){const r=b.closest('.prow');if(r)draft[+r.dataset.i].edit=true}},true);
 function touch(){const first=!dirty;dirty=true;$('posteMsg').textContent='Modifications non enregistrées.';if(first)renderLibs()}
 $('posteList').addEventListener('input',ev=>{
   const row=ev.target.closest('.prow');if(!row)return;const d=draft[+row.dataset.i];
@@ -536,10 +563,11 @@ function renderLibs(){
   const rows=groups.map((g,i)=>({g,i})).filter(({g})=>!q||g.key.includes(q)||[...g.cats].some(c=>normTxt(CAT[c]?.label).includes(q)));
   $('libTbl').innerHTML=`<thead><tr><th>Libellé</th><th>Lignes</th><th>Total</th><th>Poste</th></tr></thead><tbody>`+
     rows.map(({g,i})=>{const one=g.cats.size===1?[...g.cats][0]:'';const auto=one&&guessCat(g.label)===one;
-      return `<tr><td>${esc(g.label)}${auto?'':' <span class="auto">· classé à la main</span>'}</td><td>${g.ids.length}</td><td>${fmtM(g.total)}</td><td><select data-g="${i}" aria-label="Poste de ${esc(g.label)}" ${dirty?'disabled':''}>${one?'':'<option value="" selected>Plusieurs postes</option>'}${CATS.map(c=>`<option value="${c.id}"${c.id===one?' selected':''}>${esc(c.label)}</option>`).join('')}</select></td></tr>`}).join('')+
+      return `<tr><td>${esc(g.label)}${auto?'':' <span class="auto">· classé à la main</span>'}</td><td>${g.ids.length}</td><td>${fmtM(g.total)}</td><td><span class="libp">${one?esc((CAT[one]||{}).label||''):'Plusieurs postes'} <button type="button" class="linkbtn" data-libmod aria-label="Modifier le poste de ${esc(g.label)}">Modifier</button></span><select hidden data-g="${i}" aria-label="Poste de ${esc(g.label)}" ${dirty?'disabled':''}>${one?'':'<option value="" selected>Plusieurs postes</option>'}${CATS.map(c=>`<option value="${c.id}"${c.id===one?' selected':''}>${esc(c.label)}</option>`).join('')}</select></td></tr>`}).join('')+
     (rows.length?'':`<tr><td colspan="4" class="empty" style="text-align:center">Aucun libellé ne correspond.</td></tr>`)+'</tbody>';
 }
 $('libQ').addEventListener('input',renderLibs);
+$('libTbl').addEventListener('click',ev=>{const b=ev.target.closest('[data-libmod]');if(!b)return;const td=b.closest('td'),s=td.querySelector('select');td.querySelector('.libp').hidden=true;s.hidden=false;s.focus()});
 $('libTbl').addEventListener('change',async ev=>{
   const sel=ev.target.closest('select[data-g]');if(!sel||!sel.value)return;
   if(dirty){$('libMsg').textContent="Enregistrez d'abord les postes modifiés.";return}
@@ -583,12 +611,17 @@ function bienRow(b){const used=all.some(e=>e.nature==='investissement'&&e.bien==
     <input class="bMots" value="${esc((b.mots||[]).join(', '))}" placeholder="mots-clés d'investissement" aria-label="Mots-clés d'investissement">
     <select class="bRole" aria-label="Rôle du bien"><option value="">Rôle : bien simple</option>${Object.entries(ENGINS).map(([k,l])=>`<option value="v:${k}"${b.vehicule&&(b.engin||'voiture')===k?' selected':''}>Engin : ${l.toLowerCase()} (Mes biens › Engins)</option>`).join('')}<option value="maison"${b.maison?' selected':''}>Maison, construction (Mes biens › Maison)</option></select>
     <button type="button" class="mini danger" data-x ${used?'disabled title="Bien avec investissements : impossible à supprimer"':''} aria-label="Supprimer le bien">✕</button></div>`}
-function openCB(){$('cptEdit').innerHTML=COMPTES.filter(c=>c.type!=='tiers').map(cptRow).join('');$('cptEditT').innerHTML=COMPTES.filter(c=>c.type==='tiers').map(cptRow).join('');renderCorb();$('bienEdit').innerHTML=BIENS.map(bienRow).join('');cbDirty=false}
+function openCB(){$('cptEdit').innerHTML=COMPTES.filter(c=>c.type!=='tiers').map(cptRow).join('');$('cptEditT').innerHTML=COMPTES.filter(c=>c.type==='tiers').map(cptRow).join('');renderCorb();$('bienEdit').innerHTML=BIENS.map(bienRow).join('');cbDirty=false;
+  fiches($('cptEdit'),resumeCpt,'saveCpt',openCB);fiches($('cptEditT'),resumeCpt,'saveCpt',openCB);fiches($('bienEdit'),resumeBien,'saveBien',openCB)}
+function resumeCpt(r){const t=r.querySelector('.cType').value,tx=valIn(r,'.cTaux'),m=valIn(r,'.cMots');
+  return `<i class="pdot" style="background:${r.querySelector('.cCoul').value}" aria-hidden="true"></i><b>${esc(valIn(r,'.cNom')||'Nouveau compte')}</b> <span class="hint">${esc(selTxt(r.querySelector('.cType')))}${t==='tiers'&&valIn(r,'.cTit')?` · ${esc(valIn(r,'.cTit'))}`:''}${m?` · ${esc(m)}`:''}${tx?` · ${esc(tx)} % tous les ${esc(valIn(r,'.cPer')||'12')} mois`:''}</span>`}
+function resumeBien(r){const ro=r.querySelector('.bRole').value,p=valIn(r,'.bPrix'),d=valIn(r,'.bDate'),po=r.querySelector('.bPoste').value;
+  return `<b>${esc(valIn(r,'.bNom')||'Nouveau bien')}</b> <span class="hint">${ro.startsWith('v:')?esc(ENGINS[ro.slice(2)]||'Engin'):ro==='maison'?'Maison':'Bien'} · ${esc(selTxt(r.querySelector('.bType')))}${d?` · acheté le ${dmy(d)}`:''}${p?` · ${mtS(p)}`:''}${po?` · frais : ${esc(selTxt(r.querySelector('.bPoste')))}`:''}</span>`}
 $('cbBox').addEventListener('input',()=>{cbDirty=true});
 $('cbBox').addEventListener('change',ev=>{if(ev.target.classList.contains('cType'))ev.target.closest('.cbrow').querySelector('.cTiers').hidden=ev.target.value!=='tiers'});
 $('cbBox').addEventListener('click',ev=>{const b=ev.target.closest('[data-x]');if(b&&!b.disabled){const r=b.closest('.cbrow');retirerLigne(r,r.classList.contains('bien')?'Bien':'Compte',()=>{cbDirty=true})}});
-$('addCpt').onclick=()=>{$('cptEdit').insertAdjacentHTML('beforeend',cptRow({id:'',nom:'',type:'mobile',mots:[]}));cbDirty=true;$('cptEdit').lastElementChild.querySelector('.cNom').focus()};
-$('addCptT').onclick=()=>{$('cptEditT').insertAdjacentHTML('beforeend',cptRow({id:'',nom:'',type:'tiers',mots:[]}));cbDirty=true;$('cptEditT').lastElementChild.querySelector('.cNom').focus()};
+$('addCpt').onclick=()=>{$('cptEdit').insertAdjacentHTML('beforeend',cptRow({id:'',nom:'',type:'mobile',mots:[]}));ficher($('cptEdit').lastElementChild,resumeCpt,true);cbDirty=true;$('cptEdit').lastElementChild.querySelector('.cNom').focus()};
+$('addCptT').onclick=()=>{$('cptEditT').insertAdjacentHTML('beforeend',cptRow({id:'',nom:'',type:'tiers',mots:[]}));ficher($('cptEditT').lastElementChild,resumeCpt,true);cbDirty=true;$('cptEditT').lastElementChild.querySelector('.cNom').focus()};
 /* supprimer un compte enregistré : en deux temps, puis dans la corbeille (masqué avec ses opérations, rétablissable 30 jours) */
 $('cbBox').addEventListener('click',async ev=>{const b=ev.target.closest('[data-supcpt],[data-retab]');if(!b||b.disabled)return;
   if(cbDirty){$('cptMsg').textContent="Enregistrez d'abord vos modifications des comptes.";return}
@@ -600,7 +633,7 @@ $('cbBox').addEventListener('click',async ev=>{const b=ev.target.closest('[data-
   const c=CPT[b.dataset.retab];if(!c)return;b.disabled=true;
   try{await api.params({comptes:TOUS.map(x=>{if(x.id!==c.id)return x;const y={...x};delete y.supprime;return y})});await charger(true);$('cptMsg').textContent=`« ${c.nom} » rétabli, avec ses opérations.`}
   catch(e){$('cptMsg').textContent=e.message;b.disabled=false}});
-$('addBien').onclick=()=>{$('bienEdit').insertAdjacentHTML('beforeend',bienRow({id:'',nom:'',type:'actif',mots:[]}));cbDirty=true;$('bienEdit').lastElementChild.querySelector('.bNom').focus()};
+$('addBien').onclick=()=>{$('bienEdit').insertAdjacentHTML('beforeend',bienRow({id:'',nom:'',type:'actif',mots:[]}));ficher($('bienEdit').lastElementChild,resumeBien,true);cbDirty=true;$('bienEdit').lastElementChild.querySelector('.bNom').focus()};
 const listeMots=s=>s.split(/[,;\n]/).map(x=>x.trim()).filter(Boolean);
 $('saveCpt').onclick=async()=>{
   const pris=new Set(TOUS.map(c=>c.id)),out=[];
@@ -622,7 +655,7 @@ $('saveBien').onclick=async()=>{
     const p=r.querySelector('.bPrix').value.trim(),prix=p?montantSaisi(p):0;if(!isFinite(prix)){$('bienMsg').textContent=`Prix invalide pour « ${nom} ».`;return}
     const old=BIEN[r.dataset.id];
     out.push({id:old?old.id:nouvelId(nom,pris),nom,type:r.querySelector('.bType').value,date_achat:r.querySelector('.bDate').value,prix_achat:prix,
-      poste:r.querySelector('.bPoste').value,mots:listeMots(r.querySelector('.bMots').value),estimations:old?old.estimations:[],
+      poste:r.querySelector('.bPoste').value,mots:listeMots(r.querySelector('.bMots').value),estimations:old?old.estimations:[],...(old&&old.projet?{projet:old.projet}:{}),
       ...(()=>{const ro=r.querySelector('.bRole').value;
         if(ro.startsWith('v:'))return {vehicule:true,engin:ro.slice(2),vidange:(old&&old.vidange)||{intervalle:INTERVALLE_DEFAUT(ro.slice(2)),dernier:0,prochain:0}};
         if(ro==='maison')return {maison:true,projet:(old&&old.projet)||{budget:0,echeance:'',note:''}};return {}})()});

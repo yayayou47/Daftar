@@ -251,8 +251,8 @@ header .ctl>.btn,header .ctl>.devsel,header .ctl .expmenu>.btn{height:44px;displ
 /* téléphone : rubriques en barre d'icônes, libellé dessous */
 @media (max-width:567px){
   nav.apptabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px}
-  nav.apptabs button{flex-direction:column;justify-content:flex-start;gap:3px;font-size:.72rem;padding:8px 2px;text-align:center;line-height:1.15;min-width:0}
-  .apptabs .ic{width:1.6em;height:1.6em}
+  nav.apptabs button{flex-direction:column;justify-content:flex-start;gap:2px;font-size:.72rem;padding:4px 2px;text-align:center;line-height:1.15;min-width:0}
+  .apptabs .ic{width:1.4em;height:1.4em}
 }
 /* vues de Mes finances : icône + libellé, sur une ligne ; sur téléphone, barre de 4 (icône au-dessus) */
 .segic button{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
@@ -524,14 +524,14 @@ header #aDon[aria-pressed="true"]{background:var(--accent);color:#fff;border-col
   nav.apptabs.cachee{transform:translateY(calc(100% + 6px))}
   /* Saisir, au milieu : bouton rectangulaire arrondi DANS la barre (le rond qui débordait a été refusé le 27/11), fond
      bleu du logo (#1f4e79, même en mode nuit : texte blanc lisible), contour or (couleur des barres du logo), icône agrandie */
-  nav.apptabs .asaisir{background:#1f4e79;color:#fff;border:2px solid #f2b93f!important;border-radius:12px;margin:3px 4px;
+  nav.apptabs .asaisir{background:#1f4e79;color:#fff;border:2px solid #f2b93f!important;border-radius:12px;margin:2px 4px;
     font-weight:700;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.18)}
-  nav.apptabs .asaisir .ic{width:1.9em;height:1.9em}
+  nav.apptabs .asaisir .ic{width:1.6em;height:1.6em}
   nav.apptabs .asaisir[aria-pressed="true"]{color:#fff;box-shadow:0 0 0 3px rgba(242,185,63,.35),0 2px 8px rgba(0,0,0,.18)}
   body:has(.clavier:not([hidden])) nav.apptabs{display:none}
-  body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
-  html{scroll-padding-top:calc(var(--hh,58px) + 8px);scroll-padding-bottom:84px}
-  .toast{bottom:calc(84px + env(safe-area-inset-bottom))}
+  body{padding-bottom:calc(62px + env(safe-area-inset-bottom))}
+  html{scroll-padding-top:calc(var(--hh,58px) + 8px);scroll-padding-bottom:70px}
+  .toast{bottom:calc(70px + env(safe-area-inset-bottom))}
 }
 /* la ligne du haut (logo, synchronisation, devise, jour / nuit, ≡) est FIGÉE en haut, toujours visible (demande de
    l'utilisateur, 2026-11-25 : la version qui s'effaçait en descendant ne revenait pas assez vite en remontant) ; sur
@@ -563,3 +563,22 @@ main.wrap>header{position:sticky;top:0;z-index:41;background:var(--bg);margin:-8
 #saisie.regmenu .regplus .tgrp{display:flex;flex-direction:column;align-items:stretch;background:var(--bg);border-radius:14px;padding:6px}
 #saisie.regmenu .regplus .tgl{padding:6px 10px}
 .regitem{font:inherit;text-align:left}
+/* Réglages en listes (2026-11-27) : une ligne par élément, « Modifier » ouvre ses champs (.edit) */
+.fiche:not(.edit){display:flex!important;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;margin-bottom:6px;background:var(--surface)}
+.fiche:not(.edit)>:not(.fres):not(.pact):not(.pdel){display:none!important}
+.fiche.edit>.fres{display:none}
+.fres{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
+.fsum{flex:1;min-width:0;line-height:1.35}
+.fsum .hint{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fres .fmod{flex:none}
+.fiche.edit{border:2px solid var(--accent);border-radius:10px;padding:8px;margin-bottom:6px;background:var(--surface)}
+.fact{display:flex;gap:8px;grid-column:1/-1;flex-basis:100%;margin-top:4px}
+.fiche:not(.edit)>.fact{display:none!important}
+.pdot{display:inline-block;width:.8em;height:.8em;border-radius:50%;margin-right:6px;vertical-align:-1px;border:1px solid rgba(0,0,0,.15)}
+.prow.fiche:not(.edit)>.pact{display:flex;gap:2px;flex:none}
+.prow.fiche:not(.edit)>.pdel{flex-basis:100%}
+.prow.fiche:not(.edit){flex-wrap:wrap}
+#posteBox .phdr,#cbBox .cbhead{display:none}
+#savePostes,#saveCpt,#saveBien,#evtSave,#pjSave,#revSave{display:none}
+#savePostes.voir,#saveCpt.voir,#saveBien.voir,#evtSave.voir,#pjSave.voir,#revSave.voir{display:inline-flex}
+.libp{white-space:nowrap}

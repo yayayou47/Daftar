@@ -152,6 +152,11 @@ class Parite(unittest.TestCase):
             {"biens": [b for b in prm["biens"] if b["id"] != "villa"]},
             {"biens": prm["biens"] + [{"id": "champ", "nom": "Champ", "type": "actif", "date_achat": "2025-01-01", "prix_achat": 800000,
                                        "poste": "", "mots": ["champ"], "estimations": [{"date": "2026-01-01", "valeur": 900000}]}]},
+            # projet sur un bien qui n'est pas une maison (2026-11-27), échéance invalide, projet retiré d'une maison
+            {"biens": prm["biens"] + [{"id": "champ", "nom": "Champ", "type": "actif", "mots": [],
+                                       "projet": {"budget": 500000, "echeance": "2027-06-30", "note": "clôture"}}]},
+            {"biens": prm["biens"] + [{"id": "champ", "nom": "Champ", "type": "actif", "mots": [], "projet": {"echeance": "demain"}}]},
+            {"biens": [{**b, "maison": False, "projet": None} if b["id"] == "villa" else b for b in prm["biens"]]},
             {"devises": [{"code": "XAF", "taux": 1}, {"code": "EUR", "taux": 655}, {"code": "usd", "taux": "592,13"}]},
             {"devises": [{"code": "EURO", "taux": 655}]},
             {"revenus": [{"id": "salaire", "label": "Salaire", "courant": True, "mots": ["salaire"]}]},

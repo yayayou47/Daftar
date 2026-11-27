@@ -930,12 +930,14 @@ def nettoyer_biens(liste, d):
             biens[-1]["vehicule"] = True
             biens[-1]["engin"] = x.get("engin") if x.get("engin") in ENGINS else "voiture"
             biens[-1]["vidange"] = {"intervalle": km("intervalle", 3000) or 3000, "dernier": km("dernier"), "prochain": km("prochain")}
-        if x.get("maison"):
+        if x.get("maison") or x.get("projet"):
+            # projet (budget, échéance, note) : toujours pour une maison ; pour tout autre bien s'il en a un (2026-11-27)
             pj = x.get("projet") or {}
             ech = str(pj.get("echeance") or "")
             if ech and not RE_DATE.match(ech):
                 raise ValueError("Échéance du projet invalide pour %s." % nom)
-            biens[-1]["maison"] = True
+            if x.get("maison"):
+                biens[-1]["maison"] = True
             biens[-1]["projet"] = {"budget": montant_positif(pj.get("budget") or 0, "Budget du projet", zero=True),
                                    "echeance": ech, "note": texte(pj.get("note"), 300)}
     manquants = ({o.get("bien") for o in d.get("operations", []) if o.get("nature") == "investissement"}

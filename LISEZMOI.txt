@@ -117,10 +117,13 @@ sur l'ordinateur, elle est figée juste sous la ligne du haut :
     réglage avec une courte description, en quatre groupes :
       Saisir : Une opération · Coller une liste · Relevé bancaire ;
       Personnaliser : Postes et libellés · Comptes et biens · Événements et
-        revenus · Programmées · Repères vidange · Projet maison · Saisie ·
-        Parités ;
+        projets · Types de revenus · Programmées · Saisie · Parités ;
       Sécurité : Sauvegarde et retour ;
       Fichiers : Exporter vers Excel.
+    Postes, comptes, biens, événements, projets et types de revenus se
+    présentent en liste, une ligne par élément ; « Modifier » ouvre ses
+    champs, « Enregistrer » ou « Annuler » le referme. Dans la table des
+    libellés, « Modifier » propose la liste des postes.
     Toucher un réglage l'ouvre seul ; « ‹ Réglages » (ou le bouton retour)
     ramène à la liste. « Comment ça marche ? » ouvre les explications. Un
     point orange sur un onglet et un bouton « Enregistrer » encadré signalent
@@ -234,8 +237,11 @@ d'engin ; ailleurs, un nombre entre parenthèses est un cumul ignoré. Seul un
 compteur écrit avec « km » désigne un engin à lui seul.
 
 Vidange : en cochant « Nouvelle vidange » dans Une opération, la prochaine
-est proposée au compteur + l'intervalle (modifiable) ; dans Repères vidange,
-la prochaine se recalcule quand on change la dernière ou l'intervalle.
+est proposée au compteur + l'intervalle (modifiable). Les repères (intervalle,
+dernière et prochaine vidange) se règlent dans Mes biens › Engins, sous le
+tableau des vidanges : « Modifier les repères de vidange », pour l'engin
+affiché ; la prochaine se recalcule quand on change la dernière ou
+l'intervalle.
 
 La rubrique Engins montre la barre d'avancement vers la prochaine vidange,
 les dépenses (comparées à l'année précédente à la même date, en vert si
@@ -309,15 +315,18 @@ Filtrer : touchez un poste, un compte, une personne, un bien, un mois ou une
 année pour filtrer le journal ; Daftar y amène directement.
 
 
-8. HOUSE (MAISON)
------------------
+8. MAISON ET PROJETS
+--------------------
 Coût de revient (terrain + travaux), valeur actuelle et appréciation,
 travaux par année ou par mois et par catégorie (arrosage, eau-pompe-forage,
 maçonnerie, matériaux, main-d'œuvre, électricité, administratif…),
 perspectives (budget du projet, reste à investir, date d'achèvement au
 rythme actuel, effort mensuel pour tenir l'échéance, valeur projetée) et
-journal des travaux. Le projet se règle dans Données et réglages › Projet
-maison.
+journal des travaux. Le projet se règle dans Données et réglages ›
+Événements et projets › Projets : un projet se rattache à une maison ou à
+tout autre bien (terrain, engin…), avec budget, échéance et note ; ses
+dépenses sont les investissements dans ce bien. « Maison » donne au bien le
+carnet des travaux.
 
 
 9. CORRIGER, ANNULER, EXPORTER
@@ -393,7 +402,7 @@ Repas, boissons · Perso · Autre.
 
 12. COURANT ET EXCEPTIONNEL, PROGRAMMÉES, RELEVÉS, TIERS
 --------------------------------------------------------
-Événements (Données et réglages › Événements et revenus) : un mariage, un
+Événements (Données et réglages › Événements et projets) : un mariage, un
 baptême, des funérailles, un voyage, une mission… regroupe des dépenses ET
 des revenus exceptionnels, ce qui donne son bilan net. Ses mots-clés
 rattachent les saisies (« hôtel dakar » → Mission à Dakar). Les types de

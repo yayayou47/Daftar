@@ -325,10 +325,11 @@
         b.engin = ['voiture', 'moto', 'bus', 'camion', 'groupe', 'autre'].includes(x.engin) ? x.engin : 'voiture';
         b.vidange = {intervalle: km('intervalle', 3000) || 3000, dernier: km('dernier'), prochain: km('prochain')};
       }
-      if (x.maison) {
+      if (x.maison || x.projet) {
+        // projet : toujours pour une maison ; pour tout autre bien s'il en a un (même règle que serveur.py)
         const pj = x.projet || {}, ech = String(pj.echeance || '');
         if (ech && !RE_DATE.test(ech)) erreur('Échéance du projet invalide pour ' + nom + '.');
-        b.maison = true;
+        if (x.maison) b.maison = true;
         b.projet = {budget: montantPositif(pj.budget || 0, 'Budget du projet', true), echeance: ech, note: texte(pj.note, 300)};
       }
       out.push(b);

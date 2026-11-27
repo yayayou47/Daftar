@@ -71,7 +71,8 @@ function renderVue(){
   if(isB){renderHub();return}
   if(isV){renderVehicule();return}
   if(isH){renderMaison();return}
-  if(isD){openVidange();openProjet();return}
+  if(isD)return;
+  if(isV&&($('vidPanel').hidden||$('vidPanel').dataset.v!==(VEH()||{}).id))openVidange();
   if(!tableau){if(isS)renderStats();return}
   const items=sorted(isP?all.filter(e=>perso(e)||(filtre&&filtre==='c:'+e.compte)):isM?monthItems(cur.y,cur.m):yearItems(cur.y));   // Patrimoine : opérations des tiers seulement sur leur compte
   /* indicateurs (résumé, postes) : seulement les opérations à partir du début du suivi quotidien (DEBUT_SUIVI, 02/10/2026) ;
@@ -438,7 +439,9 @@ $('aVeh').onclick=()=>{view='vehicule';render();enHaut()};
 $('aBiens').onclick=$('bHub').onclick=()=>{view='biens';render();enHaut()};
 function renderHub(){
   const V=VEHS(),M=MAISONS(),A=BIENS.filter(b=>!b.vehicule&&!b.maison);
-  const carte=(b,sous,attr)=>`<div class="hubcard"><button type="button" class="hubgo" ${attr}><b>${esc(b.nom)}</b><span class="hint">${sous}</span><span class="chev" aria-hidden="true">›</span></button></div>`;
+  // projet d'un bien (maison ou autre) : investi / budget, échéance
+  const pjTxt=b=>{if(!aProjet(b))return '';const pj=b.projet,s=etatBien(b);return ` · projet ${fmtA(s.I)}${pj.budget?` / ${fmtA(pj.budget)}`:''} ${U()}${pj.echeance?`, échéance ${dmy(pj.echeance)}`:''}`};
+  const carte=(b,sous,attr)=>`<div class="hubcard"><button type="button" class="hubgo" ${attr}><b>${esc(b.nom)}</b><span class="hint">${sous}${b.maison?'':pjTxt(b)}</span><span class="chev" aria-hidden="true">›</span></button></div>`;
   const groupe=(titre,ic,l,f)=>l.length?`<h3 class="cbsec hubsec"><svg class="ic" aria-hidden="true" focusable="false"><use href="#${ic}"/></svg>${titre}</h3><div class="hubgrid">${l.map(f).join('')}</div>`:'';
   $('hubList').innerHTML=(BIENS.length?'':'<div class="empty">Aucun bien pour l\'instant : ajoutez un engin, une maison ou un terrain.</div>')+
     groupe('Engins','i-car',V,b=>{const k=kmNow(b);return carte(b,`${ENGINS[b.engin]||'Engin'}${k?` · ${nb(k)} ${UK(b)}`:''}`,`data-hv="${b.id}"`)})+
@@ -646,17 +649,20 @@ $('enginForm').addEventListener('submit',async ev=>{ev.preventDefault();
   const b={id,nom,type:'passif',date_achat:$('eDate').value,prix_achat:prix,poste:$('ePoste').value==='autre'?'':$('ePoste').value,mots:[],estimations:[],vehicule:true,engin:t,vidange:{intervalle:int,dernier:der,prochain:der?der+int:0}};
   try{await api.params({biens:BIENS.concat([b])});choisirEngin(id);$('dlgEngin').close();await charger();status(`Engin « ${nom} » ajouté.`)}catch(e){$('eMsg').textContent=e.message}});
 
-/* repères de vidange (Données et réglages) */
+/* repères de vidange (Mes biens › Engins › Modifier les repères de vidange) */
 function openVidange(){const v=VEH(),vd=vidangeDe(v);$('vidVehNom').textContent=v?v.nom:'aucun engin (Comptes et biens › rôle « Engin »)';$('vidForm').hidden=!v;
-  $('vidChoix').hidden=VEHS().length<2;$('vidVeh').innerHTML=VEHS().map(b=>`<option value="${b.id}"${v&&b.id===v.id?' selected':''}>${esc(b.nom)}</option>`).join('');
+  $('vidPanel').dataset.v=v?v.id:'';$('vidChoix').hidden=true;   // l'engin est celui affiché dans Engins
+ $('vidVeh').innerHTML=VEHS().map(b=>`<option value="${b.id}"${v&&b.id===v.id?' selected':''}>${esc(b.nom)}</option>`).join('');
   const u=UK(v);$('sIntLab').textContent=`Intervalle de vidange (${u})`;$('sLastLab').textContent=`Dernière vidange (${u})`;$('sNextLab').textContent=`Prochaine vidange (${u})`;
   $('sInt').value=vd.intervalle||'';$('sLast').value=vd.dernier||'';$('sNext').value=vd.prochain||''}
 ['sInt','sLast'].forEach(i=>$(i).addEventListener('input',()=>{const a=num($('sInt').value),b=num($('sLast').value);if(a>0&&b>0)$('sNext').value=b+a}));
 $('vidVeh').addEventListener('change',()=>{choisirEngin($('vidVeh').value);openVidange();render()});
+/* repères de vidange : dans Engins, pour l'engin affiché (2026-11-27 ; avant : onglet « Repères vidange » des réglages) */
+$('vidModif').onclick=()=>{const p=$('vidPanel'),o=p.hidden;if(o)openVidange();p.hidden=!o;$('vidModif').setAttribute('aria-expanded',o);if(o)$('sInt').focus()};
 async function enregistrerVidange(vd,v=VEH()){if(!v)return;await api.params({biens:BIENS.map(b=>b.id===v.id?{...b,vidange:vd}:b)})}
 $('vidForm').addEventListener('submit',async ev=>{ev.preventDefault();
   const vd={intervalle:Math.round(num($('sInt').value))||3000,dernier:Math.round(num($('sLast').value))||0,prochain:Math.round(num($('sNext').value))||0};
-  try{await enregistrerVidange(vd);await charger();$('vidMsg').textContent='Repères enregistrés.'}catch(e){$('vidMsg').textContent=e.message}});
+  try{await enregistrerVidange(vd);await charger();$('vidMsg').textContent='';$('vidPanel').hidden=true;$('vidModif').setAttribute('aria-expanded',false);status('Repères de vidange enregistrés.')}catch(e){$('vidMsg').textContent=e.message}});
 
 /* ================= carnet de la maison ================= */
 /* La maison est un bien marqué « maison » ; ses travaux sont des investissements dans ce bien,
@@ -725,9 +731,9 @@ function renderMaison(){
       if(rythme>0){const a=reste/rythme,fin=new Date(now.getTime()+a*365.25*864e5);p.push(`Au rythme ${src} (${fmtM(rythme)} ${U()} par an), les travaux seraient financés vers ${fin.toLocaleDateString('fr-FR',{month:'long',year:'numeric'})}, dans environ ${a<1?Math.max(1,Math.round(a*12))+' mois':fmt1(a)+' ans'}.`)}
       if(pj.echeance&&pj.echeance>today){const mo=Math.max(1,(nbJ(today,pj.echeance)-1)/30.44),besoin=reste/mo;
         p.push(`Pour finir à l'échéance du ${dmy(pj.echeance)}, il faudrait investir environ ${fmtM(besoin)} ${U()} par mois, contre ${fmtM(rythme/12)} ${U()} au rythme ${src}${besoin>rythme/12*1.1?' : il faudra accélérer':''}.`)}
-      else if(pj.echeance)p.push(`L'échéance du ${dmy(pj.echeance)} est passée : mettez-la à jour dans Données et réglages › Projet maison.`);
+      else if(pj.echeance)p.push(`L'échéance du ${dmy(pj.echeance)} est passée : mettez-la à jour dans menu ≡ › Événements et projets › Projets.`);
     }
-  }else p.push('Fixez un budget et une échéance dans Données et réglages › Projet maison : l\'avancement et la date d\'achèvement s\'afficheront ici.');
+  }else p.push('Fixez un budget et une échéance dans menu ≡ › Événements et projets › Projets : l\'avancement et la date d\'achèvement s\'afficheront ici.');
   if(s.taux!==null&&s.V)p.push(`Valeur projetée au taux observé (${pct(s.taux)} par an) : environ ${fmtM(s.V*(1+s.taux))} ${U()} dans un an et ${fmtM(s.V*Math.pow(1+s.taux,5))} ${U()} dans cinq ans. C'est une extrapolation d'une seule estimation, à revoir à chaque nouvelle valeur notée.`);
   else p.push('Notez une valeur actuelle (Mes finances › Patrimoine › Mettre à jour la valeur) pour calculer l\'appréciation et la valeur projetée.');
   if(pc.autre&&tot)p.push(`${fmt1(pc.autre/tot*100)} % des travaux de la période sont sans détail (« Autre ») : préciser le libellé (ciment, main-d'œuvre, brique…) rendra l'analyse par poste plus juste.`);
@@ -744,17 +750,33 @@ $('maiTbl').addEventListener('click',ev=>{const t=ev.target.closest('tr[data-k]'
 $('maiAn').onclick=()=>{maiAll=false;maiSel=null;render()};
 $('maiTout').onclick=()=>{maiAll=true;maiSel=null;render()};
 
-/* projet maison (Données et réglages) */
-function openProjet(){const m=MAISON();
-  const l=MAISONS().length?MAISONS():BIENS.filter(b=>b.type==='actif');
-  $('pjBien').innerHTML=l.map(b=>`<option value="${b.id}"${m&&b.id===m.id?' selected':''}>${esc(b.nom)}</option>`).join('')||'<option value="">aucune maison (Comptes et biens › rôle « Maison »)</option>';
-  const pj={budget:0,echeance:'',note:'',...((m&&m.projet)||{})};$('pjBudget').value=pj.budget?versSaisie(pj.budget):'';$('pjEch').value=pj.echeance;$('pjNote').value=pj.note;pjHint()}
-function pjHint(){const v=montantSaisi($('pjBudget').value);$('pjBudgetH').textContent=$('pjBudget').value.trim()&&isFinite(v)?`= ${fmtC(v)} FCFA`:(SAISIE_K?'en milliers : 5000 = 5 000 000 FCFA':'en francs CFA')}
-$('pjBudget').addEventListener('input',pjHint);
-$('pjForm').addEventListener('submit',async ev=>{ev.preventDefault();
-  const id=$('pjBien').value,budget=$('pjBudget').value.trim()?montantSaisi($('pjBudget').value):0;
-  if(!id){$('pjMsg').textContent='Aucun bien actif à suivre.';return}if(!isFinite(budget)){$('pjMsg').textContent=`Budget invalide (${U_SAISIE()}).`;return}
-  const projet={budget,echeance:$('pjEch').value,note:$('pjNote').value.trim()};
-  try{await api.params({biens:BIENS.map(b=>b.id===id?{...b,maison:true,projet}:b)});choisirMaison(id);await charger();$('pjMsg').textContent='Projet enregistré.'}catch(e){$('pjMsg').textContent=e.message}});
-$('pjBien').addEventListener('change',()=>{const b=BIEN[$('pjBien').value];if(b&&b.maison){choisirMaison(b.id);openProjet()}});
+/* projets (Données et réglages › Événements et projets, 2026-11-27) : budget, échéance et note d'un bien, maison ou autre
+   (terrain, engin…). « Maison » donne au bien le carnet des travaux. Une maison garde toujours un projet (vide = pas listé). */
+const aProjet=b=>!!b.projet&&(!b.maison||b.projet.budget>0||!!b.projet.echeance||!!b.projet.note);
+function pjRow(b){const pj={budget:0,echeance:'',note:'',...(b.projet||{})},neuf=!b.id;
+  const l=BIENS.filter(x=>neuf?!aProjet(x):x.id===b.id);
+  return `<div class="evrow pjrow" data-id="${b.id||''}"><select class="jBien" aria-label="Bien du projet"${neuf?'':' disabled'}>${l.map(x=>`<option value="${x.id}"${x.id===b.id?' selected':''}>${esc(x.nom)}</option>`).join('')||'<option value="">aucun bien sans projet (ajoutez-le dans Comptes et biens)</option>'}</select>
+    <select class="jNat" aria-label="Nature du projet"><option value="maison"${b.maison?' selected':''}>Maison (construction)</option><option value="autre"${b.maison?'':' selected'}>Autre bien</option></select>
+    <input class="jBud" inputmode="decimal" value="${pj.budget?versSaisie(pj.budget):''}" placeholder="budget" aria-label="Budget ${U_SAISIE()}" style="max-width:9em">
+    <input type="date" class="jEch" value="${pj.echeance||''}" aria-label="Échéance souhaitée">
+    <input class="jNote" value="${esc(pj.note||'')}" maxlength="300" placeholder="note : 3 pièces, forage, clôture…" aria-label="Note sur le projet">
+    <button type="button" class="mini danger" data-x aria-label="Retirer le projet">✕</button></div>`}
+function resumeProjet(r){const b=BIEN[r.querySelector('.jBien').value],bud=valIn(r,'.jBud'),e=valIn(r,'.jEch'),n=valIn(r,'.jNote'),s=b?etatBien(b):null;
+  return `<b>${esc(b?b.nom:'Nouveau projet')}</b> <span class="hint">${r.querySelector('.jNat').value==='maison'?'Maison':'Autre bien'}${bud?` · budget ${mtS(bud)}`:''}${s?` · investi ${fmtM(s.I)} ${U()}`:''}${e?` · échéance ${dmy(e)}`:''}${n?` · ${esc(n)}`:''}</span>`}
+function openProjet(){const l=BIENS.filter(aProjet);$('pjList').innerHTML=l.length?l.map(pjRow).join(''):'<div class="hint">Aucun projet pour l\'instant.</div>';
+  fiches($('pjList'),resumeProjet,'pjSave',openEvt)}
+$('pjList').addEventListener('input',()=>{evtDirty=true});
+$('pjList').addEventListener('click',ev=>{const b=ev.target.closest('[data-x]');if(b&&!b.disabled)retirerLigne(b.closest('.evrow'),'Projet',()=>{evtDirty=true})});
+$('pjAdd').onclick=()=>{const l=$('pjList');if(!l.querySelector('.evrow'))l.innerHTML='';l.insertAdjacentHTML('beforeend',pjRow({}));ficher(l.lastElementChild,resumeProjet,true);
+  const r=l.lastElementChild,b=BIEN[r.querySelector('.jBien').value];if(b)r.querySelector('.jNat').value=b.maison?'maison':'autre';r.querySelector('.jBien').focus();evtDirty=true};
+$('pjList').addEventListener('change',ev=>{if(ev.target.classList.contains('jBien')){const b=BIEN[ev.target.value];if(b)ev.target.closest('.evrow').querySelector('.jNat').value=b.maison?'maison':'autre'}});
+$('pjSave').onclick=async()=>{const par={};
+  for(const r of $('pjList').querySelectorAll('.pjrow')){const id=r.querySelector('.jBien').value;if(!id||!BIEN[id])continue;
+    const t=valIn(r,'.jBud'),bud=t?montantSaisi(t):0;if(!(bud>=0)){$('pjMsg').textContent=`Budget invalide pour ${BIEN[id].nom} (${U_SAISIE()}).`;return}
+    par[id]={maison:r.querySelector('.jNat').value==='maison',projet:{budget:bud,echeance:valIn(r,'.jEch'),note:valIn(r,'.jNote')}}}
+  const biens=BIENS.map(b=>{const x={...b};
+    if(par[b.id]){x.maison=par[b.id].maison;x.projet=par[b.id].projet;if(x.maison)choisirMaison(b.id)}
+    else if(aProjet(b)){if(b.maison)x.projet={budget:0,echeance:'',note:''};else delete x.projet}   // projet retiré
+    if(!x.projet)delete x.projet;return x});
+  try{await api.params({biens});evtDirty=false;await charger();openEvt();$('pjMsg').textContent='Projets enregistrés.'}catch(e){$('pjMsg').textContent=e.message}};
 

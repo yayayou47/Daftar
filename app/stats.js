@@ -403,7 +403,7 @@ function feuillesMaison(X){
   F.push(['Récap maison',feuille(X,[["Année",...used.map(c=>c.l),"Total (CFA)"]].concat(ans.map(y=>ligne(y,mo.filter(e=>e.date.startsWith(y)))),[ligne('Total',mo)]),[10].concat(used.map(()=>16),[13]),
     Object.fromEntries(used.map((_,i)=>[String.fromCharCode(66+i),'#,##0']).concat([[String.fromCharCode(66+used.length),'#,##0']])))]);
   if(m){const s=etatBien(m),pj={budget:0,echeance:'',note:'',...(m.projet||{})};
-    F.push(['Projet maison',feuille(X,[["Élément","Valeur"],["Bien",m.nom],["Date d'achat",m.date_achat?dmy(m.date_achat):null],["Prix du terrain (CFA)",m.prix_achat],["Travaux (CFA)",s.I],["Coût de revient (CFA)",s.cout],
+    F.push(['Projet',feuille(X,[["Élément","Valeur"],["Bien",m.nom],["Date d'achat",m.date_achat?dmy(m.date_achat):null],["Prix du terrain (CFA)",m.prix_achat],["Travaux (CFA)",s.I],["Coût de revient (CFA)",s.cout],
       ["Valeur actuelle (CFA)",s.V],["Estimée le",s.est?dmy(s.est.date):null],["Plus/moins-value (CFA)",s.pv],["Taux annuel moyen",s.taux],["Budget des travaux (CFA)",pj.budget||null],
       ["Reste à investir (CFA)",pj.budget?Math.max(0,pj.budget-s.I):null],["Échéance",pj.echeance?dmy(pj.echeance):null],["Note",pj.note||null]],[26,30],{B:'#,##0'})]);
     const ws=F[F.length-1][1];if(ws.B10&&typeof ws.B10.v==='number')ws.B10.z='0.0%'}

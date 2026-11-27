@@ -34,6 +34,14 @@ addEventListener('load',()=>setTimeout(async()=>{const vu=[];const pause=()=>new
     document.getElementById('aBiens').click();await pause();
     if(!document.querySelector('#hubList .hubmod')){document.getElementById('hubGerer').click();await pause();
       if(view==='donnees'&&!document.getElementById('cbBox').hidden)vu.push('hubmod')}
+    // repères de vidange : dans Engins, pour l'engin affiché
+    document.getElementById('aVeh').click();await pause();document.getElementById('vidModif').click();await pause();
+    if(!document.getElementById('vidPanel').hidden&&document.getElementById('sInt').value)vu.push('vidange');
+    // réglages en listes : « Modifier » ouvre un élément, « Annuler » le referme
+    document.getElementById('aDon').click();await pause();document.getElementById('tEvt').click();await pause();
+    {const f=document.querySelectorAll('#evtList .fiche,#pjList .fiche');const m=f[0]&&f[0].querySelector('.fmod');
+     if(f.length>=2&&m){m.click();await pause();const ouvert=document.querySelector('#evtList .fiche.edit');
+       if(ouvert){ouvert.querySelector('.fno').click();await pause();if(!document.querySelector('#evtList .fiche.edit'))vu.push('fiches')}}}
     document.getElementById('aDon').click();await pause();
     // menu ≡ : aucun panneau visible ; export Excel ouvert depuis le menu
     const S=document.getElementById('saisie');
@@ -114,7 +122,7 @@ class Navigateur(unittest.TestCase):
         self.assertIn("vStats", b["vu"])
         self.assertIn("aSaisir", b["vu"])
         self.assertIn("logoAccueil", b["vu"], "le logo ne ramène pas à l'accueil")
-        for etape in ("menu", "export", "theme", "tOne", "tSav", "bHub", "hub", "hubmod"):
+        for etape in ("menu", "export", "theme", "tOne", "tSav", "bHub", "hub", "hubmod", "vidange", "fiches", "tRev"):
             self.assertIn(etape, b["vu"], "étape manquante : " + etape)
 
     def test_ordinateur(self):

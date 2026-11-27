@@ -203,12 +203,17 @@ function revRow(r){const used=r.id&&utiliseRev(r.id),autre=r.id==='autre';
     <label class="chk"><input type="checkbox" class="rCour"${r.courant?' checked':''}> courant</label>
     ${autre?'<span class="hint eMots">revenus non reconnus · toujours en dernier</span>':`<input class="rMots" value="${esc((r.mots||[]).join(', '))}" placeholder="mots-clés : mission, perdiem…" aria-label="Mots-clés">`}
     <button type="button" class="mini danger" data-x ${used||autre?'disabled title="Type utilisé : impossible à supprimer"':''} aria-label="Supprimer le type">✕</button></div>`}
-function openEvt(){$('evtList').innerHTML=EVTS.length?EVTS.map(evtRow).join(''):'<div class="hint">Aucun événement pour l\'instant.</div>';$('revList').innerHTML=REVENUS.map(revRow).join('');evtDirty=false}
+function openEvt(){$('evtList').innerHTML=EVTS.length?EVTS.map(evtRow).join(''):'<div class="hint">Aucun événement pour l\'instant.</div>';$('revList').innerHTML=REVENUS.map(revRow).join('');evtDirty=false;
+  fiches($('evtList'),resumeEvt,'evtSave',openEvt);fiches($('revList'),resumeRev,'revSave',openEvt);openProjet()}
+function resumeEvt(r){const d=valIn(r,'.eDeb'),f=valIn(r,'.eFin'),b=valIn(r,'.eBud'),m=valIn(r,'.eMots');
+  return `<b>★ ${esc(valIn(r,'.eNom')||'Nouvel événement')}</b> <span class="hint">${esc(selTxt(r.querySelector('.eType')))}${d?` · du ${dmy(d)}`:''}${f?` au ${dmy(f)}`:''}${b?` · budget ${mtS(b)}`:''}${m?` · ${esc(m)}`:''}</span>`}
+function resumeRev(r){const m=r.querySelector('.rMots');
+  return `<b>${esc(valIn(r,'.rNom')||'Nouveau type')}</b> <span class="hint">${r.querySelector('.rCour').checked?'courant':'ponctuel'}${m&&m.value.trim()?` · ${esc(m.value.trim())}`:r.dataset.id==='autre'?' · revenus non reconnus':''}</span>`}
 const mots=v=>v.split(',').map(x=>x.trim()).filter(Boolean);
 ['evtList','revList'].forEach(id=>{$(id).addEventListener('input',()=>{evtDirty=true});
   $(id).addEventListener('click',ev=>{const b=ev.target.closest('[data-x]');if(!b||b.disabled)return;retirerLigne(b.closest('.evrow'),id==='evtList'?'Événement':'Type de revenu',()=>{evtDirty=true})})});
-$('evtAdd').onclick=()=>{const l=$('evtList');if(!l.querySelector('.evrow'))l.innerHTML='';l.insertAdjacentHTML('beforeend',evtRow({type:'mariage',debut:today}));l.lastElementChild.querySelector('.eNom').focus();evtDirty=true};
-$('revAdd').onclick=()=>{const l=$('revList'),a=l.querySelector('.evrow[data-id="autre"]');a.insertAdjacentHTML('beforebegin',revRow({courant:false}));a.previousElementSibling.querySelector('.rNom').focus();evtDirty=true};
+$('evtAdd').onclick=()=>{const l=$('evtList');if(!l.querySelector('.evrow'))l.innerHTML='';l.insertAdjacentHTML('beforeend',evtRow({type:'mariage',debut:today}));ficher(l.lastElementChild,resumeEvt,true);l.lastElementChild.querySelector('.eNom').focus();evtDirty=true};
+$('revAdd').onclick=()=>{const l=$('revList'),a=l.querySelector('.evrow[data-id="autre"]');a.insertAdjacentHTML('beforebegin',revRow({courant:false}));ficher(a.previousElementSibling,resumeRev,true);a.previousElementSibling.querySelector('.rNom').focus();evtDirty=true};
 $('evtSave').onclick=async()=>{
   const pris=new Set(EVTS.map(x=>x.id)),out=[];
   for(const r of $('evtList').querySelectorAll('.evrow')){const nom=r.querySelector('.eNom').value.trim();if(!nom)continue;

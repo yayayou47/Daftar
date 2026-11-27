@@ -4,6 +4,19 @@ Les versions sont numérotées `X.Y.Z` (le nom de série, « Ousnou », figure �
 est écrit à un seul endroit : `app/version.js`. Chaque version publiée a son tag `vX.Y.Z` et sa page dans
 [Releases](https://github.com/yayayou47/Daftar/releases) (APK Android et zip Ubuntu).
 
+## 1.4.18 — 2026-11-27
+
+- Téléphone : barre du bas (Mes finances, Saisir, Mes biens) 20 % moins haute (71 → 56 px).
+
+- Réglages en listes : postes, comptes, biens, événements, projets et types de revenus se lisent une ligne par
+  élément ; « Modifier » ouvre ses champs, « Enregistrer » ou « Annuler » le referme. Libellés : le poste s'affiche,
+  « Modifier » propose la liste.
+- Menu ≡ : « Événements et projets » (les événements et les projets dans le même onglet) et « Types de revenus » à
+  part. Un projet (budget, échéance, note) se rattache à une maison ou à tout autre bien (terrain, engin…) ; son
+  avancement s'affiche dans Mes biens.
+- Repères de vidange : dans Mes biens › Engins, sous le tableau des vidanges, pour l'engin affiché (« Modifier les
+  repères de vidange ») ; l'onglet des réglages disparaît.
+
 ## 1.4.17 — 2026-11-27
 
 - Téléphone : le bouton Saisir est un rectangle arrondi DANS la barre du bas (bleu du logo, contour or), et non plus un

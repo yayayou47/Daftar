@@ -198,6 +198,17 @@
     <div class="phead"><h2>Vidanges</h2><span class="muted" id="vidSub" style="font-size:.85rem"></span></div>
     <div class="tbl"><table id="vidTbl"></table></div>
     <span class="hint">Dernière vidange et prochaine prévue ; les précédentes sont dans le journal du véhicule (recherchez « vidange »). Intervalle conseillé : <b class="num" id="vidInt">3 000</b> km, en rouge s'il est dépassé de 20 %. Les vidanges de boîte ne sont pas comptées.</span>
+    <div class="row"><button type="button" class="btn ghost small" id="vidModif" aria-expanded="false" aria-controls="vidPanel">Modifier les repères de vidange</button></div>
+    <div id="vidPanel" hidden style="display:flex;flex-direction:column;gap:12px;margin-top:10px">
+      <div class="row" id="vidChoix" hidden><label class="label" for="vidVeh">Engin</label><select id="vidVeh" style="width:auto"></select></div>
+      <div class="hint">Repères de vidange de <b id="vidVehNom"></b>.</div><details class="aide"><summary>Comment ça marche ?</summary><div class="hint">Les repères se notent au compteur (kilomètres, ou heures de marche pour un groupe électrogène). Une vidange d'huile notée avec son kilométrage les met à jour (case à cocher dans « Une opération », automatiquement dans « Coller une liste »).</div></details>
+      <form id="vidForm" class="vidform">
+        <div class="field"><label class="label" for="sInt" id="sIntLab">Intervalle de vidange (km)</label><input id="sInt" inputmode="numeric"></div>
+        <div class="field"><label class="label" for="sLast" id="sLastLab">Dernière vidange (km)</label><input id="sLast" inputmode="numeric"></div>
+        <div class="field"><label class="label" for="sNext" id="sNextLab">Prochaine vidange (km)</label><input id="sNext" inputmode="numeric"><span class="hint">Calculée à partir de la dernière et de l'intervalle ; modifiable.</span></div>
+        <div class="row full"><button class="btn" type="submit">Enregistrer les repères</button><span id="vidMsg" class="muted"></span></div>
+      </form>
+    </div>
   </section>
 
   <section class="panel" aria-label="Journal du véhicule" id="vehJournal" hidden>
@@ -248,10 +259,9 @@
       <div class="tgrp" role="presentation"><span class="tgl" aria-hidden="true">Personnaliser</span>
         <button role="tab" id="tPostes" aria-selected="false"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-tag"/></svg><span>Postes et libellés</span><span class="tdesc">Catégories de dépenses, budgets, mots-clés</span><span class="chev" aria-hidden="true">›</span></button>
         <button role="tab" id="tCB" aria-selected="false"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-banque"/></svg><span>Comptes et biens</span><span class="tdesc">Comptes, comptes de tiers, biens et engins</span><span class="chev" aria-hidden="true">›</span></button>
-        <button role="tab" id="tEvt" aria-selected="false"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-etoile"/></svg><span>Événements et revenus</span><span class="tdesc">Mariages, voyages, missions ; types de revenus</span><span class="chev" aria-hidden="true">›</span></button>
+        <button role="tab" id="tEvt" aria-selected="false"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-etoile"/></svg><span>Événements et projets</span><span class="tdesc">Mariages, voyages ; projets d'une maison ou d'un autre bien</span><span class="chev" aria-hidden="true">›</span></button>
+        <button role="tab" id="tRev" aria-selected="false"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-cochon"/></svg><span>Types de revenus</span><span class="tdesc">Salaire, primes, missions : courants ou ponctuels</span><span class="chev" aria-hidden="true">›</span></button>
         <button role="tab" id="tProg" aria-selected="false"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-cycle"/></svg><span>Programmées</span><span class="tdesc">Frais et intérêts à confirmer à chaque échéance</span><span class="chev" aria-hidden="true">›</span></button>
-        <button role="tab" id="tVid" aria-selected="false"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-huile"/></svg><span>Repères vidange</span><span class="tdesc">Intervalles et prochaines vidanges des engins</span><span class="chev" aria-hidden="true">›</span></button>
-        <button role="tab" id="tMai" aria-selected="false"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-chantier"/></svg><span>Projet maison</span><span class="tdesc">Budget et échéance de la construction</span><span class="chev" aria-hidden="true">›</span></button>
         <button role="tab" id="tSai" aria-selected="false"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-clavier"/></svg><span>Saisie</span><span class="tdesc">Montants en milliers, clavier, montants abrégés</span><span class="chev" aria-hidden="true">›</span></button>
         <button role="tab" id="tPar" aria-selected="false"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-change"/></svg><span>Parités</span><span class="tdesc">Devises d'affichage et taux de change</span><span class="chev" aria-hidden="true">›</span></button>
       </div>
@@ -352,26 +362,6 @@
       <div id="bienEdit"></div>
       <div class="row"><button class="btn ghost" type="button" id="addBien">+ Ajouter un bien</button><button class="btn" type="button" id="saveBien">Enregistrer les biens</button><span id="bienMsg" class="muted"></span></div>
     </div>
-    <div id="vidPanel" hidden style="display:flex;flex-direction:column;gap:12px">
-      <div class="row" id="vidChoix" hidden><label class="label" for="vidVeh">Engin</label><select id="vidVeh" style="width:auto"></select></div>
-      <div class="hint">Repères de vidange de <b id="vidVehNom"></b>.</div><details class="aide"><summary>Comment ça marche ?</summary><div class="hint">Les repères se notent au compteur (kilomètres, ou heures de marche pour un groupe électrogène). Une vidange d'huile notée avec son kilométrage les met à jour (case à cocher dans « Une opération », automatiquement dans « Coller une liste »).</div></details>
-      <form id="vidForm" class="vidform">
-        <div class="field"><label class="label" for="sInt" id="sIntLab">Intervalle de vidange (km)</label><input id="sInt" inputmode="numeric"></div>
-        <div class="field"><label class="label" for="sLast" id="sLastLab">Dernière vidange (km)</label><input id="sLast" inputmode="numeric"></div>
-        <div class="field"><label class="label" for="sNext" id="sNextLab">Prochaine vidange (km)</label><input id="sNext" inputmode="numeric"><span class="hint">Calculée à partir de la dernière et de l'intervalle ; modifiable.</span></div>
-        <div class="row full"><button class="btn" type="submit">Enregistrer les repères</button><span id="vidMsg" class="muted"></span></div>
-      </form>
-    </div>
-    <div id="maiPanel" hidden style="display:flex;flex-direction:column;gap:12px">
-      <details class="aide"><summary>Comment ça marche ?</summary><div class="hint">Le carnet de la maison suit les travaux (investissements) du bien choisi. Budget <span class="uS-court"></span> ; échéance et note facultatives. Le budget sert aux perspectives : avancement, reste à investir, date d'achèvement estimée.</div></details>
-      <form id="pjForm" class="vidform">
-        <div class="field"><label class="label" for="pjBien">Bien suivi</label><select id="pjBien"></select></div>
-        <div class="field"><label class="label" for="pjBudget">Budget des travaux <span class="uS"></span></label><input id="pjBudget" inputmode="decimal" placeholder="5000" autocomplete="off" aria-describedby="pjBudgetH"><span class="hint" id="pjBudgetH"></span></div>
-        <div class="field"><label class="label" for="pjEch">Échéance souhaitée</label><input type="date" id="pjEch"></div>
-        <div class="field full"><label class="label" for="pjNote">Note sur le projet</label><input id="pjNote" maxlength="300" placeholder="maison 3 pièces, forage, clôture…" autocomplete="off"></div>
-        <div class="row full"><button class="btn" type="submit">Enregistrer le projet</button><span id="pjMsg" class="muted"></span></div>
-      </form>
-    </div>
     <div id="relBox" hidden style="display:flex;flex-direction:column;gap:12px">
     <div class="phead"><h3 class="sub">Relevé bancaire</h3><span class="hint">PDF ou photo · comparé au carnet, rien n'est modifié sans votre accord</span></div>
     <details class="aide"><summary>Comment ça marche ?</summary><div class="hint">Le relevé est lu <b>dans cet appareil</b> (rien n'est envoyé). PDF du site de la banque : lecture directe. PDF scanné ou photo : reconnaissance de texte (OCR), dont le module (≈ 15 Mo) se télécharge la première fois. Ensuite : ✓ lignes déjà notées, ✎ montants ou dates à corriger, ➕ lignes absentes du carnet à ajouter, ⚠ lignes du carnet absentes du relevé.</div></details>
@@ -393,6 +383,12 @@
     <details class="aide"><summary>Comment ça marche ?</summary><div class="hint">Une dépense ou un revenu rattaché à un événement est <b>exceptionnel</b> : il sort des dépenses courantes, des postes et des statistiques journalières, et apparaît dans la section « Exceptionnel » des vues Mois et Année, avec le total de l'événement. Les soldes des comptes, eux, comptent tout. Les mots-clés rattachent automatiquement une saisie (« tenue mariage Awa » → Mariage Awa).</div></details>
     <div id="evtList" class="evlist"></div>
     <div class="row"><button class="btn ghost" type="button" id="evtAdd">+ Ajouter un événement</button><button class="btn" type="button" id="evtSave">Enregistrer les événements</button><span id="evtMsg" class="muted" role="status"></span></div>
+    <div class="phead"><h3 class="sub">Projets</h3><span class="hint">Construction d'une maison, aménagement d'un terrain, achat d'un engin…</span></div>
+    <details class="aide"><summary>Comment ça marche ?</summary><div class="hint">Un projet se rattache à un <b>bien</b> : une maison, ou tout autre bien (terrain, engin…). Ses dépenses sont les <b>investissements</b> dans ce bien. Le budget (<span class="uS-court"></span>), l'échéance et la note servent aux perspectives : pour une maison, dans Mes biens › Maison. « Maison » donne au bien le carnet des travaux.</div></details>
+    <div id="pjList" class="evlist"></div>
+    <div class="row"><button class="btn ghost" type="button" id="pjAdd">+ Ajouter un projet</button><button class="btn" type="button" id="pjSave">Enregistrer les projets</button><span id="pjMsg" class="muted" role="status"></span></div>
+    </div>
+    <div id="revBox" hidden style="display:flex;flex-direction:column;gap:12px">
     <div class="phead"><h3 class="sub">Types de revenus</h3><span class="hint">Courant : revient chaque mois · ponctuel : exceptionnel</span></div>
     <details class="aide"><summary>Comment ça marche ?</summary><div class="hint">Un revenu est classé dans le premier type dont un mot-clé apparaît dans le libellé. Les revenus des types ponctuels (mission, atelier, consultance, jury…) sont comptés à part des entrées courantes.</div></details>
     <div id="revList" class="evlist"></div>
