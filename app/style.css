@@ -522,11 +522,12 @@ header #aDon[aria-pressed="true"]{background:var(--accent);color:#fff;border-col
   nav.apptabs button{border-bottom:0;border-top:3px solid transparent;margin:0;border-radius:0 0 8px 8px}
   nav.apptabs button[aria-pressed="true"]{border-top-color:var(--accent)}
   nav.apptabs.cachee{transform:translateY(calc(100% + 6px))}
-  /* Saisir, au milieu : bouton rond agrandi, cerclé d'or (couleur des barres du logo), qui dépasse de la barre */
-  nav.apptabs .asaisir{border-top-color:transparent!important;font-weight:700;overflow:visible}
-  nav.apptabs .asaisir .ic{width:4em;height:4em;padding:.5em;margin-top:-2.1em;border-radius:50%;background:var(--accent);color:#fff;
-    border:3px solid #f2b93f;box-shadow:0 4px 12px rgba(0,0,0,.28);box-sizing:border-box;flex:none}
-  nav.apptabs .asaisir[aria-pressed="true"] .ic{box-shadow:0 0 0 3px rgba(242,185,63,.35),0 4px 12px rgba(0,0,0,.28)}
+  /* Saisir, au milieu : bouton rectangulaire arrondi DANS la barre (le rond qui débordait a été refusé le 27/11), fond
+     bleu du logo (#1f4e79, même en mode nuit : texte blanc lisible), contour or (couleur des barres du logo), icône agrandie */
+  nav.apptabs .asaisir{background:#1f4e79;color:#fff;border:2px solid #f2b93f!important;border-radius:12px;margin:3px 4px;
+    font-weight:700;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+  nav.apptabs .asaisir .ic{width:1.9em;height:1.9em}
+  nav.apptabs .asaisir[aria-pressed="true"]{color:#fff;box-shadow:0 0 0 3px rgba(242,185,63,.35),0 2px 8px rgba(0,0,0,.18)}
   body:has(.clavier:not([hidden])) nav.apptabs{display:none}
   body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
   html{scroll-padding-top:calc(var(--hh,58px) + 8px);scroll-padding-bottom:84px}

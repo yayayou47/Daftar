@@ -4,6 +4,11 @@ Les versions sont numérotées `X.Y.Z` (le nom de série, « Ousnou », figure �
 est écrit à un seul endroit : `app/version.js`. Chaque version publiée a son tag `vX.Y.Z` et sa page dans
 [Releases](https://github.com/yayayou47/Daftar/releases) (APK Android et zip Ubuntu).
 
+## 1.4.17 — 2026-11-27
+
+- Téléphone : le bouton Saisir est un rectangle arrondi DANS la barre du bas (bleu du logo, contour or), et non plus un
+  rond qui dépasse.
+
 ## 1.4.16 — 2026-11-27
 
 - Téléphone : bouton Saisir de la barre du bas agrandi, rond, cerclé d'or, au-dessus de la barre.

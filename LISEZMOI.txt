@@ -104,7 +104,7 @@ sur l'ordinateur, elle est figée juste sous la ligne du haut :
 
   - Mes finances (à gauche) : vues Mois, Année, Patrimoine et
     Statistiques, avec le journal de toutes les opérations.
-  - Saisir (au milieu, gros bouton bleu cerclé d'or sur le téléphone) : la carte de saisie d'une opération, le
+  - Saisir (au milieu, bouton bleu au contour doré sur le téléphone) : la carte de saisie d'une opération, le
     curseur dans le champ Montant.
   - Mes biens (à droite) : la liste des biens (engins, maisons, autres
     biens). Toucher un bien l'ouvre : Engins (vidanges, carburant,
