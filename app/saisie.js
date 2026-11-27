@@ -25,12 +25,31 @@ function fillSelects(){
    défaut (poste Foyer → commun du premier foyer, sinon Moi). Seul un choix à la main ou reconnu est enregistré. */
 let pourSel=null,pourAuto=null;
 const pourEffectif=()=>pourSel||pourAuto||pourDe({nature:'depense',categorie:$('fCat').value,pour:[]});
-function renderPour(){if($('wPour').hidden)return;const p=pourEffectif();
-  const b=(id,lab)=>`<button type="button" data-p="${id}" aria-pressed="${id===''?!p.length:p.includes(id)}">${esc(lab)}</button>`;
-  $('fPour').innerHTML=b('','Moi')+FOYERS.map(f=>b(f.id,FOYERS.length>1||f.membres.length?f.nom+' (commun)':f.nom)+f.membres.map(m=>b(m.id,m.nom)).join('')).join('')}
-$('fPour').addEventListener('click',ev=>{const t=ev.target.closest('[data-p]');if(!t)return;const id=t.dataset.p;let p=pourEffectif().slice();
-  if(!id)p=[];else if(FOYER[id])p=[id];else{p=p.filter(x=>MEMBRE[x]);p=p.includes(id)?p.filter(x=>x!==id):p.concat([id])}
-  pourSel=p;touched.pour=true;renderPour()});
+/* Champ « Pour » (2026-11-27, demande de l'utilisateur) : Moi | Foyer 1 | Foyer 2… ; un foyer choisi ouvre son menu
+   déroulant : « Tous (commun) » ou un ou plusieurs de ses membres (épouse, enfants…), cochés (parts égales). */
+let pourOuvert=false;
+const foyerDe=p=>p.length?(FOYER[p[0]]?p[0]:(MEMBRE[p[0]]||{}).foyer||''):'';
+function renderPour(){if($('wPour').hidden)return;const p=pourEffectif(),fo=foyerDe(p),F=FOYER[fo];
+  const chip=(id,lab)=>`<button type="button" data-p="${id}" aria-pressed="${id===''?!p.length:id===fo}">${esc(lab)}</button>`;
+  let h=`<div class="chips">${chip('','Moi')}${FOYERS.map(f=>chip(f.id,f.nom)).join('')}</div>`;
+  if(F){const mb=p.filter(x=>MEMBRE[x]),tous=!mb.length;
+    const lab=tous?'Tous (commun)':mb.map(x=>MEMBRE[x].nom).join(', ')+(mb.length>1?` (${mb.length})`:'');
+    h+=`<div class="pourdd"><button type="button" class="pourBtn" aria-expanded="${pourOuvert}" aria-controls="pourList">${esc(F.nom)} : <b>${esc(lab)}</b> <span aria-hidden="true">▾</span></button>
+      <div class="pourList" id="pourList"${pourOuvert?'':' hidden'}>
+        <label class="check"><input type="checkbox" data-tous${tous?' checked':''}> Tous (commun)</label>
+        ${F.membres.map(m=>`<label class="check"><input type="checkbox" data-m="${m.id}"${mb.includes(m.id)?' checked':''}> ${esc(m.nom)} <span class="hint">${esc(ROLES[m.role]||'')}</span></label>`).join('')||'<span class="hint">Aucun membre : ajoutez-les dans Données et réglages › Foyers.</span>'}
+      </div></div>`}
+  $('fPour').innerHTML=h;$('fPourHint').hidden=!F}
+$('fPour').addEventListener('click',ev=>{const t=ev.target.closest('[data-p],.pourBtn');if(!t)return;
+  if(t.classList.contains('pourBtn')){pourOuvert=!pourOuvert;renderPour();return}
+  const id=t.dataset.p,p=pourEffectif();
+  if(!id){pourSel=[];pourOuvert=false}
+  else{if(foyerDe(p)!==id)pourSel=[id];else pourSel=p.slice();pourOuvert=true}
+  touched.pour=true;renderPour()});
+$('fPour').addEventListener('change',ev=>{const c=ev.target;if(c.type!=='checkbox')return;const fo=foyerDe(pourEffectif());if(!fo)return;
+  if(c.dataset.tous!==undefined)pourSel=[fo];
+  else{let mb=pourEffectif().filter(x=>MEMBRE[x]);mb=c.checked?mb.concat([c.dataset.m]):mb.filter(x=>x!==c.dataset.m);pourSel=mb.length?mb:[fo]}
+  touched.pour=true;renderPour()});
 function majChamps(){
   const n=$('fNat').value;
   $('wPour').hidden=!(n==='depense'&&FOYERS.length&&!estTiers($('fCpt').value));renderPour();
@@ -180,7 +199,7 @@ majClavier();
 function majAbrege(){$('abregeK').checked=ABREGE;$('abregeKInfo').textContent=ABREGE?'Activé : les grands montants des cartes sont abrégés (K = milliers, M = millions) ; le montant exact apparaît en survolant le chiffre. Le journal et les tableaux restent en entier.':'Désactivé : les cartes affichent les montants en entier.'}
 $('abregeK').addEventListener('change',()=>{ABREGE=$('abregeK').checked;lsSet('daftar-abrege',ABREGE?'1':'0');majAbrege();render();status(ABREGE?'Montants abrégés dans les cartes.':'Montants en entier dans les cartes.')});
 majAbrege();
-function resetForm(){['fAmt','fLib','fRem','fPers','fEch','fKm','fQty'].forEach(i=>$(i).value='');$('fTiers').value='';$('fPonct').value='';pourSel=null;pourAuto=null;$('fLibHint').textContent='';$('fUnit').value='L';$('fVid').checked=true;touched={};$('fVidNext').value='';$('fNat').value='depense';$('fCpt').value='especes';$('fCat').value='autre';$('fEvt').value='';editId=null;$('editBar').hidden=true;$('addBtn').textContent='Ajouter';majChamps();amtHint();render()}
+function resetForm(){['fAmt','fLib','fRem','fPers','fEch','fKm','fQty'].forEach(i=>$(i).value='');$('fTiers').value='';$('fPonct').value='';pourSel=null;pourAuto=null;pourOuvert=false;$('fLibHint').textContent='';$('fUnit').value='L';$('fVid').checked=true;touched={};$('fVidNext').value='';$('fNat').value='depense';$('fCpt').value='especes';$('fCat').value='autre';$('fEvt').value='';editId=null;$('editBar').hidden=true;$('addBtn').textContent='Ajouter';majChamps();amtHint();render()}
 /* fenêtre de confirmation : résumé lisible de l'opération avant l'enregistrement (Échap ou « Modifier » = annuler) */
 /* ================= annuler : message en bas de l'écran, 10 secondes ================= */
 let toastT=null,HIST=null;

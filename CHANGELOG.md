@@ -4,6 +4,15 @@ Les versions sont numérotées `X.Y.Z` (le nom de série, « Ousnou », figure �
 est écrit à un seul endroit : `app/version.js`. Chaque version publiée a son tag `vX.Y.Z` et sa page dans
 [Releases](https://github.com/yayayou47/Daftar/releases) (APK Android et zip Ubuntu).
 
+## 1.4.21 — 2026-11-27
+
+- Foyer : le bouton est à côté du mois ou de l'année (Mes finances › Mois ou Année) et montre le foyer de cette
+  période ; il quitte la barre des vues.
+- Une opération, champ « Pour » : Moi, Foyer 1, Foyer 2… seulement ; un foyer choisi ouvre un menu déroulant « Tous
+  (commun) » ou ses membres à cocher (l'épouse et les enfants de ce foyer), au lieu d'un bouton par membre.
+- Téléphone : balayer l'écran à gauche ou à droite passe à la période suivante ou précédente (Mois, Année, Foyer,
+  Statistiques par mois ou par année), sans remonter aux flèches.
+
 ## 1.4.20 — 2026-11-27
 
 - Serveur : une requête dont le corps n'a pas la bonne forme (une liste au lieu d'un objet, des éléments qui ne sont pas

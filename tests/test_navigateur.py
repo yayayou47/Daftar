@@ -24,7 +24,7 @@ window.__err=[];addEventListener('error',e=>__err.push((e.filename||'').split('/
 addEventListener('unhandledrejection',e=>__err.push('promesse : '+(e.reason&&e.reason.message||e.reason)));
 addEventListener('load',()=>setTimeout(async()=>{const vu=[];const pause=()=>new Promise(r=>setTimeout(r,150));
   try{
-    for(const [rub,vues] of [['aFin',['vMois','vAn','vPat','vStats','vFoy']],['aBiens',['aVeh','aMai','bHub']]]){
+    for(const [rub,vues] of [['aFin',['vMois','vAn','vPat','vStats']],['aBiens',['aVeh','aMai','bHub']]]){
       document.getElementById(rub).click();await pause();vu.push(rub);
       for(const v of vues){document.getElementById(v).click();await pause();vu.push(v)}}
     // Mes biens : un engin s'ouvre dans Engins ; « Modifier les biens » mène à Comptes et biens (pas de « Modifier » par carte)
@@ -36,6 +36,19 @@ addEventListener('load',()=>setTimeout(async()=>{const vu=[];const pause=()=>new
     document.getElementById('aBiens').click();await pause();
     if(!document.querySelector('#hubList .hubmod')){document.getElementById('hubGerer').click();await pause();
       if(view==='donnees'&&!document.getElementById('cbBox').hidden)vu.push('hubmod')}
+    // Foyer : bouton à côté de la période ; il garde le mois (vue Mois) ou l'année (vue Année) ; un second appui revient
+    document.getElementById('aFin').click();await pause();document.getElementById('vMois').click();await pause();
+    document.getElementById('foyBtn').click();await pause();if(view==='foyer'&&foyMode==='mois')vu.push('foyMois');
+    document.getElementById('foyBtn').click();await pause();document.getElementById('vAn').click();await pause();
+    document.getElementById('foyBtn').click();await pause();if(view==='foyer'&&foyMode==='annee')vu.push('foyAn');
+    document.getElementById('foyBtn').click();await pause();
+    // balayage (téléphone) : vers la gauche = période suivante, vers la droite = précédente
+    {document.getElementById('vMois').click();await pause();const m0=cur.y*12+cur.m,el=document.getElementById('resumePanel');
+     const geste=async(x0,x1)=>{const T=x=>new Touch({identifier:1,target:el,clientX:x,clientY:300});
+       el.dispatchEvent(new TouchEvent('touchstart',{touches:[T(x0)],changedTouches:[T(x0)],bubbles:true}));
+       el.dispatchEvent(new TouchEvent('touchend',{touches:[],changedTouches:[T(x1)],bubbles:true}));await pause()};
+     await geste(300,100);const m1=cur.y*12+cur.m;await geste(100,300);const m2=cur.y*12+cur.m;
+     if(m1===m0+1&&m2===m0)vu.push('balayage')}
     // repères de vidange : dans Engins, pour l'engin affiché
     document.getElementById('aVeh').click();await pause();document.getElementById('vidModif').click();await pause();
     if(!document.getElementById('vidPanel').hidden&&document.getElementById('sInt').value)vu.push('vidange');
@@ -56,6 +69,12 @@ addEventListener('load',()=>setTimeout(async()=>{const vu=[];const pause=()=>new
     for(const [t] of tabs){document.getElementById('aDon').click();await pause();document.getElementById(t).click();await pause();
       if(S.classList.contains('regpage')&&getComputedStyle(document.getElementById(tabs.find(x=>x[0]===t)[1])).display!=='none')vu.push(t)}
     document.getElementById('aSaisir').click();await pause();vu.push('aSaisir');
+    // champ « Pour » : Moi | Foyer 1… ; le foyer ouvre son menu : Tous (commun) ou des membres cochés
+    if(FOYERS.length&&MEMBRES().length){const F=FOYERS[0],m=F.membres[0];
+      document.getElementById('fLib').value='pain';document.getElementById('fLib').dispatchEvent(new Event('input'));await pause();
+      document.querySelector('#fPour [data-p="'+F.id+'"]').click();await pause();const tous=JSON.stringify(pourEffectif())===JSON.stringify([F.id]);
+      const c=document.querySelector('#fPour [data-m="'+m.id+'"]');c.checked=true;c.dispatchEvent(new Event('change',{bubbles:true}));await pause();
+      if(tous&&JSON.stringify(pourEffectif())===JSON.stringify([m.id])&&!document.querySelector('#fPour [data-p="'+m.id+'"]'))vu.push('pour');resetForm()}
     // logo : retour à l'accueil (Mes finances, vue Mois)
     document.getElementById('aVeh').click();await pause();document.getElementById('logoAccueil').click();await pause();
     if(view==='mois'&&vueFin==='mois')vu.push('logoAccueil');
@@ -124,7 +143,7 @@ class Navigateur(unittest.TestCase):
         self.assertIn("vStats", b["vu"])
         self.assertIn("aSaisir", b["vu"])
         self.assertIn("logoAccueil", b["vu"], "le logo ne ramène pas à l'accueil")
-        for etape in ("menu", "export", "theme", "tOne", "tSav", "bHub", "hub", "hubmod", "vidange", "fiches", "tRev", "vFoy", "tFoy"):
+        for etape in ("menu", "export", "theme", "tOne", "tSav", "bHub", "hub", "hubmod", "vidange", "fiches", "tRev", "foyMois", "foyAn", "balayage", "tFoy", "pour"):
             self.assertIn(etape, b["vu"], "étape manquante : " + etape)
 
     def test_ordinateur(self):

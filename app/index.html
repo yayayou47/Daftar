@@ -102,14 +102,14 @@
     <button type="button" id="aBiens" aria-pressed="false"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-cle"/></svg><span>Mes biens</span></button>
   </nav>
   <div class="ctl subctl" id="subCtl">
-    <div class="seg segic" role="group" aria-label="Vue de Mes finances" id="segFin"><button id="vMois" aria-pressed="true"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-mois"/></svg><span>Mois</span></button><button id="vAn" aria-pressed="false"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-annee"/></svg><span>Année</span></button><button id="vPat" aria-pressed="false"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-patrimoine"/></svg><span>Patrimoine</span></button><button id="vStats" aria-pressed="false"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-stats"/></svg><span>Statistiques</span></button><button id="vFoy" aria-pressed="false"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-foyer"/></svg><span>Foyer</span></button></div>
+    <div class="seg segic" role="group" aria-label="Vue de Mes finances" id="segFin"><button id="vMois" aria-pressed="true"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-mois"/></svg><span>Mois</span></button><button id="vAn" aria-pressed="false"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-annee"/></svg><span>Année</span></button><button id="vPat" aria-pressed="false"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-patrimoine"/></svg><span>Patrimoine</span></button><button id="vStats" aria-pressed="false"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-stats"/></svg><span>Statistiques</span></button></div>
     <div class="seg segic" role="group" aria-label="Vue de Mes biens" id="segBiens" hidden><button type="button" id="bHub" aria-pressed="false"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-cle"/></svg><span>Tous</span></button><button type="button" id="aVeh" aria-pressed="false"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-car"/></svg><span>Engins</span></button><button type="button" id="aMai" aria-pressed="false"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-house"/></svg><span>Maison</span></button></div>
     <div class="seg" role="group" aria-label="Engin affiché" id="segEngins" hidden></div>
     <button type="button" class="btn ghost" id="addEngin" aria-label="Ajouter un engin" hidden>+ <span class="lgEng">Ajouter un </span>engin</button>
     <div class="seg" role="group" aria-label="Maison affichée" id="segMaisons" hidden></div>
     <div class="seg" role="group" aria-label="Période du véhicule" id="segVeh" hidden><button id="vehAn" aria-pressed="true">Par année</button><button id="vehTout" aria-pressed="false">Toutes les années</button></div>
     <div class="seg" role="group" aria-label="Période de la maison" id="segMai" hidden><button id="maiAn" aria-pressed="false">Par année</button><button id="maiTout" aria-pressed="true">Depuis le début</button></div>
-    <div class="nav" id="navBox"><button id="prev" aria-label="Période précédente">‹</button><span id="perLabel">—</span><button id="next" aria-label="Période suivante">›</button></div>
+    <div class="nav" id="navBox"><button id="prev" aria-label="Période précédente">‹</button><span id="perLabel">—</span><button id="next" aria-label="Période suivante">›</button><button type="button" id="foyBtn" class="foybtn" aria-pressed="false" title="Dépenses du foyer pour cette période" hidden><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-foyer"/></svg><span>Foyer</span></button></div>
   </div>
 
   <div id="devNote" class="hint devnote" hidden></div>
@@ -156,7 +156,7 @@
   </section>
 
   <section class="panel" aria-labelledby="foyTitre" id="foyPanel" hidden>
-    <div class="phead"><h2 id="foyTitre">Dépenses du foyer</h2><div class="seg" role="group" aria-label="Période"><button type="button" id="foyMois" aria-pressed="true">Mois</button><button type="button" id="foyAn" aria-pressed="false">Année</button></div></div>
+    <div class="phead"><h2 id="foyTitre">Dépenses du foyer</h2><span class="hint" id="foySous"></span></div>
     <div id="foyBody"></div>
     <span class="hint">Pour qui est faite chaque dépense : le commun du foyer, un membre, ou vous (« Moi »). Une dépense pour plusieurs membres est partagée à parts égales. Toucher une ligne ouvre son journal.</span>
   </section>
@@ -298,7 +298,7 @@
       <div class="field"><label class="label" for="fCpt" id="fCptLab">Payé avec</label><select id="fCpt"></select></div>
       <div class="field" id="wCat"><label class="label" for="fCat">Poste</label><select id="fCat"></select></div>
       <div class="field" id="wTiers" hidden><label class="label" for="fTiers">Versé au compte de</label><select id="fTiers" aria-describedby="fTiersHint"></select><span class="hint" id="fTiersHint">Votre part : la dépense alimente aussi ce compte.</span></div>
-      <div class="field" id="wPour" hidden><span class="label" id="fPourLab">Pour</span><div class="chips" id="fPour" role="group" aria-labelledby="fPourLab"></div><span class="hint" id="fPourHint">Plusieurs membres : la dépense est partagée à parts égales.</span></div>
+      <div class="field" id="wPour" hidden><span class="label" id="fPourLab">Pour</span><div class="pour" id="fPour" role="group" aria-labelledby="fPourLab"></div><span class="hint" id="fPourHint">Plusieurs membres cochés : la dépense est partagée à parts égales.</span></div>
       <div class="field" id="wRev" hidden><label class="label" for="fCatR">Type de revenu</label><select id="fCatR"></select></div>
       <div class="field" id="wPonct" hidden><label class="label" for="fPonct">Dont ponctuel <span class="uS"></span></label><div class="ponct"><input type="text" inputmode="decimal" id="fPonct" autocomplete="off" aria-describedby="fPonctHint"><select id="fCatP" aria-label="Type de la part ponctuelle"></select></div><span class="hint" id="fPonctHint">Facultatif : part exceptionnelle reçue dans le même virement (rappel, bonus) : comptée à part des revenus courants. Le solde garde le montant entier.</span></div>
       <div class="field" id="wEvt" hidden><label class="label" for="fEvt">Événement (facultatif)</label><select id="fEvt" aria-describedby="fEvtHint"></select><span class="hint" id="fEvtHint">Rattachée à un événement, l'opération compte comme exceptionnelle.</span></div>

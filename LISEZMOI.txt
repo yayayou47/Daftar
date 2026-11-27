@@ -314,9 +314,14 @@ Données et réglages › Saisie › « Montants abrégés dans les cartes ».
 Filtrer : touchez un poste, un compte, une personne, un bien, un mois ou une
 année pour filtrer le journal ; Daftar y amène directement.
 
-Vue Foyer : pour qui sont les dépenses. Chaque foyer (Foyer 1, Foyer 2…)
-montre son commun et chacun de ses membres (épouse, enfants…), par mois ou
-par année, avec la moyenne par mois et le coût d'un enfant par mois ; un
+Changer de période : les flèches ‹ › à côté du mois ou de l'année, ou, sur
+le téléphone, balayer l'écran vers la gauche (période suivante) ou vers la
+droite (période précédente), sans remonter en haut de la page.
+
+Foyer : le bouton « Foyer », à côté du mois ou de l'année, montre pour qui
+sont les dépenses de cette période (le mois en vue Mois, l'année en vue
+Année) ; un second appui revient à la vue. Chaque foyer (Foyer 1, Foyer 2…)
+montre son commun et chacun de ses membres (épouse, enfants…), avec la moyenne par mois et le coût d'un enfant par mois ; un
 tableau croise les membres et les postes (santé, transport, habillement,
 coiffure…). « Moi » regroupe vos dépenses pour vous-même. Toucher une ligne
 ouvre son journal. Les foyers et leurs membres se déclarent dans Données et
@@ -329,8 +334,10 @@ Pour qui ? Le prénom d'un membre dans une note désigne ce membre :
   75000 rentrée adam zara → partagée : 37 500 pour Adam, 37 500 pour Zara
   25000 vivres           → Foyer, commun du foyer 1 (règle par défaut)
 Sans prénom, une dépense du poste Foyer est commune au premier foyer ; les
-autres sont pour vous. Dans Une opération, le champ « Pour » (Moi, Foyer 1
-(commun), Halima, Adam…) corrige le choix ; plusieurs membres = parts égales.
+autres sont pour vous. Dans Une opération, le champ « Pour » propose Moi,
+Foyer 1, Foyer 2… ; un foyer choisi ouvre son menu : « Tous (commun) », ou
+cochez un ou plusieurs de ses membres (l'épouse, 2 enfants…) ; plusieurs
+membres = parts égales. Chaque foyer a ses propres membres, épouse comprise.
 
 
 8. MAISON ET PROJETS

@@ -52,7 +52,10 @@ function renderVue(){
   $('aFin').setAttribute('aria-pressed',isF);$('aVeh').setAttribute('aria-pressed',isV);majRubSaisie();$('aMai').setAttribute('aria-pressed',isH);
   $('aBiens').setAttribute('aria-pressed',isB||isV||isH);$('bHub').setAttribute('aria-pressed',isB);$('segBiens').hidden=!(isB||isV||isH);$('biensHub').hidden=!isB;
   $('maiAn').setAttribute('aria-pressed',!maiAll);$('maiTout').setAttribute('aria-pressed',maiAll);$('segMai').hidden=!isH;
-  $('vMois').setAttribute('aria-pressed',isM);$('vAn').setAttribute('aria-pressed',isA);$('vPat').setAttribute('aria-pressed',isP);$('vStats').setAttribute('aria-pressed',isS);$('vFoy').setAttribute('aria-pressed',isFo);$('foyPanel').hidden=!isFo;
+  $('vMois').setAttribute('aria-pressed',isM);$('vAn').setAttribute('aria-pressed',isA);$('vPat').setAttribute('aria-pressed',isP);$('vStats').setAttribute('aria-pressed',isS);$('foyPanel').hidden=!isFo;
+  // Foyer : à côté de la période, en vue Mois ou Année ; il garde la période (mois ou année) de la vue d'où il vient
+  $('foyBtn').hidden=!(isM||isA||isFo);$('foyBtn').setAttribute('aria-pressed',isFo);
+  if(isFo){$('vMois').setAttribute('aria-pressed',foyMode==='mois');$('vAn').setAttribute('aria-pressed',foyMode!=='mois')}
   $('vehAn').setAttribute('aria-pressed',!vehAll);$('vehTout').setAttribute('aria-pressed',vehAll);
   $('segFin').hidden=!isF;$('segVeh').hidden=!isV;$('subCtl').hidden=isD;
   {const lv=VEHS(),cv=VEH(),lm=MAISONS(),cm=MAISON();
@@ -425,10 +428,23 @@ $('biensList').addEventListener('click',async ev=>{
 const parMois=()=>view==='mois'||(view==='stats'&&statsMode==='mois')||(view==='foyer'&&foyMode==='mois');   // sinon (Année, Statistiques par année, Véhicule) : l'année
 $('prev').onclick=()=>{if(parMois()){cur.m--;if(cur.m<0){cur.m=11;cur.y--}}else cur.y--;shown=80;render()};
 $('next').onclick=()=>{if(parMois()){cur.m++;if(cur.m>11){cur.m=0;cur.y++}}else cur.y++;shown=80;render()};
+/* Téléphone (2026-11-27, demande de l'utilisateur) : dans Mes finances par mois ou par année (Mois, Année, Foyer,
+   Statistiques), balayer l'écran vers la gauche = période suivante, vers la droite = période précédente, comme les
+   flèches, sans remonter en haut. Pas depuis un tableau ou un graphique qui défile de côté, ni un champ de saisie. */
+let glisse=null;
+document.addEventListener('touchstart',ev=>{const t=ev.touches[0];
+  glisse=ev.touches.length===1&&['mois','annee','foyer','stats'].includes(view)&&!$('prev').hidden&&!$('navBox').hidden&&
+    !ev.target.closest('input,select,textarea,button.del,.tbl,.chart,.plot,.clavier,dialog,nav.apptabs,.seg')?{x:t.clientX,y:t.clientY,t:Date.now()}:null},{passive:true});
+document.addEventListener('touchend',ev=>{if(!glisse)return;const t=ev.changedTouches[0],dx=t.clientX-glisse.x,dy=t.clientY-glisse.y,dt=Date.now()-glisse.t;glisse=null;
+  if(Math.abs(dx)<70||Math.abs(dx)<2*Math.abs(dy)||dt>800)return;
+  $(dx<0?'next':'prev').click();
+  // petit glissement des cartes affichées, dans le sens du geste
+  const c=dx<0?'glisseG':'glisseD';document.querySelectorAll('main.wrap>section:not([hidden])').forEach(s=>{s.classList.remove('glisseG','glisseD');void s.offsetWidth;s.classList.add(c)});
+  setTimeout(()=>document.querySelectorAll('.glisseG,.glisseD').forEach(s=>s.classList.remove('glisseG','glisseD')),400)},{passive:true});
 $('vMois').onclick=()=>{view='mois';shown=80;render()};
 $('vAn').onclick=()=>{view='annee';shown=80;render()};
 $('vPat').onclick=()=>{view='patrimoine';shown=80;render()};
-$('vFoy').onclick=()=>{view='foyer';render()};
+$('foyBtn').onclick=()=>{if(view==='foyer')view=foyMode==='mois'?'mois':'annee';else{foyMode=view==='mois'?'mois':'annee';view='foyer'}shown=80;render()};
 $('vStats').onclick=()=>{view='stats';render();window.scrollTo({top:0,behavior:doux()})};
 $('aSaisir').onclick=()=>{nouveauJour();navEtape(()=>{retourVue=null;saisieSeule=true;view='donnees';showTab('tOne');render()});window.scrollTo({top:0,behavior:'instant'});$('fAmt').focus({preventScroll:true})};
 // une rubrique s'ouvre toujours en haut de la page (la barre figée la laisse toucher depuis n'importe où)
@@ -796,7 +812,7 @@ function partsPour(items){const r={};
 // mois de l'année y comptés pour la moyenne mensuelle : depuis le début du suivi, jusqu'au mois en cours
 function moisDeLAnnee(y){let a=0,b=11;if(y===now.getFullYear())b=now.getMonth();if(DEBUT_SUIVI&&+DEBUT_SUIVI.slice(0,4)===y)a=+DEBUT_SUIVI.slice(5,7)-1;return Math.max(1,b-a+1)}
 function renderFoyer(){
-  $('foyMois').setAttribute('aria-pressed',foyMode==='mois');$('foyAn').setAttribute('aria-pressed',foyMode!=='mois');
+  $('foySous').textContent=foyMode==='mois'?'du mois':'de l\'année, moyenne par mois';
   if(!FOYERS.length){$('foyBody').innerHTML=`<div class="empty">Aucun foyer pour l'instant. <button type="button" class="btn ghost small" id="foyOuvrir">Déclarer le foyer et ses membres</button></div>`;
     $('foyOuvrir').onclick=()=>{navEtape(()=>{view='donnees';showTab('tFoy');render()});openFoyers()};return}
   const its=(foyMode==='mois'?monthItems(cur.y,cur.m):yearItems(cur.y)).filter(e=>!DEBUT_SUIVI||e.date>=DEBUT_SUIVI),P=partsPour(its);
@@ -817,7 +833,5 @@ function renderFoyer(){
   h+=`<div class="foycard"><div class="foybars">${barre(moi)}</div></div>`;
   $('foyBody').innerHTML=h;
 }
-$('foyMois').onclick=()=>{foyMode='mois';render()};
-$('foyAn').onclick=()=>{foyMode='annee';render()};
 // une ligne (commun, membre, Moi) : son journal, sur la même période
 $('foyBody').addEventListener('click',ev=>{const t=ev.target.closest('[data-f]');if(!t)return;filtre=t.dataset.f;view=foyMode==='mois'?'mois':'annee';shown=80;render();allerJournal('journal')});
