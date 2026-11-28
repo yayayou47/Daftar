@@ -22,11 +22,12 @@ ESSAI = r"""<script>
 delete window.EventSource;   // « un seul onglet » : connexion permanente qui empêche Chrome sans interface de finir
 window.__err=[];addEventListener('error',e=>__err.push((e.filename||'').split('/').pop()+':'+e.lineno+' '+e.message));
 addEventListener('unhandledrejection',e=>__err.push('promesse : '+(e.reason&&e.reason.message||e.reason)));
-addEventListener('load',()=>setTimeout(async()=>{const vu=[];const pause=()=>new Promise(r=>setTimeout(r,150));
+addEventListener('load',()=>setTimeout(async()=>{const vu=[],diag=[];
+  const etat=q=>diag.push(q+' : '+JSON.stringify({ready:typeof ready!=='undefined'&&ready,ops:typeof all!=='undefined'?all.length:-1,biens:typeof BIENS!=='undefined'?BIENS.length:-1,foyers:typeof FOYERS!=='undefined'?FOYERS.length:-1,evts:typeof EVTS!=='undefined'?EVTS.length:-1,view}));const pause=()=>new Promise(r=>setTimeout(r,150));
   try{
     // machine lente : la démo (3 ans simulés) peut mettre plusieurs secondes à se générer ; on attend les données
     // (opérations, puis réglages : biens et foyers peuvent arriver après les opérations — vu sur GitHub le 28/11)
-    for(let i=0;i<400&&!(typeof ready!=='undefined'&&ready&&all.length&&BIENS.length&&FOYERS.length);i++)await pause();
+    etat('début');for(let i=0;i<400&&!(typeof ready!=='undefined'&&ready&&all.length&&BIENS.length&&FOYERS.length);i++)await pause();etat('après attente');
     for(const [rub,vues] of [['aFin',['vMois','vAn','vPat','vStats']],['aBiens',['aVeh','aMai','bHub']]]){
       document.getElementById(rub).click();await pause();vu.push(rub);
       for(const v of vues){document.getElementById(v).click();await pause();vu.push(v)}}
@@ -111,7 +112,7 @@ addEventListener('load',()=>setTimeout(async()=>{const vu=[];const pause=()=>new
     document.getElementById('aVeh').click();await pause();document.getElementById('logoAccueil').click();await pause();
     if(view==='mois'&&vueFin==='mois')vu.push('logoAccueil');
     const ok=typeof ready!=='undefined'&&ready&&all.length>0;
-    document.title='BILAN '+JSON.stringify({ok,n:all.length,vu,err:__err})}
+    etat('fin');document.title='BILAN '+JSON.stringify({ok,n:all.length,vu,err:__err,diag})}
   catch(e){document.title='BILAN '+JSON.stringify({ok:false,exception:e.message,vu,err:__err})}},1500));
 </script>
 """
@@ -175,8 +176,9 @@ class Navigateur(unittest.TestCase):
         self.assertIn("vStats", b["vu"])
         self.assertIn("aSaisir", b["vu"])
         self.assertIn("logoAccueil", b["vu"], "le logo ne ramène pas à l'accueil")
+        b_diag = b.get("diag")
         for etape in ("menu", "export", "theme", "tOne", "tSav", "bHub", "hub", "hubmod", "vidange", "fiches", "tRev", "foyMois", "foyAn", "balayage", "tFoy", "pour", "pourReplie", "foyReste", "enfants", "pjdep", "foyInd", "tableau", "decoche", "dateJour", "barreBas"):
-            self.assertIn(etape, b["vu"], "étape manquante : " + etape)
+            self.assertIn(etape, b["vu"], "étape manquante : %s ; état de la page : %r" % (etape, b_diag))
 
     def test_ordinateur(self):
         self.verifier(self.bilan("index.html"))
