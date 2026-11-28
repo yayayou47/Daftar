@@ -302,6 +302,11 @@ class Calculs(unittest.TestCase):
         self.assertEqual(moi, ["moi"])
         self.assertEqual(poste, [])
         self.assertEqual(choisi, ["moi"])
+        # décoché (« aucun ») : faite ailleurs, même pour un poste réglé « moi »
+        self.assertEqual(page("pourDe({nature:'depense',categorie:'repas',pour:['aucun']})"), [[]])
+        # libellé : tous les enfants d'un foyer → « tous les enfants (Foyer 1) », sinon les prénoms
+        self.assertEqual(page("libellePour(['zara','adam'])", "libellePour(['halima','adam'])", "libellePour(['foyer1'])"),
+                         ["tous les enfants (Foyer 1)", "Halima, Adam", "Foyer 1 (commun)"])
         d = demo()
         ops = [o for o in d["operations"] if o["date"].startswith("2026") and o["nature"] == "depense" and o["date"] >= d["parametres"]["debut_suivi"]]
         parts = page("(()=>{const r=partsPour(yearItems(2026).filter(e=>!DEBUT_SUIVI||e.date>=DEBUT_SUIVI));return Object.fromEntries(Object.entries(r).map(([k,v])=>[k,Math.round(v.tot)]))})()")[0]

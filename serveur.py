@@ -149,7 +149,7 @@ def ids_de(d, cle):
 
 def ids_pour(d):
     """« Pour » d'une dépense (2026-11-27) : {id: "foyer" | "membre"} des foyers et de leurs membres."""
-    out = {"moi": "moi"}   # « Moi » choisi à la main (un poste sans destinataire par défaut)
+    out = {"moi": "moi", "aucun": "aucun"}   # « Moi » choisi à la main ; « aucun » = décoché : dépense faite ailleurs (28/11)
     for f in d.get("parametres", {}).get("foyers", []):
         out[f["id"]] = "foyer"
         for m in f.get("membres", []):
@@ -721,8 +721,8 @@ def nettoyer(doc, d):
                 raise ValueError("Membre du foyer inconnu : %s" % p)
             if p not in vus:
                 vus.append(p)
-        if len(vus) > 1 and any(connus[p] in ("foyer", "moi") for p in vus):
-            raise ValueError("Une dépense pour vous ou commune au foyer ne vise pas en plus un membre.")
+        if len(vus) > 1 and any(connus[p] in ("foyer", "moi", "aucun") for p in vus):
+            raise ValueError("Une dépense pour vous, commune au foyer ou faite ailleurs ne vise pas en plus un membre.")
         out["pour"] = vus
     if nature in ("depense", "revenu") and doc.get("evenement"):
         if doc["evenement"] not in ids_de(d, "evenements"):
@@ -1007,7 +1007,7 @@ def nettoyer_foyers(liste, d):
             membres.append({"id": mid, "nom": mnom, "role": m.get("role") if m.get("role") in ROLES_MEMBRE else "autre",
                             "naissance": nais, "mots": nettoyer_mots(m.get("mots"))})
         out.append({"id": fid, "nom": nom, "membres": membres})
-    manquants = {p for o in d.get("operations", []) for p in (o.get("pour") or [])} - vus - {"moi"}
+    manquants = {p for o in d.get("operations", []) for p in (o.get("pour") or [])} - vus - {"moi", "aucun"}
     if manquants:
         raise ValueError("Impossible de supprimer un foyer ou un membre qui a des dépenses : %s" % ", ".join(sorted(manquants)))
     return out

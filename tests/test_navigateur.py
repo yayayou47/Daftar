@@ -43,10 +43,16 @@ addEventListener('load',()=>setTimeout(async()=>{const vu=[];const pause=()=>new
     document.getElementById('foyBtn').click();await pause();if(view==='foyer'&&foyMode==='mois')vu.push('foyMois');
     document.getElementById('foyBtn').click();await pause();document.getElementById('vAn').click();await pause();
     document.getElementById('foyBtn').click();await pause();if(view==='foyer'&&foyMode==='annee')vu.push('foyAn');
+    if(document.querySelectorAll('#foyBody .foyhero .stat').length===4)vu.push('foyInd');
     // Foyer actif : Mois / Année gardent le Foyer, seule la période change
     document.getElementById('vMois').click();await pause();const fm=view==='foyer'&&foyMode==='mois';
     document.getElementById('vAn').click();await pause();if(fm&&view==='foyer'&&foyMode==='annee')vu.push('foyReste');
     document.getElementById('foyBtn').click();await pause();
+    // tableau par mois (vue Année) : replié par défaut ; déplié, titres et première colonne figés
+    {document.getElementById('vAn').click();await pause();const w=document.getElementById('yearTblWrap'),avant=w.hidden;
+     document.getElementById('yearTblBtn').click();await pause();const th=document.querySelector('#yearTbl thead th'),td=document.querySelector('#yearTbl tbody td');
+     if(avant&&!w.hidden&&th&&getComputedStyle(th).position==='sticky'&&td&&getComputedStyle(td).position==='sticky')vu.push('tableau');
+     document.getElementById('yearTblBtn').click();await pause()}
     // balayage (téléphone) : vers la gauche = période suivante, vers la droite = précédente
     {document.getElementById('vMois').click();await pause();const m0=cur.y*12+cur.m,el=document.getElementById('resumePanel');
      const geste=async(x0,x1)=>{const T=x=>new Touch({identifier:1,target:el,clientX:x,clientY:300});
@@ -54,6 +60,8 @@ addEventListener('load',()=>setTimeout(async()=>{const vu=[];const pause=()=>new
        el.dispatchEvent(new TouchEvent('touchend',{touches:[],changedTouches:[T(x1)],bubbles:true}));await pause()};
      await geste(300,100);const m1=cur.y*12+cur.m;await geste(100,300);const m2=cur.y*12+cur.m;
      if(m1===m0+1&&m2===m0)vu.push('balayage')}
+    // projet : « + Dépense » ouvre Une opération en investissement dans le bien du projet
+    {const pj=BIENS.find(x=>x.projet&&x.projet.budget);if(pj){depenseProjet(pj.id);await pause();if($('fNat').value==='investissement'&&$('fBien').value===pj.id)vu.push('pjdep');resetForm()}}
     // repères de vidange : dans Engins, pour l'engin affiché
     document.getElementById('aVeh').click();await pause();document.getElementById('vidModif').click();await pause();
     if(!document.getElementById('vidPanel').hidden&&document.getElementById('sInt').value)vu.push('vidange');
@@ -73,17 +81,31 @@ addEventListener('load',()=>setTimeout(async()=>{const vu=[];const pause=()=>new
     document.getElementById('themeBtn').click();await pause();if(t1!==t0&&sombre()===t0&&localStorage.getItem('daftar-theme')===null)vu.push('theme');
     for(const [t] of tabs){document.getElementById('aDon').click();await pause();document.getElementById(t).click();await pause();
       if(S.classList.contains('regpage')&&getComputedStyle(document.getElementById(tabs.find(x=>x[0]===t)[1])).display!=='none')vu.push(t)}
-    document.getElementById('aSaisir').click();await pause();vu.push('aSaisir');
+    document.getElementById('fDate').value='2024-01-15';document.getElementById('aSaisir').click();await pause();vu.push('aSaisir');
+    // Saisir remet la date du jour (et non la dernière date saisie ou modifiée)
+    if(document.getElementById('fDate').value===today)vu.push('dateJour');
+    // ordinateur aussi : barre des rubriques en bas de l'écran
+    if(getComputedStyle(document.querySelector('nav.apptabs')).position==='fixed')vu.push('barreBas');
     // champ « Pour » : Moi | Foyer 1… ; le foyer ouvre son menu : Tous (commun) ou des membres cochés
     if(FOYERS.length&&MEMBRES().length){const F=FOYERS[0],m=F.membres[0];
       document.getElementById('fLib').value='pain';document.getElementById('fLib').dispatchEvent(new Event('input'));await pause();
-      document.querySelector('#fPour [data-p="'+F.id+'"]').click();await pause();const tous=JSON.stringify(pourEffectif())===JSON.stringify([F.id]);
+      // le foyer est déjà choisi (poste Foyer) : le toucher le décocherait ; le menu s'ouvre par son propre bouton
+      if(foyerDe(pourEffectif())!==F.id){document.querySelector('#fPour [data-p="'+F.id+'"]').click();await pause()}
+      if(document.getElementById('pourList').hidden){document.querySelector('#fPour .pourBtn').click();await pause()}
+      const tous=JSON.stringify(pourEffectif())===JSON.stringify([F.id]);
       const c=document.querySelector('#fPour [data-m="'+m.id+'"]');c.checked=true;c.dispatchEvent(new Event('change',{bubbles:true}));await pause();
-      if(tous&&JSON.stringify(pourEffectif())===JSON.stringify([m.id])&&!document.querySelector('#fPour [data-p="'+m.id+'"]'))vu.push('pour');resetForm();
-      // poste sans destinataire (voiture) : champ replié derrière « Préciser pour qui », qui l'ouvre
+      if(tous&&JSON.stringify(pourEffectif())===JSON.stringify([m.id])&&!document.querySelector('#fPour [data-p="'+m.id+'"]'))vu.push('pour');
+      // « Tous les enfants » : tous les enfants du foyer, parts égales
+      const te=document.querySelector('#fPour [data-enfants]');if(te){te.checked=true;te.dispatchEvent(new Event('change',{bubbles:true}));await pause();
+        const E=F.membres.filter(x=>x.role==='enfant').map(x=>x.id);if(JSON.stringify(pourEffectif())===JSON.stringify(E))vu.push('enfants')}
+      // toucher « Moi » une deuxième fois le décoche : dépense faite ailleurs
+      document.querySelector('#fPour [data-p="moi"]').click();await pause();const m1=JSON.stringify(pourEffectif());
+      document.querySelector('#fPour [data-p="moi"]').click();await pause();if(m1==='["moi"]'&&JSON.stringify(pourEffectif())==='["aucun"]'&&!document.querySelector('#fPour [aria-pressed="true"]'))vu.push('decoche');
+      resetForm();
+      // dépense générale (voiture) : boutons Moi et foyer affichés, aucun coché ; on peut cocher
       document.getElementById('fLib').value='lavage voiture';document.getElementById('fLib').dispatchEvent(new Event('input'));await pause();
-      const plus=document.querySelector('#fPour [data-plus]');if(plus&&!document.querySelector('#fPour [data-p]')){plus.click();await pause();
-        if(document.querySelector('#fPour [data-p="moi"]'))vu.push('pourReplie')}resetForm()}
+      const bm=document.querySelector('#fPour [data-p="moi"]');if(bm&&!document.querySelector('#fPour [aria-pressed="true"]')){bm.click();await pause();
+        if(JSON.stringify(pourEffectif())==='["moi"]')vu.push('pourReplie')}resetForm()}
     // logo : retour à l'accueil (Mes finances, vue Mois)
     document.getElementById('aVeh').click();await pause();document.getElementById('logoAccueil').click();await pause();
     if(view==='mois'&&vueFin==='mois')vu.push('logoAccueil');
@@ -152,7 +174,7 @@ class Navigateur(unittest.TestCase):
         self.assertIn("vStats", b["vu"])
         self.assertIn("aSaisir", b["vu"])
         self.assertIn("logoAccueil", b["vu"], "le logo ne ramène pas à l'accueil")
-        for etape in ("menu", "export", "theme", "tOne", "tSav", "bHub", "hub", "hubmod", "vidange", "fiches", "tRev", "foyMois", "foyAn", "balayage", "tFoy", "pour", "pourReplie", "foyReste"):
+        for etape in ("menu", "export", "theme", "tOne", "tSav", "bHub", "hub", "hubmod", "vidange", "fiches", "tRev", "foyMois", "foyAn", "balayage", "tFoy", "pour", "pourReplie", "foyReste", "enfants", "pjdep", "foyInd", "tableau", "decoche", "dateJour", "barreBas"):
             self.assertIn(etape, b["vu"], "étape manquante : " + etape)
 
     def test_ordinateur(self):

@@ -4,6 +4,27 @@ Les versions sont numérotées `X.Y.Z` (le nom de série, « Ousnou », figure �
 est écrit à un seul endroit : `app/version.js`. Chaque version publiée a son tag `vX.Y.Z` et sa page dans
 [Releases](https://github.com/yayayou47/Daftar/releases) (APK Android et zip Ubuntu).
 
+## 1.4.24 — 2026-11-28
+
+- Une opération : menu des membres d'un foyer ouvert vers le haut ; option « Tous les enfants » (parts égales) ; le
+  choix « Pour » affiché, même par défaut, est enregistré ; « Pour » n'apparaît que si un foyer a des membres ;
+  Remarque après le bouton Ajouter. Journal, export et confirmation : « pour tous les enfants (nom du foyer) » au lieu
+  des prénoms.
+- Modifier une ligne puis enregistrer (ou annuler) ramène à l'endroit de la page d'où on l'a ouverte.
+- Bouton Foyer (Mes finances) seulement quand un foyer a des membres.
+- Ordinateur : la barre des rubriques (Mes finances, Saisir, Mes biens) est aussi en bas de l'écran, avec Saisir au
+  milieu au contour doré.
+- Saisir ouvre une nouvelle opération à la date du jour (et non à la dernière date saisie ou modifiée).
+- Champ « Pour » : les boutons Moi et foyers sont toujours affichés (plus de champ replié pour les dépenses générales,
+  qui n'ont simplement rien de coché).
+- Champ « Pour » : toucher « Moi » ou le foyer actif le décoche ; rien de coché = dépense faite ailleurs (enregistrée,
+  elle l'emporte sur le réglage du poste).
+- Foyer : quatre indicateurs (dépenses du foyer, part dans vos dépenses, par enfant et par mois, évolution par rapport
+  à la période d'avant).
+- Vue Année : tableau par mois et par poste replié par défaut ; tableaux larges (année, foyer, engins, maison) avec la
+  ligne des titres, la première colonne et la ligne Total figées pendant le défilement.
+- Projets : « + Dépense » (liste des projets, Mes biens › Maison) ouvre Une opération en investissement dans le bien.
+
 ## 1.4.23 — 2026-11-27
 
 - Vue Foyer : seulement les dépenses faites pour une personne (le commun du foyer, chaque membre, vous). Les dépenses

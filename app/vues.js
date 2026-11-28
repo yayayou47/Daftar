@@ -54,7 +54,7 @@ function renderVue(){
   $('maiAn').setAttribute('aria-pressed',!maiAll);$('maiTout').setAttribute('aria-pressed',maiAll);$('segMai').hidden=!isH;
   $('vMois').setAttribute('aria-pressed',isM);$('vAn').setAttribute('aria-pressed',isA);$('vPat').setAttribute('aria-pressed',isP);$('vStats').setAttribute('aria-pressed',isS);$('foyPanel').hidden=!isFo;
   // Foyer : à côté de la période, en vue Mois ou Année ; il garde la période (mois ou année) de la vue d'où il vient
-  $('foyBtn').hidden=!(isM||isA||isFo);$('foyBtn').setAttribute('aria-pressed',isFo);
+  $('foyBtn').hidden=!((isM||isA||isFo)&&foyerActif());$('foyBtn').setAttribute('aria-pressed',isFo);
   if(isFo){$('vMois').setAttribute('aria-pressed',foyMode==='mois');$('vAn').setAttribute('aria-pressed',foyMode!=='mois')}
   $('vehAn').setAttribute('aria-pressed',!vehAll);$('vehTout').setAttribute('aria-pressed',vehAll);
   $('segFin').hidden=!isF;$('segVeh').hidden=!isV;$('subCtl').hidden=isD;
@@ -165,7 +165,9 @@ function renderVue(){
       $('chart').style.gridTemplateColumns='repeat(12,1fr)';
       $('chart').innerHTML=tots.map((v,i)=>`<button type="button" class="wk" data-m="${i}" aria-label="${MOIS[i]} : ${fmtM(v)} ${U()}"><span class="v">${v?fmt(v/1000)+'k':''}</span><div class="col" style="height:${v/mx*72}%"></div><span class="d">${MOIS[i].slice(0,4)}</span></button>`).join('');
       const used=CATS.filter(c=>deps(items).some(e=>e.categorie===c.id));
-      $('yearTblWrap').hidden=!items.length;
+      // tableau mois × postes : replié par défaut (demande du 28/11), le choix est retenu sur l'appareil
+      const tv=lsGet('daftar-tableau-mois')==='1';$('yearTblBar').hidden=!items.length;$('yearTblWrap').hidden=!items.length||!tv;
+      $('yearTblBtn').textContent=tv?'Masquer le tableau par mois et par poste':'Afficher le tableau par mois et par poste';$('yearTblBtn').setAttribute('aria-expanded',tv);
       const ligne=(lab,it,attr)=>{const b=byCat(it),f=flux(it);return `<tr${attr}><td>${lab}</td>${used.map(c=>`<td>${b[c.id]?fmtM(b[c.id]):'–'}</td>`).join('')}<td><b>${fmtM(f.dep)}</b></td><td>${f.exc?fmtM(f.exc):'–'}</td><td>${f.ent?fmtM(f.ent):'–'}</td><td>${f.entX?fmtM(f.entX):'–'}</td><td>${f.inv+f.pre?fmtM(f.inv+f.pre):'–'}</td><td style="color:${f.net>=0?'var(--ok)':'var(--warn)'}">${sgnM(f.net)}</td></tr>`};
       $('yearTbl').innerHTML=`<thead><tr><th>Mois</th>${used.map(c=>`<th>${esc(c.label)}</th>`).join('')}<th>Dépenses courantes</th><th>Exceptionnel</th><th>Entrées courantes</th><th>Revenus ponctuels</th><th>Investi, prêté</th><th>Solde</th></tr></thead><tbody>`+
         months.map((it,i)=>it.length?ligne(new Date(cur.y,i,1).toLocaleDateString('fr-FR',{month:'long'}),it,` class="click" data-m="${i}"`):'').join('')+
@@ -336,7 +338,7 @@ function opTag(e){
   const progTag=e.prog?' · <span class="nat" title="opération programmée">programmée</span>':'';
   const evTag=progTag+(e.evenement?` · <span class="nat exc">★ ${esc((EVT[e.evenement]||{}).nom||e.evenement)}</span>`:'');
   switch(e.nature){
-    case 'depense':{const p=CAT[e.categorie]||CAT.autre,po=pourDe(e);return `<span class="dot" aria-hidden="true" style="background:${color(p.id)}"></span>${esc(p.label)}${po.length&&(e.pour||[]).length?` · <span class="nat">pour ${esc(po.map(x=>x==='moi'?'moi':MEMBRE[x]?MEMBRE[x].nom:(FOYER[x]||{}).nom||x).join(', '))}</span>`:''}${e.compte!=='especes'?` · ${cn}`:''}${evTag}`}
+    case 'depense':{const p=CAT[e.categorie]||CAT.autre,po=pourDe(e);return `<span class="dot" aria-hidden="true" style="background:${color(p.id)}"></span>${esc(p.label)}${po.length&&(e.pour||[]).length?` · <span class="nat">pour ${esc(po.length===1&&po[0]==='moi'?'moi':libellePour(po))}</span>`:''}${e.compte!=='especes'?` · ${cn}`:''}${evTag}`}
     case 'revenu':{const r=REV[catRev(e)]||{label:'',courant:true};return `<span class="nat in">Revenu</span> · ${esc(r.label)}${!r.courant&&!e.evenement?' <span class="nat exc">ponctuel</span>':''}${partPonct(e)?` · <span class="nat exc">dont ${fmt(partPonct(e))} ${U()} ${esc(((REV[e.cat_ponctuel]||{label:'autre revenu'}).label).toLowerCase())} (ponctuel)</span>`:''} · ${cn}${evTag}`}
     case 'virement':return `<span class="nat">Virement</span> · ${cn} → ${dotCpt(e.vers)}${esc(nomCpt(e.vers))}`;
     case 'pret':return `<span class="nat out">Prêt</span> · ${esc(e.personne)} · ${cn}${e.echeance?` · échéance ${dmy(e.echeance)}`:''}`;
@@ -447,7 +449,8 @@ $('vAn').onclick=()=>{if(view==='foyer')foyMode='annee';else view='annee';shown=
 $('vPat').onclick=()=>{view='patrimoine';shown=80;render()};
 $('foyBtn').onclick=()=>{if(view==='foyer')view=foyMode==='mois'?'mois':'annee';else{foyMode=view==='mois'?'mois':'annee';view='foyer'}shown=80;render()};
 $('vStats').onclick=()=>{view='stats';render();window.scrollTo({top:0,behavior:doux()})};
-$('aSaisir').onclick=()=>{nouveauJour();navEtape(()=>{retourVue=null;saisieSeule=true;view='donnees';showTab('tOne');render()});window.scrollTo({top:0,behavior:'instant'});$('fAmt').focus({preventScroll:true})};
+// Saisir = une nouvelle opération, à la date du jour (et non la dernière date saisie ou modifiée, demande du 28/11)
+$('aSaisir').onclick=()=>{nouveauJour();if(editId)resetForm();$('fDate').value=today;navEtape(()=>{retourVue=null;saisieSeule=true;view='donnees';showTab('tOne');render()});window.scrollTo({top:0,behavior:'instant'});$('fAmt').focus({preventScroll:true})};
 // une rubrique s'ouvre toujours en haut de la page (la barre figée la laisse toucher depuis n'importe où)
 const enHaut=()=>window.scrollTo({top:0,behavior:'instant'});
 $('aFin').onclick=()=>{view=vueFin;render();enHaut()};
@@ -485,7 +488,7 @@ function openMonth(ev){const t=ev.target.closest('[data-m]');if(!t)return;cur.m=
 $('chart').addEventListener('click',openMonth);$('yearTbl').addEventListener('click',openMonth);
 $('accFermer').onclick=()=>{memo('appya-accueil-vu','1');render()};
 $('accComptes').onclick=()=>{navEtape(()=>{view='donnees';showTab('tCB');render()});$('saisie').scrollIntoView({behavior:doux()})};
-$('accSaisir').onclick=()=>{nouveauJour();navEtape(()=>{saisieSeule=true;view='donnees';showTab('tOne');render()});$('fAmt').focus()};
+$('accSaisir').onclick=()=>{nouveauJour();if(editId)resetForm();$('fDate').value=today;navEtape(()=>{saisieSeule=true;view='donnees';showTab('tOne');render()});$('fAmt').focus()};
 $('demoRecreer').onclick=async()=>{if(!confirm('Effacer les données de démo modifiées et recréer les trois années simulées ?'))return;await locCharger();LOC.donnees=await donneesDemo();await locSauver();await charger();status('Données de démo recréées.')};
 $('segEngins').addEventListener('click',ev=>{const b=ev.target.closest('[data-v]');if(!b)return;choisirEngin(b.dataset.v);render()});
 $('segMaisons').addEventListener('click',ev=>{const b=ev.target.closest('[data-h]');if(!b)return;choisirMaison(b.dataset.h);render()});
@@ -758,7 +761,7 @@ function renderMaison(){
   if(s.taux!==null&&s.V)p.push(`Valeur projetée au taux observé (${pct(s.taux)} par an) : environ ${fmtM(s.V*(1+s.taux))} ${U()} dans un an et ${fmtM(s.V*Math.pow(1+s.taux,5))} ${U()} dans cinq ans. C'est une extrapolation d'une seule estimation, à revoir à chaque nouvelle valeur notée.`);
   else p.push('Notez une valeur actuelle (Mes finances › Patrimoine › Mettre à jour la valeur) pour calculer l\'appréciation et la valeur projetée.');
   if(pc.autre&&tot)p.push(`${fmt1(pc.autre/tot*100)} % des travaux de la période sont sans détail (« Autre ») : préciser le libellé (ciment, main-d'œuvre, brique…) rendra l'analyse par poste plus juste.`);
-  $('maiPerspTxt').innerHTML=jauge+(pj.note?`<p class="hint">Projet : ${esc(pj.note)}</p>`:'')+`<ul class="analyse">${p.map(t=>`<li>${esc(t)}</li>`).join('')}</ul>`;
+  $('maiPerspTxt').innerHTML=`<div class="row"><button type="button" class="btn small" data-pjdep="${m.id}">+ Dépense du projet (travaux, achats…)</button></div>`+jauge+(pj.note?`<p class="hint">Projet : ${esc(pj.note)}</p>`:'')+`<ul class="analyse">${p.map(t=>`<li>${esc(t)}</li>`).join('')}</ul>`;
   /* filtres et journal */
   let jl=items.slice().reverse();
   if(maiSel!==null)jl=jl.filter(e=>maiAll?e.date.startsWith(maiSel+'-'):+e.date.slice(5,7)-1===maiSel);
@@ -783,10 +786,15 @@ function pjRow(b){const pj={budget:0,echeance:'',note:'',...(b.projet||{})},neuf
     <input class="jNote" value="${esc(pj.note||'')}" maxlength="300" placeholder="note : 3 pièces, forage, clôture…" aria-label="Note sur le projet">
     <button type="button" class="mini danger" data-x aria-label="Retirer le projet">✕</button></div>`}
 function resumeProjet(r){const b=BIEN[r.querySelector('.jBien').value],bud=valIn(r,'.jBud'),e=valIn(r,'.jEch'),n=valIn(r,'.jNote'),s=b?etatBien(b):null;
-  return `<b>${esc(b?b.nom:'Nouveau projet')}</b> <span class="hint">${r.querySelector('.jNat').value==='maison'?'Maison':'Autre bien'}${bud?` · budget ${mtS(bud)}`:''}${s?` · investi ${fmtM(s.I)} ${U()}`:''}${e?` · échéance ${dmy(e)}`:''}${n?` · ${esc(n)}`:''}</span>`}
+  return `<b>${esc(b?b.nom:'Nouveau projet')}</b>${b&&r.dataset.id?` <button type="button" class="btn ghost small" data-pjdep="${b.id}">+ Dépense</button>`:''} <span class="hint">${r.querySelector('.jNat').value==='maison'?'Maison':'Autre bien'}${bud?` · budget ${mtS(bud)}`:''}${s?` · investi ${fmtM(s.I)} ${U()}`:''}${e?` · échéance ${dmy(e)}`:''}${n?` · ${esc(n)}`:''}</span>`}
 function openProjet(){const l=BIENS.filter(aProjet);$('pjList').innerHTML=l.length?l.map(pjRow).join(''):'<div class="hint">Aucun projet pour l\'instant.</div>';
   fiches($('pjList'),resumeProjet,'pjSave',openEvt)}
 $('pjList').addEventListener('input',()=>{evtDirty=true});
+/* dépense d'un projet = investissement dans son bien : Une opération pré-remplie (nature Investissement, le bien) */
+function depenseProjet(id){if(!BIEN[id])return;nouveauJour();resetForm();navEtape(()=>{saisieSeule=true;view='donnees';showTab('tOne');render()});
+  $('fNat').value='investissement';$('fBien').value=id;touched.nat=true;touched.bien=true;majChamps();
+  $('addMsg').textContent=`Dépense du projet « ${BIEN[id].nom} » : un investissement dans ce bien.`;window.scrollTo({top:0,behavior:'instant'});$('fAmt').focus()}
+$('pjList').addEventListener('click',ev=>{const d=ev.target.closest('[data-pjdep]');if(d){depenseProjet(d.dataset.pjdep);return}});
 $('pjList').addEventListener('click',ev=>{const b=ev.target.closest('[data-x]');if(b&&!b.disabled)retirerLigne(b.closest('.evrow'),'Projet',()=>{evtDirty=true})});
 $('pjAdd').onclick=()=>{const l=$('pjList');if(!l.querySelector('.evrow'))l.innerHTML='';l.insertAdjacentHTML('beforeend',pjRow({}));ficher(l.lastElementChild,resumeProjet,true);
   const r=l.lastElementChild,b=BIEN[r.querySelector('.jBien').value];if(b)r.querySelector('.jNat').value=b.maison?'maison':'autre';r.querySelector('.jBien').focus();evtDirty=true};
@@ -823,12 +831,28 @@ function renderFoyer(){
   const tousTot=lignes.reduce((a,l)=>a+((P[l.k]||{}).tot||0),0)+((P.moi||{}).tot||0)||1;
   const barre=l=>{const x=P[l.k]||{tot:0,n:0};return `<button type="button" class="foyl" data-f="${l.f===undefined&&l.k!=='moi'?l.k:l.k==='moi'?'o:':'m:'+l.k}"><span class="foyn"><b>${esc(l.lab)}</b>${l.sous?`<span class="hint">${esc(l.sous)}</span>`:''}</span>
     <span class="foyb"><i style="width:${Math.max(x.tot?1.5:0,x.tot/tousTot*100)}%"></i></span><span class="foym num">${fmtM(r0(x.tot))}${foyMode!=='mois'&&x.tot?`<span class="hint">${fmtM(r0(x.tot/nm))}/mois</span>`:''}</span></button>`};
-  const table=ls=>{const cats=CATS.filter(c=>ls.some(l=>(P[l.k]||{cats:{}}).cats[c.id]));if(!cats.length)return '';return `<div class="tbl"><table><thead><tr><th>Pour</th>${cats.map(c=>`<th>${esc(c.label)}</th>`).join('')}<th>Total</th></tr></thead><tbody>${ls.map(l=>{const x=P[l.k]||{tot:0,cats:{}};
+  const table=ls=>{const cats=CATS.filter(c=>ls.some(l=>(P[l.k]||{cats:{}}).cats[c.id]));if(!cats.length)return '';return `<div class="tbl fige"><table><thead><tr><th>Pour</th>${cats.map(c=>`<th>${esc(c.label)}</th>`).join('')}<th>Total</th></tr></thead><tbody>${ls.map(l=>{const x=P[l.k]||{tot:0,cats:{}};
     return `<tr class="click" data-f="m:${l.k}"><td>${esc(l.lab)}</td>${cats.map(c=>`<td>${x.cats[c.id]?fmtM(r0(x.cats[c.id])):'–'}</td>`).join('')}<td><b>${fmtM(r0(x.tot))}</b></td></tr>`}).join('')}</tbody></table></div>`};
-  let h='';
+  // indicateurs (demande du 28/11) : coût du foyer, sa part dans vos dépenses, coût d'un enfant par mois, évolution
+  const totFoy=lignes.reduce((a,l)=>a+((P[l.k]||{}).tot||0),0),totDep=its.filter(e=>e.nature==='depense'&&perso(e)).reduce((a,e)=>a+e.montant,0);
+  const E=MEMBRES().filter(m=>m.role==='enfant'),totE=E.reduce((a,m)=>a+((P[m.id]||{}).tot||0),0);
+  // même période d'avant : mois (ou année) précédent, jusqu'au même jour si la période est en cours
+  const enCours=foyMode==='mois'?cur.y===now.getFullYear()&&cur.m===now.getMonth():cur.y===now.getFullYear();
+  const av=foyMode==='mois'?(cur.m?{y:cur.y,m:cur.m-1}:{y:cur.y-1,m:11}):{y:cur.y-1};
+  const jusqu=d=>{if(!enCours)return true;const j=new Date(d+'T12:00');return foyMode==='mois'?j.getDate()<=now.getDate():(j.getMonth()<now.getMonth()||(j.getMonth()===now.getMonth()&&j.getDate()<=now.getDate()))};
+  const itsAv=(foyMode==='mois'?monthItems(av.y,av.m):yearItems(av.y)).filter(e=>(!DEBUT_SUIVI||e.date>=DEBUT_SUIVI)&&jusqu(e.date));
+  const PA=partsPour(itsAv),totAv=FOYERS.reduce((a,f)=>a+((PA[f.id]||{}).tot||0)+f.membres.reduce((b,m)=>b+((PA[m.id]||{}).tot||0),0),0);
+  const evo=totAv>0?(totFoy-totAv)/totAv:null;
+  const tuile=(l,v,sous,col)=>`<div class="stat"><span class="label">${lblIc(l)}</span><span class="v"${col?` style="color:${col}"`:''}>${valAbr(l,v)}</span><span class="s">${sous}</span></div>`;
+  let h=`<div class="hero foyhero">`+
+    tuile('Dépenses du foyer',fmtM(r0(totFoy)),`${U()}${foyMode!=='mois'?` · ${fmtM(r0(totFoy/nm))}/mois`:''} · commun et membres`)+
+    tuile('Part dans vos dépenses',totDep?`${fmt1(totFoy/totDep*100)} %`:'—',`de ${fmtM(r0(totDep))} ${U()} dépensés en tout`)+
+    tuile('Par enfant et par mois',E.length?fmtM(r0(totE/E.length/nm)):'—',E.length?`${U()} · ${E.length} enfant${E.length>1?'s':''}`:'aucun enfant déclaré')+
+    tuile(foyMode==='mois'?'Vs mois précédent':'Vs année précédente',evo===null?'—':`${evo>=0?'+':''}${fmt1(evo*100)} %`,totAv?`${fmtM(r0(totAv))} ${U()}${enCours?' à la même date':''}`:'pas de dépense à comparer',evo===null?'':evo>0?'var(--warn)':'var(--ok)')+
+    `</div>`;
   for(const f of FOYERS){const ls=lignes.filter(l=>l.f===f),tot=ls.reduce((a,l)=>a+((P[l.k]||{}).tot||0),0);
     const enf=f.membres.filter(m=>m.role==='enfant'),te=enf.reduce((a,m)=>a+((P[m.id]||{}).tot||0),0);
-    h+=`<div class="foycard"><div class="phead"><h3 class="sub">${esc(f.nom)}</h3><span class="hint">${fmtM(r0(tot))} ${U()}${foyMode!=='mois'?` · ${fmtM(r0(tot/nm))} ${U()}/mois`:''}${enf.length&&te?` · enfants ${fmtM(r0(te/enf.length/nm))} ${U()} par enfant et par mois`:''}</span></div>
+    h+=`<div class="foycard"><div class="phead"><h3 class="sub">${esc(f.nom)}</h3><span class="hint">${fmtM(r0(tot))} ${U()}${foyMode!=='mois'?` · ${fmtM(r0(tot/nm))} ${U()}/mois`:''}${FOYERS.length>1&&enf.length&&te?` · enfants ${fmtM(r0(te/enf.length/nm))} ${U()} par enfant et par mois`:''}</span></div>
       <div class="foybars">${ls.map(barre).join('')}</div>${table(ls)}</div>`}
   const moi={k:'moi',lab:'Moi',sous:'dépenses pour vous-même'};
   h+=`<div class="foycard"><div class="foybars">${barre(moi)}</div></div>`;
@@ -840,3 +864,6 @@ function renderFoyer(){
 }
 // une ligne (commun, membre, Moi) : son journal, sur la même période
 $('foyBody').addEventListener('click',ev=>{const t=ev.target.closest('[data-f]');if(!t)return;filtre=t.dataset.f;view=foyMode==='mois'?'mois':'annee';shown=80;render();allerJournal('journal')});
+
+$('maiPerspTxt').addEventListener('click',ev=>{const d=ev.target.closest('[data-pjdep]');if(d)depenseProjet(d.dataset.pjdep)});
+$('yearTblBtn').onclick=()=>{lsSet('daftar-tableau-mois',lsGet('daftar-tableau-mois')==='1'?'0':'1');render()};

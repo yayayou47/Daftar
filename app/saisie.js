@@ -27,35 +27,40 @@ let pourSel=null,pourAuto=null;
 const pourEffectif=()=>pourSel||pourAuto||pourDe({nature:'depense',categorie:$('fCat').value,pour:[]});
 /* Champ « Pour » (2026-11-27, demande de l'utilisateur) : Moi | Foyer 1 | Foyer 2… ; un foyer choisi ouvre son menu
    déroulant : « Tous (commun) » ou un ou plusieurs de ses membres (épouse, enfants…), cochés (parts égales). */
-let pourOuvert=false,pourMontre=false;   // pourMontre : « Préciser pour qui » touché (poste sans destinataire)
+let pourOuvert=false;
 const foyerDe=p=>p.length?(FOYER[p[0]]?p[0]:(MEMBRE[p[0]]||{}).foyer||''):'';
 function renderPour(){if($('wPour').hidden)return;const p=pourEffectif(),fo=foyerDe(p),F=FOYER[fo];
-  // poste sans destinataire (voiture, aides, bureau…) : le champ reste replié, « Préciser pour qui » l'ouvre
-  if(!p.length&&!pourMontre&&(CAT[$('fCat').value]||{}).pour==='general'){$('fPour').innerHTML=`<button type="button" class="linkbtn" data-plus>Dépense générale · préciser pour qui (Moi, un foyer…)</button>`;$('fPourHint').hidden=true;return}
+  // boutons Moi et foyers toujours visibles (demande du 28/11) : dépense générale = aucun coché ; on coche ou décoche
   const chip=(id,lab)=>`<button type="button" data-p="${id}" aria-pressed="${id==='moi'?p.includes('moi'):id===fo}">${esc(lab)}</button>`;
   let h=`<div class="chips">${chip('moi','Moi')}${FOYERS.map(f=>chip(f.id,f.nom)).join('')}</div>`;
+  // rien de coché : dépense faite ailleurs (ni pour vous ni pour un foyer) — on décoche en touchant le choix actif
+  if(!p.includes('moi')&&!F)h+=`<span class="hint">${(CAT[$('fCat').value]||{}).pour==='general'&&!pourSel?'Dépense générale : ':''}aucun coché, dépense faite ailleurs (ni pour vous ni pour un foyer).</span>`;
   if(F){const mb=p.filter(x=>MEMBRE[x]),tous=!mb.length;
-    const lab=tous?'Tous (commun)':mb.map(x=>MEMBRE[x].nom).join(', ')+(mb.length>1?` (${mb.length})`:'');
+    const lab=tous?'Tous (commun)':/^tous les enfants/.test(libellePour(mb))?`Tous les enfants (${mb.length})`:mb.map(x=>MEMBRE[x].nom).join(', ')+(mb.length>1?` (${mb.length})`:'');
     h+=`<div class="pourdd"><button type="button" class="pourBtn" aria-expanded="${pourOuvert}" aria-controls="pourList">${esc(F.nom)} : <b>${esc(lab)}</b> <span aria-hidden="true">▾</span></button>
       <div class="pourList" id="pourList"${pourOuvert?'':' hidden'}>
         <label class="check"><input type="checkbox" data-tous${tous?' checked':''}> Tous (commun)</label>
+        ${(()=>{const E=F.membres.filter(m=>m.role==='enfant');if(E.length<2)return '';const tousE=E.every(m=>mb.includes(m.id))&&mb.length===E.length;
+          return `<label class="check"><input type="checkbox" data-enfants${tousE?' checked':''}> Tous les enfants (${E.length}) <span class="hint">parts égales</span></label>`})()}
         ${F.membres.map(m=>`<label class="check"><input type="checkbox" data-m="${m.id}"${mb.includes(m.id)?' checked':''}> ${esc(m.nom)} <span class="hint">${esc(ROLES[m.role]||'')}</span></label>`).join('')||'<span class="hint">Aucun membre : ajoutez-les dans Données et réglages › Foyers.</span>'}
       </div></div>`}
   $('fPour').innerHTML=h;$('fPourHint').hidden=!F}
-$('fPour').addEventListener('click',ev=>{const t=ev.target.closest('[data-p],.pourBtn,[data-plus]');if(!t)return;
-  if(t.dataset.plus!==undefined){pourMontre=true;renderPour();return}
+$('fPour').addEventListener('click',ev=>{const t=ev.target.closest('[data-p],.pourBtn');if(!t)return;
   if(t.classList.contains('pourBtn')){pourOuvert=!pourOuvert;renderPour();return}
   const id=t.dataset.p,p=pourEffectif();
-  if(id==='moi'){pourSel=['moi'];pourOuvert=false}
-  else{if(foyerDe(p)!==id)pourSel=[id];else pourSel=p.slice();pourOuvert=true}
+  // toucher le choix actif le décoche (demande du 28/11) : « aucun » = dépense faite ailleurs
+  if(id==='moi'){pourSel=p.includes('moi')?['aucun']:['moi'];pourOuvert=false}
+  else if(foyerDe(p)===id){pourSel=['aucun'];pourOuvert=false}
+  else{pourSel=[id];pourOuvert=true}
   touched.pour=true;renderPour()});
 $('fPour').addEventListener('change',ev=>{const c=ev.target;if(c.type!=='checkbox')return;const fo=foyerDe(pourEffectif());if(!fo)return;
   if(c.dataset.tous!==undefined)pourSel=[fo];
+  else if(c.dataset.enfants!==undefined){const E=FOYER[fo].membres.filter(m=>m.role==='enfant').map(m=>m.id);pourSel=c.checked?E:[fo]}
   else{let mb=pourEffectif().filter(x=>MEMBRE[x]);mb=c.checked?mb.concat([c.dataset.m]):mb.filter(x=>x!==c.dataset.m);pourSel=mb.length?mb:[fo]}
   touched.pour=true;renderPour()});
 function majChamps(){
   const n=$('fNat').value;
-  $('wPour').hidden=!(n==='depense'&&FOYERS.length&&!estTiers($('fCpt').value));renderPour();
+  $('wPour').hidden=!(n==='depense'&&foyerActif()&&!estTiers($('fCpt').value));renderPour();
   $('wCat').hidden=n!=='depense';$('wTiers').hidden=!(n==='depense'&&TIERS().length&&!estTiers($('fCpt').value));$('wVers').hidden=n!=='virement';$('wPers').hidden=!(n==='pret'||n==='remboursement');
   $('wEch').hidden=n!=='pret';$('wBien').hidden=n!=='investissement';
   $('wRev').hidden=n!=='revenu';$('wEvt').hidden=!((n==='depense'||n==='revenu')&&EVTS.length);
@@ -202,7 +207,7 @@ majClavier();
 function majAbrege(){$('abregeK').checked=ABREGE;$('abregeKInfo').textContent=ABREGE?'Activé : les grands montants des cartes sont abrégés (K = milliers, M = millions) ; le montant exact apparaît en survolant le chiffre. Le journal et les tableaux restent en entier.':'Désactivé : les cartes affichent les montants en entier.'}
 $('abregeK').addEventListener('change',()=>{ABREGE=$('abregeK').checked;lsSet('daftar-abrege',ABREGE?'1':'0');majAbrege();render();status(ABREGE?'Montants abrégés dans les cartes.':'Montants en entier dans les cartes.')});
 majAbrege();
-function resetForm(){['fAmt','fLib','fRem','fPers','fEch','fKm','fQty'].forEach(i=>$(i).value='');$('fTiers').value='';$('fPonct').value='';pourSel=null;pourAuto=null;pourOuvert=false;pourMontre=false;$('fLibHint').textContent='';$('fUnit').value='L';$('fVid').checked=true;touched={};$('fVidNext').value='';$('fNat').value='depense';$('fCpt').value='especes';$('fCat').value='autre';$('fEvt').value='';editId=null;$('editBar').hidden=true;$('addBtn').textContent='Ajouter';majChamps();amtHint();render()}
+function resetForm(){['fAmt','fLib','fRem','fPers','fEch','fKm','fQty'].forEach(i=>$(i).value='');$('fTiers').value='';$('fPonct').value='';pourSel=null;pourAuto=null;pourOuvert=false;$('fLibHint').textContent='';$('fUnit').value='L';$('fVid').checked=true;touched={};$('fVidNext').value='';$('fNat').value='depense';$('fCpt').value='especes';$('fCat').value='autre';$('fEvt').value='';editId=null;$('editBar').hidden=true;$('addBtn').textContent='Ajouter';majChamps();amtHint();render()}
 /* fenêtre de confirmation : résumé lisible de l'opération avant l'enregistrement (Échap ou « Modifier » = annuler) */
 /* ================= annuler : message en bas de l'écran, 10 secondes ================= */
 let toastT=null,HIST=null;
@@ -260,7 +265,7 @@ function confirmerOp(doc,opt={}){
   if(doc.nature==='depense')lignes.push(['Poste',(CAT[doc.categorie]||{}).label||doc.categorie]);
   if(doc.cat_revenu){const r=REV[doc.cat_revenu]||{label:doc.cat_revenu};lignes.push(['Type de revenu',`${r.label} (${r.courant?'courant':'ponctuel'})`])}
   if(doc.ponctuel){const p=REV[doc.cat_ponctuel]||{label:'Autre revenu'};lignes.push(['Dont ponctuel',`${fmtC(doc.ponctuel)} FCFA ${p.label.toLowerCase()} · courant : ${fmtC(doc.montant-doc.ponctuel)} FCFA`])}
-  if(doc.nature==='depense'&&FOYERS.length&&!estTiers(doc.compte)){const p=pourDe(doc);if(p.length)lignes.push(['Pour',p.map(nomPour).join(', ')+(p.length>1?` : ${fmtC(Math.round(doc.montant/p.length))} FCFA chacun`:'')])}
+  if(doc.nature==='depense'&&FOYERS.length&&!estTiers(doc.compte)){const p=pourDe(doc);if(p.length)lignes.push(['Pour',libellePour(p)+(p.length>1?` : ${fmtC(Math.round(doc.montant/p.length))} FCFA chacun`:'')])}
   if(doc.tiers)lignes.push(['Versé au compte',`${nomCpt(doc.tiers)} : votre dépense alimente aussi ce compte`]);
   if(estTiers(doc.compte))lignes.push(['Compte d\'un tiers','gardé à part : ne compte pas dans vos dépenses ni vos revenus']);
   if(doc.evenement)lignes.push(['Événement',`★ ${(EVT[doc.evenement]||{}).nom||doc.evenement} : opération exceptionnelle`]);
@@ -285,11 +290,15 @@ function confirmerOp(doc,opt={}){
 }
 /* modifier une ligne depuis un journal : le formulaire s'ouvre dans Données et réglages, puis on revient à la vue d'origine */
 let retourVue=null;
-function revenir(){if(retourVue){view=retourVue;retourVue=null;render();window.scrollTo({top:0,behavior:doux()})}}
+/* après une modification (ou son annulation) : retour à la vue ET à la position d'où on l'a ouverte (demande du 28/11) */
+let retourY=0;
+function revenir(){if(retourVue){view=retourVue;retourVue=null;render();const y=retourY;let n=0;
+  // les cartes (content-visibility) prennent leur hauteur au défilement : on recale quelques fois
+  const caler=()=>{window.scrollTo({top:y,behavior:'instant'});if(++n<5&&Math.abs(window.scrollY-y)>4)requestAnimationFrame(caler)};requestAnimationFrame(caler)}}
 $('editCancel').onclick=()=>{resetForm();$('addMsg').textContent='';revenir()};
 function startEdit(id){
   const e=all.find(x=>x.id===id);if(!e)return;
-  navEtape(()=>{editId=id;saisieSeule=false;if(view!=='donnees'){retourVue=view;view='donnees'}showTab('tOne')});
+  navEtape(()=>{editId=id;saisieSeule=false;if(view!=='donnees'){retourVue=view;retourY=window.scrollY;view='donnees'}showTab('tOne')});
   $('fDate').value=e.date;$('fAmt').value=versSaisie(e.montant);$('fLib').value=e.libelle;$('fNat').value=e.nature;$('fCpt').value=e.compte;
   $('fCat').value=e.categorie||'autre';$('fVers').value=e.vers;$('fPers').value=e.personne;$('fEch').value=e.echeance;$('fBien').value=e.bien;$('fRem').value=e.remarque;
   $('fCatM').value=e.cat_maison||guessCatM(e.libelle);$('fCatV').value=e.cat_vehicule||guessCatV(e.libelle);$('fKm').value=e.km||'';$('fQty').value=e.quantite?String(e.quantite).replace('.',','):'';$('fUnit').value=e.unite==='u'?'u':'L';$('fVid').checked=false;
@@ -341,7 +350,7 @@ $('oneForm').addEventListener('submit',async ev=>{
     const doc=docOp({date:$('fDate').value,montant,libelle,nature,compte:$('fCpt').value,categorie:$('fCat').value,vers:$('fVers').value,
       personne:nature==='pret'||nature==='remboursement'?personneConnue($('fPers').value.trim()):'',echeance:$('fEch').value,bien:$('fBien').value,
       vehicule:vehChoisi,cat_maison:$('wMai').hidden?'':$('fCatM').value,cat_vehicule:$('fCatV').value,km,quantite:qte,unite:$('fUnit').value,
-      pour:$('wPour').hidden?[]:(pourSel||pourAuto||[]),cat_revenu:$('fCatR').value,ponctuel:ponct,cat_ponctuel:$('fCatP').value,evenement:$('wEvt').hidden?'':$('fEvt').value,tiers:$('wTiers').hidden?'':$('fTiers').value,
+      pour:$('wPour').hidden?[]:pourEffectif(),   // le choix affiché, même par défaut, est enregistré (demande du 28/11)cat_revenu:$('fCatR').value,ponctuel:ponct,cat_ponctuel:$('fCatP').value,evenement:$('wEvt').hidden?'':$('fEvt').value,tiers:$('wTiers').hidden?'':$('fTiers').value,
       remarque:$('fRem').value.trim(),cree:old?old.cree:new Date().toISOString()});
     const nouvVid=avecVeh&&!$('vidBox').hidden&&$('fVid').checked&&km>0,vehOp=BIEN[doc.vehicule];
     const prochVid=nouvVid?Math.round(num($('fVidNext').value))||km+vidangeDe(vehOp).intervalle:0;

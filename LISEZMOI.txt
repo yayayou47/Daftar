@@ -98,14 +98,14 @@ l'autre, et le choix est retenu sur l'appareil. Rebasculer vers le mode du
 navigateur revient au réglage automatique. Elle reste figée en haut
 de l'écran pendant le défilement.
 
-La barre des rubriques est en bas de l'écran sur le téléphone, où elle
-s'efface pendant qu'on fait défiler la page et revient dès qu'on s'arrête ;
-sur l'ordinateur, elle est figée juste sous la ligne du haut :
+La barre des rubriques est en bas de l'écran, sur le téléphone comme sur
+l'ordinateur ; sur le téléphone, elle s'efface pendant qu'on fait défiler la
+page et revient dès qu'on s'arrête :
 
   - Mes finances (à gauche) : vues Mois, Année, Patrimoine et
     Statistiques, avec le journal de toutes les opérations.
-  - Saisir (au milieu, bouton bleu au contour doré sur le téléphone) : la carte de saisie d'une opération, le
-    curseur dans le champ Montant.
+  - Saisir (au milieu, bouton bleu au contour doré) : la carte de saisie
+    d'une opération, à la date du jour, le curseur dans le champ Montant.
   - Mes biens (à droite) : la liste des biens (engins, maisons, autres
     biens). Toucher un bien l'ouvre : Engins (vidanges, carburant,
     consommation, coûts de chaque engin), Maison (terrain, construction,
@@ -318,10 +318,19 @@ Changer de période : les flèches ‹ › à côté du mois ou de l'année, ou,
 le téléphone, balayer l'écran vers la gauche (période suivante) ou vers la
 droite (période précédente), sans remonter en haut de la page.
 
+Vue Année : le tableau par mois et par poste est replié ; « Afficher le
+tableau par mois et par poste » le déplie (le choix est retenu). Dans ce
+tableau, comme dans ceux des engins, de la maison et du foyer, la ligne des
+titres, la première colonne et la ligne Total restent visibles quand on le
+fait défiler, sur le téléphone comme sur l'ordinateur.
+
 Foyer : le bouton « Foyer », à côté du mois ou de l'année, montre pour qui
 sont les dépenses de cette période (le mois en vue Mois, l'année en vue
 Année) ; un second appui revient à la vue. Foyer affiché, Mois et Année
-changent seulement sa période. Chaque foyer (Foyer 1, Foyer 2…)
+changent seulement sa période. En tête, quatre indicateurs : dépenses du
+foyer (et par mois), part du foyer dans toutes vos dépenses, coût d'un
+enfant par mois, évolution par rapport au mois ou à l'année d'avant (à la
+même date si la période est en cours). Chaque foyer (Foyer 1, Foyer 2…)
 montre son commun et chacun de ses membres (épouse, enfants…), avec la moyenne par mois et le coût d'un enfant par mois ; un
 tableau croise les membres et les postes (santé, transport, habillement,
 coiffure…). « Moi » regroupe vos dépenses pour vous-même. Toucher une ligne
@@ -342,13 +351,20 @@ de chaque poste) :
     ouvert pour dire sur qui la dépense est faite (vous, l'épouse, un
     enfant) ; sans choix, elle n'entre pas dans le Foyer ;
   - « dépense générale » (voiture, loyer, aides et dons, bureau, service
-    d'un tiers…) : jamais dans le Foyer, seulement dans Mes finances ; le
-    champ « Pour » reste replié (« préciser pour qui » l'ouvre au besoin).
+    d'un tiers…) : jamais dans le Foyer, seulement dans Mes finances ; dans
+    le champ « Pour », aucun bouton n'est coché (on peut en cocher un).
 Une dépense de santé pour un enfant compte dans le Foyer sous cet enfant, et
 dans Mes finances dans le poste Santé. Dans Une opération, le champ « Pour » propose Moi,
 Foyer 1, Foyer 2… ; un foyer choisi ouvre son menu : « Tous (commun) », ou
-cochez un ou plusieurs de ses membres (l'épouse, 2 enfants…) ; plusieurs
-membres = parts égales. Chaque foyer a ses propres membres, épouse comprise.
+cochez un ou plusieurs de ses membres (l'épouse, 2 enfants…), ou « Tous les
+enfants » ; plusieurs membres = parts égales. Le journal écrit alors « pour
+tous les enfants (Foyer 1) », avec le nom du foyer, plutôt que les prénoms. Le menu s'ouvre vers le haut.
+Le choix affiché est enregistré tel quel, sans avoir à le toucher. Toucher
+le choix actif (Moi ou le foyer) le décoche : rien de coché = dépense faite
+ailleurs (ni pour vous ni pour un foyer), même si le poste est réglé
+« pour moi » ; le menu des membres s'ouvre par son propre bouton. Le champ
+« Pour » n'apparaît que si un foyer a des membres, et « Versé au compte de »
+que s'il existe un compte de tiers. Chaque foyer a ses propres membres, épouse comprise.
 
 
 8. MAISON ET PROJETS
@@ -361,8 +377,11 @@ rythme actuel, effort mensuel pour tenir l'échéance, valeur projetée) et
 journal des travaux. Le projet se règle dans Données et réglages ›
 Événements et projets › Projets : un projet se rattache à une maison ou à
 tout autre bien (terrain, engin…), avec budget, échéance et note ; ses
-dépenses sont les investissements dans ce bien. « Maison » donne au bien le
-carnet des travaux.
+dépenses sont les investissements dans ce bien : « + Dépense » (dans la liste
+des projets, ou dans Mes biens › Maison) ouvre Une opération réglée en
+Investissement dans ce bien ; une note qui contient un mot-clé du bien
+(« forage terrain », « pompe »…) est aussi reconnue comme dépense du
+projet. « Maison » donne au bien le carnet des travaux.
 
 
 9. CORRIGER, ANNULER, EXPORTER

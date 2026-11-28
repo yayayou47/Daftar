@@ -64,11 +64,20 @@ const ROLES={epouse:'Épouse',enfant:'Enfant',autre:'Autre membre'};
 function setFoyers(l){FOYERS=(Array.isArray(l)?l:[]).map(f=>({id:f.id,nom:f.nom,membres:(Array.isArray(f.membres)?f.membres:[]).map(m=>({id:m.id,nom:m.nom,role:m.role||'autre',naissance:m.naissance||'',mots:Array.isArray(m.mots)?m.mots:[],foyer:f.id}))}));
   FOYER=Object.fromEntries(FOYERS.map(f=>[f.id,f]));MEMBRE=Object.fromEntries(FOYERS.flatMap(f=>f.membres).map(m=>[m.id,m]))}
 const MEMBRES=()=>FOYERS.flatMap(f=>f.membres);
+// foyer actif : au moins un foyer déclaré avec ses membres (bouton Foyer, champ « Pour » : seulement dans ce cas)
+const foyerActif=()=>FOYERS.some(f=>f.membres.length>0);
 // pour qui : liste enregistrée, sinon la règle par défaut (poste Foyer → commun du premier foyer ; sinon [] = Moi)
-function pourDe(e){if(e.nature!=='depense')return [];const p=(e.pour||[]).filter(x=>x==='moi'||FOYER[x]||MEMBRE[x]);if(p.length)return p;
+function pourDe(e){if(e.nature!=='depense')return [];if((e.pour||[]).includes('aucun'))return [];   // décoché : faite ailleurs
+  const p=(e.pour||[]).filter(x=>x==='moi'||FOYER[x]||MEMBRE[x]);if(p.length)return p;
   const d=(CAT[e.categorie]||{}).pour;return d==='moi'?['moi']:d==='foyer'&&FOYERS.length?[FOYERS[0].id]:[]}
 const nomPour=id=>id==='moi'?'Moi':FOYER[id]?FOYER[id].nom+' (commun)':MEMBRE[id]?MEMBRE[id].nom:id;
-const textePour=e=>pourDe(e).map(nomPour).join(', ');
+/* texte de « pour » (journal, export, confirmation) : tous les enfants d'un foyer → « tous les enfants (Foyer 1) » plutôt
+   que leurs prénoms (demande du 28/11) ; sinon les noms */
+function libellePour(p){if(p.length>1){const fo=(MEMBRE[p[0]]||{}).foyer,F=FOYER[fo];
+    if(F&&p.every(x=>(MEMBRE[x]||{}).foyer===fo)){const E=F.membres.filter(m=>m.role==='enfant').map(m=>m.id);
+      if(E.length>1&&E.length===p.length&&E.every(x=>p.includes(x)))return `tous les enfants (${F.nom})`}}
+  return p.map(nomPour).join(', ')}
+const textePour=e=>libellePour(pourDe(e));
 // membres cités dans une note (prénom ou mot-clé du membre) : « pharmacie adam » → Adam
 function guessPour(lib){const L=normTxt(lib);return MEMBRES().filter(m=>[m.nom,...m.mots].some(k=>{const n=normTxt(k);return n&&hasWord(L,n)})).map(m=>m.id)}
 let PROGS=[];

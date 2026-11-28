@@ -123,7 +123,7 @@ class Parite(unittest.TestCase):
             # « pour » (foyers, 2026-11-27)
             {"pour": ["adam"]}, {"pour": ["adam", "zara", "adam"]}, {"pour": "halima"}, {"pour": ["foyer1"]}, {"pour": []},
             {"pour": ["foyer1", "adam"]}, {"pour": ["inconnu"]}, {"nature": "revenu", "pour": ["adam"]},
-            {"pour": ["moi"]}, {"pour": ["moi", "adam"]}, {"pour": ["moi", "moi"]},
+            {"pour": ["moi"]}, {"pour": ["moi", "adam"]}, {"pour": ["moi", "moi"]}, {"pour": ["aucun"]}, {"pour": ["aucun", "foyer1"]},
             {"prog": "frais-banque", "prog_date": "2026-11-30"}, {"cree": "2026-11-20T08:00:00Z"}, {"cree": "n'importe quoi"},
         ]
         docs = [{**base, **v} for v in variantes]

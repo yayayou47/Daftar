@@ -61,7 +61,7 @@
   const texte = (v, n) => String(v == null ? '' : v).split(/\s+/).filter(Boolean).join(' ').slice(0, n);
   const ids = (d, cle) => new Set(((d.parametres || {})[cle] || []).map(x => x.id));
   // « Pour » d'une dépense (2026-11-27) : {id: 'foyer' | 'membre'} des foyers et de leurs membres (même règle que serveur.py)
-  const idsPour = d => { const out = {moi: 'moi'}; for (const f of (d.parametres || {}).foyers || []) { out[f.id] = 'foyer'; for (const m of f.membres || []) out[m.id] = 'membre'; } return out; };
+  const idsPour = d => { const out = {moi: 'moi', aucun: 'aucun'}; for (const f of (d.parametres || {}).foyers || []) { out[f.id] = 'foyer'; for (const m of f.membres || []) out[m.id] = 'membre'; } return out; };
   const idsPostes = d => { const s = ids(d, 'postes'); return s.size ? s : new Set(POSTES_DEFAUT.map(x => x.id)); };
   const biens = d => (d.parametres || {}).biens || [];
   const idsRevenus = d => { const s = ids(d, 'revenus'); return s.size ? s : new Set(REVENUS_DEFAUT.map(x => x.id)); };
@@ -157,7 +157,7 @@
       // pour qui : un foyer (dépense commune) OU un ou plusieurs membres (part égale de chacun)
       const pour = Array.isArray(doc.pour) ? doc.pour : [doc.pour], connus = idsPour(d), vus = [];
       for (const p of pour) { if (!(p in connus)) erreur('Membre du foyer inconnu : ' + p); if (!vus.includes(p)) vus.push(p); }
-      if (vus.length > 1 && vus.some(p => connus[p] === 'foyer' || connus[p] === 'moi')) erreur('Une dépense pour vous ou commune au foyer ne vise pas en plus un membre.');
+      if (vus.length > 1 && vus.some(p => ['foyer', 'moi', 'aucun'].includes(connus[p]))) erreur('Une dépense pour vous, commune au foyer ou faite ailleurs ne vise pas en plus un membre.');
       out.pour = vus;
     }
     if ((nature === 'depense' || nature === 'revenu') && doc.evenement) {
@@ -373,7 +373,7 @@
       }
       out.push({id: fid, nom, membres});
     }
-    const manquants = [...new Set(d.operations.flatMap(o => o.pour || []))].filter(p => !vus.has(p) && p !== 'moi');
+    const manquants = [...new Set(d.operations.flatMap(o => o.pour || []))].filter(p => !vus.has(p) && p !== 'moi' && p !== 'aucun');
     if (manquants.length) erreur('Impossible de supprimer un foyer ou un membre qui a des dépenses : ' + manquants.sort().join(', '));
     return out;
   }

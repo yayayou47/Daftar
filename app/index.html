@@ -152,7 +152,8 @@
   <section class="panel" aria-label="Rythme" id="rythmePanel">
     <div class="phead"><h2 id="chartTitle">Par semaine</h2><span class="hint" id="chartHint"></span></div>
     <div class="chart" id="chart"></div>
-    <div class="tbl" id="yearTblWrap" hidden><table id="yearTbl"></table></div>
+    <div class="row" id="yearTblBar" hidden><button type="button" class="btn ghost small" id="yearTblBtn" aria-expanded="false" aria-controls="yearTblWrap">Afficher le tableau par mois et par poste</button></div>
+    <div class="tbl fige" id="yearTblWrap" hidden><table id="yearTbl"></table></div>
   </section>
 
   <section class="panel" aria-labelledby="foyTitre" id="foyPanel" hidden>
@@ -197,7 +198,7 @@
     <div class="phead"><h2 id="vehRecTitre">Récapitulatif mensuel</h2><span class="hint" id="vehRecHint"></span></div>
     <div class="chart" id="vehChart"></div>
     <div class="slegende" id="vehLegend"></div>
-    <div class="tbl"><table id="vehTbl"></table></div>
+    <div class="tbl fige"><table id="vehTbl"></table></div>
   </section>
 
   <section class="panel" aria-label="Vidanges" id="vehVid" hidden>
@@ -241,7 +242,7 @@
     <div class="phead"><h2 id="maiRecTitre">Travaux par année</h2><span class="hint">Touchez une barre pour filtrer le journal</span></div>
     <div class="chart" id="maiChart"></div>
     <div class="slegende" id="maiLegend"></div>
-    <div class="tbl"><table id="maiTbl"></table></div>
+    <div class="tbl fige"><table id="maiTbl"></table></div>
   </section>
 
   <section class="panel" aria-label="Perspectives de la maison" id="maiPersp" hidden>
@@ -316,8 +317,8 @@
       <fieldset class="full vehf" id="wMai" hidden><legend class="label">Maison</legend>
         <div class="field"><label class="label" for="fCatM">Catégorie des travaux</label><select id="fCatM"></select></div>
       </fieldset>
-      <div class="field"><label class="label" for="fRem">Remarque (facultatif)</label><input type="text" id="fRem" autocomplete="off"></div>
       <div class="row full"><button class="btn" type="submit" id="addBtn">Ajouter</button><span id="addMsg" class="muted"></span></div>
+      <div class="field full"><label class="label" for="fRem">Remarque (facultatif)</label><input type="text" id="fRem" autocomplete="off"></div>
     </form>
 
     <div id="pasteBox" hidden style="display:flex;flex-direction:column;gap:10.5px">
