@@ -25,7 +25,8 @@ addEventListener('unhandledrejection',e=>__err.push('promesse : '+(e.reason&&e.r
 addEventListener('load',()=>setTimeout(async()=>{const vu=[];const pause=()=>new Promise(r=>setTimeout(r,150));
   try{
     // machine lente : la démo (3 ans simulés) peut mettre plusieurs secondes à se générer ; on attend les données
-    for(let i=0;i<200&&!(typeof ready!=='undefined'&&ready&&all.length);i++)await pause();
+    // (opérations, puis réglages : biens et foyers peuvent arriver après les opérations — vu sur GitHub le 28/11)
+    for(let i=0;i<400&&!(typeof ready!=='undefined'&&ready&&all.length&&BIENS.length&&FOYERS.length);i++)await pause();
     for(const [rub,vues] of [['aFin',['vMois','vAn','vPat','vStats']],['aBiens',['aVeh','aMai','bHub']]]){
       document.getElementById(rub).click();await pause();vu.push(rub);
       for(const v of vues){document.getElementById(v).click();await pause();vu.push(v)}}
@@ -160,8 +161,8 @@ class Navigateur(unittest.TestCase):
         profil = tempfile.mkdtemp(prefix="daftar-chrome-")
         try:
             sortie = subprocess.run([CHROME, "--headless=new", "--disable-gpu", "--no-first-run", "--no-default-browser-check",
-                                     "--user-data-dir=" + profil, "--window-size=1200,900", "--virtual-time-budget=60000", "--dump-dom",
-                                     "http://localhost:%d/%s" % (self.port, chemin)], capture_output=True, text=True, timeout=240).stdout
+                                     "--user-data-dir=" + profil, "--window-size=1200,900", "--virtual-time-budget=150000", "--dump-dom",
+                                     "http://localhost:%d/%s" % (self.port, chemin)], capture_output=True, text=True, timeout=400).stdout
         finally:
             shutil.rmtree(profil, ignore_errors=True)
         m = re.search(r"<title>BILAN (.*?)</title>", sortie, re.S)
